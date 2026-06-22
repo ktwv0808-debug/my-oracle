@@ -19,20 +19,14 @@ def price():
         "vs_currencies": "usd"
     }
 
-    result = requests.get(
+    response = requests.get(
         url,
         params=params
-    ).json()
-
-
-    eth = result["ethereum"]["usd"]
-
-
-    return jsonify(
-        {
-            "ETH_USD": eth
-        }
     )
+
+    data = response.json()
+
+    return jsonify(data)
 
 
 if __name__ == "__main__":
