@@ -12,11 +12,10 @@ def home():
 @app.route("/price")
 def price():
 
-    url = "https://api.coingecko.com/api/v3/simple/price"
+    url = "https://api.binance.com/api/v3/ticker/price"
 
     params = {
-        "ids": "ethereum",
-        "vs_currencies": "usd"
+        "symbol": "ETHUSDT"
     }
 
     response = requests.get(
@@ -26,7 +25,11 @@ def price():
 
     data = response.json()
 
-    return jsonify(data)
+    return jsonify(
+        {
+            "ETH_USDT": data["price"]
+        }
+    )
 
 
 if __name__ == "__main__":
