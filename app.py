@@ -14,14 +14,21 @@ def price():
 
     try:
 
-        url = "https://api.coincap.io/v2/assets/ethereum"
+        url = "https://api.coinbase.com/v2/prices/ETH-USD/spot"
 
-        r = requests.get(
+        response = requests.get(
             url,
             timeout=10
         )
 
-        return jsonify(r.json())
+        data = response.json()
+
+        return jsonify(
+            {
+                "ETH_USD": data["data"]["amount"],
+                "source": "Coinbase"
+            }
+        )
 
 
     except Exception as e:
