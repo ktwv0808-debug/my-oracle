@@ -40,7 +40,7 @@ def price():
 def ktw_price():
 
     return jsonify({
-        "symbol": "KTW",
+        "symbol": "W-donation",
         "price_usd": "0.0001",
         "source": "Oracle Test Price"
     })
