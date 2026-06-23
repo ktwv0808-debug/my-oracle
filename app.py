@@ -12,28 +12,18 @@ def home():
 @app.route("/price")
 def price():
 
-    try:
-        url = "https://api.binance.com/api/v3/ticker/price"
+    url = "https://api.coincap.io/v2/assets/ethereum"
 
-        params = {
-            "symbol": "ETHUSDT"
+    response = requests.get(url)
+
+    data = response.json()
+
+    return jsonify(
+        {
+            "ETH_USD": data["data"]["priceUsd"],
+            "source": "CoinCap"
         }
-
-        response = requests.get(
-            url,
-            params=params,
-            timeout=10
-        )
-
-        data = response.json()
-
-        return jsonify(data)
-
-    except Exception as e:
-
-        return jsonify({
-            "error": str(e)
-        })
+    )
 
 
 if __name__ == "__main__":
