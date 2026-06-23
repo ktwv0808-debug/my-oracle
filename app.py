@@ -12,18 +12,23 @@ def home():
 @app.route("/price")
 def price():
 
-    url = "https://api.coincap.io/v2/assets/ethereum"
+    try:
 
-    response = requests.get(url)
+        url = "https://api.coincap.io/v2/assets/ethereum"
 
-    data = response.json()
+        r = requests.get(
+            url,
+            timeout=10
+        )
 
-    return jsonify(
-        {
-            "ETH_USD": data["data"]["priceUsd"],
-            "source": "CoinCap"
-        }
-    )
+        return jsonify(r.json())
+
+
+    except Exception as e:
+
+        return jsonify({
+            "error": str(e)
+        })
 
 
 if __name__ == "__main__":
