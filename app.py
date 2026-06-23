@@ -12,24 +12,27 @@ def home():
 @app.route("/price")
 def price():
 
-    url = "https://api.binance.com/api/v3/ticker/price"
+    try:
+        url = "https://api.binance.com/api/v3/ticker/price"
 
-    params = {
-        "symbol": "ETHUSDT"
-    }
-
-    response = requests.get(
-        url,
-        params=params
-    )
-
-    data = response.json()
-
-    return jsonify(
-        {
-            "ETH_USDT": data["price"]
+        params = {
+            "symbol": "ETHUSDT"
         }
-    )
+
+        r = requests.get(url, params=params, timeout=10)
+
+        data = r.json()
+
+        return jsonify({
+            "ETH_USDT": data.get("price"),
+            "source": "Binance"
+        })
+
+    except Exception as e:
+
+        return jsonify({
+            "error": str(e)
+        })
 
 
 if __name__ == "__main__":
