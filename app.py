@@ -14,7 +14,6 @@ def home():
 def price():
 
     try:
-
         url = "https://api.coinbase.com/v2/prices/ETH-USD/spot"
 
         response = requests.get(
@@ -24,12 +23,10 @@ def price():
 
         data = response.json()
 
-        return jsonify(
-            {
-                "ETH_USD": data["data"]["amount"],
-                "source": "Coinbase"
-            }
-        )
+        return jsonify({
+            "ETH_USD": data["data"]["amount"],
+            "source": "Coinbase"
+        })
 
     except Exception as e:
 
@@ -38,28 +35,20 @@ def price():
         })
 
 
-# KTW 가격 (테스트용)
+# KTW 가격 테스트 API
 @app.route("/ktw-price")
 def ktw_price():
 
-    ktw_price_usd = 0.0001
-
-    return jsonify(
-        {
-            "symbol": "KTW",
-            "price_usd": ktw_price_usd,
-            "source": "Oracle Test Price"
-        }
-    )
+    return jsonify({
+        "symbol": "KTW",
+        "price_usd": "0.0001",
+        "source": "Oracle Test Price"
+    })
 
 
 if __name__ == "__main__":
+
     app.run(
         host="0.0.0.0",
         port=5000
     )
-2) GitHub 저장
-
-Commit:
-
-Update app.py
