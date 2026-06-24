@@ -44,8 +44,6 @@ body {
 h1 {
 
     color:#164a8a;
-    font-size:38px;
-
 }
 
 
@@ -71,107 +69,113 @@ h1 {
 .highlight {
 
     font-size:21px;
-    line-height:1.8;
     font-weight:bold;
+    line-height:1.8;
 
 }
 
 
 table {
 
-    width:100%;
-    margin-top:30px;
-    border-collapse:collapse;
+width:100%;
+margin-top:30px;
+border-collapse:collapse;
 
 }
 
 
-th, td {
+th,td {
 
-    border:1px solid #ddd;
-    padding:15px;
+border:1px solid #ddd;
+padding:15px;
 
 }
+
 
 
 .footer {
 
-    margin-top:45px;
-    padding:25px;
-    background:#f8f8f8;
-    border-radius:15px;
-    color:#555;
-
-}
-
-
-/* Whitepaper Button */
-
-.whitepaper-btn {
-
-    display:inline-block;
-    margin:30px;
-    padding:15px 35px;
-    background:#164a8a;
-    color:white;
-    border-radius:10px;
-    cursor:pointer;
+margin-top:45px;
+padding:25px;
+background:#f8f8f8;
+border-radius:15px;
 
 }
 
 
 
-/* Popup */
+/* popup button */
+
+.popup-btn {
+
+display:inline-block;
+margin:15px;
+padding:15px 30px;
+background:#164a8a;
+color:white;
+border-radius:10px;
+cursor:pointer;
+
+}
+
+
+
+/* popup */
+
 
 .modal {
 
-    display:none;
-    position:fixed;
-    z-index:999;
-    left:0;
-    top:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.6);
+display:none;
+position:fixed;
+z-index:999;
+left:0;
+top:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
 
 }
+
 
 
 .modal-content {
 
-    background:white;
-    width:80%;
-    max-width:800px;
+background:white;
+width:80%;
+max-width:800px;
 
-    margin:5% auto;
+margin:5% auto;
 
-    padding:40px;
+padding:40px;
 
-    border-radius:15px;
+border-radius:15px;
 
-    text-align:left;
+text-align:left;
 
-    max-height:80vh;
+max-height:80vh;
 
-    overflow:auto;
+overflow:auto;
 
 }
+
 
 
 .close {
 
-    float:right;
-    font-size:35px;
-    cursor:pointer;
+float:right;
+
+font-size:35px;
+
+cursor:pointer;
 
 }
+
 
 
 </style>
 
 
 </head>
-
 
 
 <body>
@@ -185,7 +189,6 @@ th, td {
 <h1>
 W-donation
 </h1>
-
 
 
 <h2>
@@ -221,7 +224,6 @@ W-donation ecosystem will be donated to World Vision.
 </p>
 
 
-
 <p class="highlight">
 
 Donation records and transaction details will be
@@ -236,13 +238,28 @@ publicly disclosed.
 
 
 
-<a class="whitepaper-btn"
+<!-- Links -->
+
+<div>
+
+
+<a class="popup-btn"
 onclick="openWhitepaper()">
 
 W-donation Whitepaper
 
 </a>
 
+
+<a class="popup-btn"
+onclick="openPoem()">
+
+Toward Victory
+
+</a>
+
+
+</div>
 
 
 
@@ -305,7 +322,6 @@ Transaction Proof
 </th>
 
 </tr>
-
 
 
 <tr>
@@ -386,20 +402,12 @@ will be publicly available for community verification.
 </p>
 
 
-<p>
-
-Building a transparent ecosystem where technology
-supports positive change.
-
-</p>
-
-
 </div>
 
 
 
-
 </div>
+
 
 
 
@@ -411,13 +419,11 @@ supports positive change.
 <!-- Whitepaper Popup -->
 
 
-<div id="whitepaperModal"
+<div id="whitepaper"
 class="modal">
 
 
-
 <div class="modal-content">
-
 
 
 <span class="close"
@@ -426,7 +432,6 @@ onclick="closeWhitepaper()">
 &times;
 
 </span>
-
 
 
 
@@ -442,53 +447,21 @@ Blockchain With Social Responsibility
 
 
 
-
-
 <h3>
-1. Introduction
+Introduction
 </h3>
 
 
 <p>
 
-W-donation is a blockchain project designed
-to connect digital asset technology with
-real-world social impact.
+W-donation is a blockchain project designed to connect
+digital asset technology with real-world social impact.
 
 </p>
-
-
-<p>
-
-We believe blockchain technology is not only
-a financial innovation, but also a tool that can
-create transparent and meaningful change.
-
-</p>
-
-
-
 
 
 <h3>
-2. Vision
-</h3>
-
-
-<p>
-
-W-donation aims to build a transparent blockchain
-ecosystem where technology, community participation,
-and social responsibility grow together.
-
-</p>
-
-
-
-
-
-<h3>
-3. Social Contribution Policy
+Social Contribution Policy
 </h3>
 
 
@@ -500,151 +473,178 @@ W-donation ecosystem will be donated to World Vision.
 </p>
 
 
-<p>
-
-Donation records and transaction details will be
-publicly disclosed.
-
-</p>
-
-
-
-
-
 <h3>
-4. Transparency
+Transparency
 </h3>
 
 
 <p>
 
-W-donation will publicly disclose:
+Donation records, transaction hashes,
+and wallet information will be publicly disclosed.
 
 </p>
 
 
-<ul>
-
-<li>Donation records</li>
-
-<li>Transaction hashes</li>
-
-<li>Donation wallet information</li>
-
-<li>Project updates</li>
-
-</ul>
-
-
-
-
 
 <h3>
-5. Roadmap
+Roadmap
+
 </h3>
 
 
 <p>
 
+Phase 1: Development and Testnet
 
-<b>
-Phase 1 - Development
-</b>
+<br><br>
 
-<br>
+Phase 2: Mainnet Launch and Liquidity
 
-Smart contract development
+<br><br>
 
-<br>
-
-Testnet deployment
-
-<br>
-
-Oracle server development
-
-<br>
-
-Website development
-
+Phase 3: Ecosystem Growth
 
 </p>
-
-
-
-
-<p>
-
-
-<b>
-Phase 2 - Mainnet Preparation
-</b>
-
-<br>
-
-Mainnet deployment
-
-<br>
-
-Liquidity pool creation
-
-<br>
-
-Community launch
-
-
-</p>
-
-
-
-
-<p>
-
-
-<b>
-Phase 3 - Ecosystem Growth
-</b>
-
-<br>
-
-Community expansion
-
-<br>
-
-Partnership development
-
-<br>
-
-Sustainable donation system
-
-
-</p>
-
-
-
-
-
-
-<h3>
-W-donation Goal
-</h3>
-
-
-<p>
-
-Building a transparent blockchain ecosystem
-where technology supports positive change.
-
-</p>
-
-
 
 
 
 </div>
 
+</div>
+
+
+
+
+
+
+
+
+<!-- Poem Popup -->
+
+
+<div id="poem"
+class="modal">
+
+
+<div class="modal-content">
+
+
+<span class="close"
+onclick="closePoem()">
+
+&times;
+
+</span>
+
+
+
+<h1>
+Toward Victory
+</h1>
+
+
+
+<h2>
+By Tae-wan Kim
+</h2>
+
+
+
+
+<p>
+
+
+Youth that knows how to look toward the highest place in life,
+
+</p>
+
+
+<p>
+
+Youth that carries the strongest energy of life,
+
+</p>
+
+
+<p>
+
+The cries you shouted from the valley
+
+now return as an echo.
+
+</p>
+
+
+<h3>
+Move forward, youth.
+</h3>
+
+
+<p>
+
+Even if rain and fierce winds stand in your way,
+
+will your determination ever break?
+
+</p>
+
+
+
+<h3>
+Move forward, youth.
+</h3>
+
+
+<p>
+
+On your path,
+
+the thorn trees are your companions.
+
+Know when to avoid,
+
+know when to endure,
+
+and keep moving forward.
+
+</p>
+
+
+
+<p>
+
+God has said:
+
+Your passion will never be meaningless.
+
+</p>
+
+
+<p>
+
+God has given you:
+
+Strong legs to walk,
+
+and a mountain that you can climb.
+
+</p>
+
+
+
+<p>
+
+Never abandon the purpose given to you.
+
+</p>
+
 
 </div>
+
+</div>
+
+
 
 
 
@@ -658,7 +658,7 @@ where technology supports positive change.
 function openWhitepaper(){
 
 document.getElementById(
-"whitepaperModal"
+"whitepaper"
 ).style.display="block";
 
 }
@@ -668,7 +668,27 @@ document.getElementById(
 function closeWhitepaper(){
 
 document.getElementById(
-"whitepaperModal"
+"whitepaper"
+).style.display="none";
+
+}
+
+
+
+function openPoem(){
+
+document.getElementById(
+"poem"
+).style.display="block";
+
+}
+
+
+
+function closePoem(){
+
+document.getElementById(
+"poem"
 ).style.display="none";
 
 }
@@ -676,7 +696,6 @@ document.getElementById(
 
 
 </script>
-
 
 
 
