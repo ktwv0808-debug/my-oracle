@@ -1,60 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
 <meta charset="UTF-8">
 
 <title>
-W-donation | Social Contribution
+W-donation | Blockchain Social Responsibility
 </title>
 
 
 <style>
 
 
-body {
+body{
 
-font-family: Arial, sans-serif;
+font-family:Arial,sans-serif;
+
 background:#f4f7fb;
+
 margin:0;
 
 }
 
 
-.container {
 
+.container{
 
-max-width:900px;
+max-width:950px;
 
-margin:50px auto;
+margin:40px auto;
 
 background:white;
 
-padding:45px;
+padding:40px;
 
 border-radius:20px;
 
 text-align:center;
 
-
 }
 
 
 
-.logo {
-
-
-width:220px;
-
-margin:25px;
-
-
-}
-
-
-
-h1 {
+h1{
 
 color:#164a8a;
 
@@ -62,8 +46,17 @@ color:#164a8a;
 
 
 
-.subtitle {
+.logo{
 
+width:220px;
+
+margin:20px;
+
+}
+
+
+
+.subtitle{
 
 font-size:22px;
 
@@ -71,118 +64,85 @@ color:#e67e22;
 
 font-weight:bold;
 
-
 }
 
 
 
-.card {
-
-
-margin-top:35px;
-
-padding:30px;
+.card{
 
 background:#eef5ff;
 
+padding:30px;
+
 border-radius:15px;
-
-
-}
-
-
-
-.highlight {
-
-
-font-size:21px;
-
-line-height:1.8;
-
-font-weight:bold;
-
-
-}
-
-
-
-
-table {
-
-
-width:100%;
 
 margin-top:30px;
 
-border-collapse:collapse;
+}
 
+
+
+.highlight{
+
+font-size:20px;
+
+font-weight:bold;
+
+line-height:1.8;
 
 }
 
 
 
-th,td {
 
+table{
+
+width:100%;
+
+border-collapse:collapse;
+
+margin-top:20px;
+
+}
+
+
+
+th,td{
 
 border:1px solid #ddd;
 
-padding:15px;
-
-
-}
-
-
-
-
-.footer {
-
-
-margin-top:45px;
-
-padding:25px;
-
-background:#f8f8f8;
-
-border-radius:15px;
-
+padding:12px;
 
 }
 
 
 
 
-.popup-btn {
-
+.popup-btn{
 
 display:inline-block;
-
-margin:15px;
-
-padding:15px 30px;
 
 background:#164a8a;
 
 color:white;
 
+padding:15px 25px;
+
+margin:10px;
+
 border-radius:10px;
 
 cursor:pointer;
-
 
 }
 
 
 
-
-
-.modal {
-
+.modal{
 
 display:none;
 
 position:fixed;
-
-z-index:999;
 
 left:0;
 
@@ -194,48 +154,37 @@ height:100%;
 
 background:rgba(0,0,0,0.6);
 
+z-index:999;
 
 }
 
 
 
-
-.modal-content {
-
+.modal-content{
 
 background:white;
 
 width:80%;
 
-max-width:800px;
-
+max-width:850px;
 
 margin:5% auto;
 
-
-padding:40px;
-
+padding:35px;
 
 border-radius:15px;
 
-
 text-align:left;
-
 
 max-height:80vh;
 
-
 overflow:auto;
-
 
 }
 
 
 
-
-
-.close {
-
+.close{
 
 float:right;
 
@@ -243,9 +192,17 @@ font-size:35px;
 
 cursor:pointer;
 
-
 }
 
+
+
+a{
+
+color:#164a8a;
+
+font-weight:bold;
+
+}
 
 
 </style>
@@ -255,9 +212,7 @@ cursor:pointer;
 
 
 
-
 <body>
-
 
 
 
@@ -270,19 +225,16 @@ W-donation
 </h1>
 
 
-
 <h2>
 Blockchain With Social Responsibility
 </h2>
 
 
 
+
 <img class="logo"
 
-src="https://www.worldvision.or.kr/images/logo.png"
-
-alt="World Vision">
-
+src="https://www.worldvision.or.kr/images/logo.png">
 
 
 <p class="subtitle">
@@ -290,6 +242,7 @@ alt="World Vision">
 Creating technology that creates social impact.
 
 </p>
+
 
 
 
@@ -308,8 +261,7 @@ W-donation ecosystem will be donated to World Vision.
 
 <p class="highlight">
 
-Donation records and transaction details will be
-publicly disclosed.
+Donation records and transaction details will be publicly disclosed.
 
 </p>
 
@@ -321,63 +273,35 @@ publicly disclosed.
 
 
 
-<a class="popup-btn"
 
+<button class="popup-btn"
 onclick="openWhitepaper()">
 
 W-donation Whitepaper
 
-</a>
+</button>
 
 
 
-<a class="popup-btn"
 
+<button class="popup-btn"
 onclick="openPoem()">
 
 Toward Victory
 
-</a>
+</button>
 
 
 
 
-<a class="popup-btn"
 
+<button class="popup-btn"
 onclick="openTrading()">
 
 Auto Trading System
 
-</a>
+</button>
 
-
-
-
-
-
-
-<h2>
-Our Mission
-</h2>
-
-
-
-<p>
-
-W-donation believes blockchain technology
-can create positive change beyond digital assets.
-
-</p>
-
-
-
-
-<p>
-
-Through transparent operation and community participation,
-we aim to build a sustainable ecosystem.
-
-</p>
 
 
 
@@ -396,17 +320,24 @@ Quarterly Donation Report
 
 <tr>
 
-<th>Quarter</th>
+<th>
+Quarter
+</th>
 
-<th>Net Profit</th>
+<th>
+Net Profit
+</th>
 
-<th>Donation</th>
+<th>
+Donation 10%
+</th>
 
-<th>Proof</th>
+<th>
+Proof
+</th>
 
 
 </tr>
-
 
 
 <tr>
@@ -429,7 +360,6 @@ Preparing
 
 
 </tr>
-
 
 
 <tr>
@@ -460,41 +390,6 @@ Preparing
 
 
 
-
-<div class="footer">
-
-
-<p>
-
-W-donation connects blockchain technology
-with real-world impact.
-
-</p>
-
-
-<p>
-
-After the mainnet launch, all donation activities
-will be transparently recorded on the blockchain.
-
-</p>
-
-
-
-<p>
-
-Donation wallet information and transaction proofs
-will be publicly available.
-
-</p>
-
-
-
-</div>
-
-
-
-
 </div>
 
 
@@ -507,19 +402,17 @@ will be publicly available.
 
 <!-- WHITEPAPER -->
 
-
-<div id="whitepaper" class="modal">
+<div id="whitepaper"
+class="modal">
 
 
 <div class="modal-content">
 
 
 <span class="close"
-
 onclick="closeWhitepaper()">
 
 ×
-
 
 </span>
 
@@ -528,7 +421,6 @@ onclick="closeWhitepaper()">
 <h1>
 W-donation Whitepaper
 </h1>
-
 
 
 <h2>
@@ -566,15 +458,17 @@ W-donation ecosystem will be donated to World Vision.
 
 
 
+
 <h3>
 Transparency
+
 </h3>
 
 
 <p>
 
-Donation records, wallet information,
-and transaction proofs will be publicly disclosed.
+Donation records, transaction hashes,
+and wallet information will be publicly disclosed.
 
 </p>
 
@@ -582,12 +476,13 @@ and transaction proofs will be publicly disclosed.
 
 <h3>
 Roadmap
+
 </h3>
 
 
 <p>
 
-Phase 1 : Development
+Phase 1 : Development & Testnet
 
 <br><br>
 
@@ -597,9 +492,7 @@ Phase 2 : Mainnet Launch
 
 Phase 3 : Ecosystem Growth
 
-
 </p>
-
 
 
 
@@ -618,15 +511,14 @@ Phase 3 : Ecosystem Growth
 <!-- POEM -->
 
 
-<div id="poem" class="modal">
+<div id="poem"
+class="modal">
 
 
 <div class="modal-content">
 
 
-
 <span class="close"
-
 onclick="closePoem()">
 
 ×
@@ -635,19 +527,13 @@ onclick="closePoem()">
 
 
 
-
 <h1>
-
 Toward Victory
-
 </h1>
 
 
-
 <h2>
-
 A Poem by Tae-wan Kim
-
 </h2>
 
 
@@ -655,9 +541,7 @@ A Poem by Tae-wan Kim
 
 <p>
 
-
-Youth that knows how to look toward
-the highest place in life,
+Youth that knows how to look toward the highest place in life,
 
 </p>
 
@@ -724,29 +608,6 @@ Your passion will never be meaningless.
 
 
 
-
-<p>
-
-God has given you:
-
-Strong legs to walk,
-
-and a mountain that you can climb.
-
-</p>
-
-
-
-
-<p>
-
-Never abandon the purpose given to you.
-
-</p>
-
-
-
-
 </div>
 
 </div>
@@ -762,7 +623,8 @@ Never abandon the purpose given to you.
 <!-- AUTO TRADING -->
 
 
-<div id="trading" class="modal">
+<div id="trading"
+class="modal">
 
 
 <div class="modal-content">
@@ -770,13 +632,11 @@ Never abandon the purpose given to you.
 
 
 <span class="close"
-
 onclick="closeTrading()">
 
 ×
 
 </span>
-
 
 
 
@@ -796,40 +656,27 @@ Python Blockchain Trading Engine
 
 
 
-
 <hr>
 
 
 
-
 <h3>
-
 System Status
-
 </h3>
 
 
-
 <p>
-
 Server : Running
-
 </p>
 
 
-
 <p>
-
 Database : SQLite Connected
-
 </p>
 
 
-
 <p>
-
 Market Data : Coinbase API
-
 </p>
 
 
@@ -837,10 +684,10 @@ Market Data : Coinbase API
 
 
 <h3>
-
-Price Monitor
-
+W-donation Oracle API
 </h3>
+
+
 
 
 
@@ -850,57 +697,149 @@ Price Monitor
 <tr>
 
 <th>
-Asset
+Function
 </th>
 
-<th>
-Price
-</th>
 
 <th>
-Status
+Link
 </th>
 
 
 </tr>
+
 
 
 
 <tr>
 
 <td>
-ETH
+ETH Price
 </td>
 
 <td>
-API Connected
-</td>
 
-<td>
-Monitoring
+<a href="/price"
+target="_blank">
+
+/price
+
+</a>
+
 </td>
 
 
 </tr>
+
+
+
 
 
 
 <tr>
 
 <td>
-W-donation
+Save Price To SQLite
+
 </td>
 
 <td>
-0.0001 USD
+
+<a href="/save-price"
+target="_blank">
+
+/save-price
+
+</a>
+
 </td>
 
+</tr>
+
+
+
+
+
+
+
+<tr>
+
 <td>
-Simulation
+Price History
+
+</td>
+
+
+<td>
+
+<a href="/history"
+target="_blank">
+
+/history
+
+</a>
+
 </td>
 
 
 </tr>
+
+
+
+
+
+
+
+<tr>
+
+<td>
+Auto Trading Signal
+
+</td>
+
+
+<td>
+
+<a href="/trade-check"
+target="_blank">
+
+/trade-check
+
+</a>
+
+</td>
+
+
+</tr>
+
+
+
+
+
+
+
+<tr>
+
+<td>
+Trading Records
+
+</td>
+
+
+<td>
+
+<a href="/trades"
+target="_blank">
+
+/trades
+
+</a>
+
+</td>
+
+
+</tr>
+
 
 
 </table>
@@ -910,10 +849,9 @@ Simulation
 
 
 
+
 <h3>
-
 Trading Strategy
-
 </h3>
 
 
@@ -931,19 +869,15 @@ Risk Management
 
 <br>
 
-Future Exchange API Integration
+Simulation Trading
 
 </p>
 
 
 
 
-
-
 <h3>
-
 Trading Mode
-
 </h3>
 
 
@@ -959,6 +893,7 @@ Currently running simulation mode.
 
 
 </div>
+
 
 </div>
 
@@ -976,20 +911,15 @@ Currently running simulation mode.
 
 function openWhitepaper(){
 
-document.getElementById(
-"whitepaper"
-).style.display="block";
-
+document.getElementById("whitepaper").style.display="block";
 
 }
 
 
+
 function closeWhitepaper(){
 
-document.getElementById(
-"whitepaper"
-).style.display="none";
-
+document.getElementById("whitepaper").style.display="none";
 
 }
 
@@ -998,20 +928,15 @@ document.getElementById(
 
 function openPoem(){
 
-document.getElementById(
-"poem"
-).style.display="block";
-
+document.getElementById("poem").style.display="block";
 
 }
 
 
+
 function closePoem(){
 
-document.getElementById(
-"poem"
-).style.display="none";
-
+document.getElementById("poem").style.display="none";
 
 }
 
@@ -1020,27 +945,21 @@ document.getElementById(
 
 function openTrading(){
 
-document.getElementById(
-"trading"
-).style.display="block";
-
+document.getElementById("trading").style.display="block";
 
 }
 
 
+
 function closeTrading(){
 
-document.getElementById(
-"trading"
-).style.display="none";
-
+document.getElementById("trading").style.display="none";
 
 }
 
 
 
 </script>
-
 
 
 
