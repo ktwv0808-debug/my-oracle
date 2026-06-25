@@ -12,161 +12,237 @@ W-donation | Social Contribution
 
 <style>
 
+
 body {
 
-    font-family: Arial, sans-serif;
-    background:#f4f7fb;
-    margin:0;
+font-family: Arial, sans-serif;
+background:#f4f7fb;
+margin:0;
 
 }
 
 
 .container {
 
-    max-width:900px;
-    margin:50px auto;
-    background:white;
-    padding:45px;
-    border-radius:20px;
-    text-align:center;
+
+max-width:900px;
+
+margin:50px auto;
+
+background:white;
+
+padding:45px;
+
+border-radius:20px;
+
+text-align:center;
+
 
 }
+
 
 
 .logo {
 
-    width:220px;
-    margin:25px;
+
+width:220px;
+
+margin:25px;
+
 
 }
+
 
 
 h1 {
 
-    color:#164a8a;
+color:#164a8a;
+
 }
+
 
 
 .subtitle {
 
-    font-size:22px;
-    color:#e67e22;
-    font-weight:bold;
+
+font-size:22px;
+
+color:#e67e22;
+
+font-weight:bold;
+
 
 }
+
 
 
 .card {
 
-    margin-top:35px;
-    padding:30px;
-    background:#eef5ff;
-    border-radius:15px;
+
+margin-top:35px;
+
+padding:30px;
+
+background:#eef5ff;
+
+border-radius:15px;
+
 
 }
+
 
 
 .highlight {
 
-    font-size:21px;
-    font-weight:bold;
-    line-height:1.8;
+
+font-size:21px;
+
+line-height:1.8;
+
+font-weight:bold;
+
 
 }
+
+
 
 
 table {
 
+
 width:100%;
+
 margin-top:30px;
+
 border-collapse:collapse;
 
+
 }
+
 
 
 th,td {
 
+
 border:1px solid #ddd;
+
 padding:15px;
 
+
 }
+
 
 
 
 .footer {
 
+
 margin-top:45px;
+
 padding:25px;
+
 background:#f8f8f8;
+
 border-radius:15px;
+
 
 }
 
 
 
-/* popup button */
 
 .popup-btn {
 
+
 display:inline-block;
+
 margin:15px;
+
 padding:15px 30px;
+
 background:#164a8a;
+
 color:white;
+
 border-radius:10px;
+
 cursor:pointer;
+
 
 }
 
 
 
-/* popup */
 
 
 .modal {
 
+
 display:none;
+
 position:fixed;
+
 z-index:999;
+
 left:0;
+
 top:0;
+
 width:100%;
+
 height:100%;
+
 background:rgba(0,0,0,0.6);
 
+
 }
+
 
 
 
 .modal-content {
 
+
 background:white;
+
 width:80%;
+
 max-width:800px;
+
 
 margin:5% auto;
 
+
 padding:40px;
+
 
 border-radius:15px;
 
+
 text-align:left;
+
 
 max-height:80vh;
 
+
 overflow:auto;
+
 
 }
 
 
 
+
+
 .close {
+
 
 float:right;
 
 font-size:35px;
 
 cursor:pointer;
+
 
 }
 
@@ -178,7 +254,10 @@ cursor:pointer;
 </head>
 
 
+
+
 <body>
+
 
 
 
@@ -191,6 +270,7 @@ W-donation
 </h1>
 
 
+
 <h2>
 Blockchain With Social Responsibility
 </h2>
@@ -198,7 +278,9 @@ Blockchain With Social Responsibility
 
 
 <img class="logo"
+
 src="https://www.worldvision.or.kr/images/logo.png"
+
 alt="World Vision">
 
 
@@ -238,12 +320,9 @@ publicly disclosed.
 
 
 
-<!-- Links -->
-
-<div>
-
 
 <a class="popup-btn"
+
 onclick="openWhitepaper()">
 
 W-donation Whitepaper
@@ -251,7 +330,9 @@ W-donation Whitepaper
 </a>
 
 
+
 <a class="popup-btn"
+
 onclick="openPoem()">
 
 Toward Victory
@@ -259,7 +340,16 @@ Toward Victory
 </a>
 
 
-</div>
+
+
+<a class="popup-btn"
+
+onclick="openTrading()">
+
+Auto Trading System
+
+</a>
+
 
 
 
@@ -274,20 +364,21 @@ Our Mission
 
 <p>
 
-W-donation believes that blockchain technology
+W-donation believes blockchain technology
 can create positive change beyond digital assets.
 
 </p>
 
 
 
+
 <p>
 
 Through transparent operation and community participation,
-we aim to build a sustainable ecosystem where technology
-supports social responsibility.
+we aim to build a sustainable ecosystem.
 
 </p>
+
 
 
 
@@ -305,23 +396,17 @@ Quarterly Donation Report
 
 <tr>
 
-<th>
-Quarter
-</th>
+<th>Quarter</th>
 
-<th>
-Net Profit
-</th>
+<th>Net Profit</th>
 
-<th>
-Donation (10%)
-</th>
+<th>Donation</th>
 
-<th>
-Transaction Proof
-</th>
+<th>Proof</th>
+
 
 </tr>
+
 
 
 <tr>
@@ -341,6 +426,7 @@ Q1 2026
 <td>
 Preparing
 </td>
+
 
 </tr>
 
@@ -364,11 +450,11 @@ Q2 2026
 Preparing
 </td>
 
+
 </tr>
 
 
 </table>
-
 
 
 
@@ -394,42 +480,46 @@ will be transparently recorded on the blockchain.
 </p>
 
 
+
 <p>
 
 Donation wallet information and transaction proofs
-will be publicly available for community verification.
+will be publicly available.
 
 </p>
 
 
-</div>
-
-
 
 </div>
 
 
 
 
+</div>
 
 
 
 
 
-<!-- Whitepaper Popup -->
 
 
-<div id="whitepaper"
-class="modal">
+
+
+<!-- WHITEPAPER -->
+
+
+<div id="whitepaper" class="modal">
 
 
 <div class="modal-content">
 
 
 <span class="close"
+
 onclick="closeWhitepaper()">
 
-&times;
+×
+
 
 </span>
 
@@ -454,10 +544,12 @@ Introduction
 
 <p>
 
-W-donation is a blockchain project designed to connect
-digital asset technology with real-world social impact.
+W-donation connects blockchain technology
+with real-world social impact.
 
 </p>
+
+
 
 
 <h3>
@@ -473,6 +565,7 @@ W-donation ecosystem will be donated to World Vision.
 </p>
 
 
+
 <h3>
 Transparency
 </h3>
@@ -480,8 +573,8 @@ Transparency
 
 <p>
 
-Donation records, transaction hashes,
-and wallet information will be publicly disclosed.
+Donation records, wallet information,
+and transaction proofs will be publicly disclosed.
 
 </p>
 
@@ -489,30 +582,30 @@ and wallet information will be publicly disclosed.
 
 <h3>
 Roadmap
-
 </h3>
 
 
 <p>
 
-Phase 1: Development and Testnet
+Phase 1 : Development
 
 <br><br>
 
-Phase 2: Mainnet Launch and Liquidity
+Phase 2 : Mainnet Launch
 
 <br><br>
 
-Phase 3: Ecosystem Growth
+Phase 3 : Ecosystem Growth
+
 
 </p>
 
 
 
-</div>
 
 </div>
 
+</div>
 
 
 
@@ -520,33 +613,41 @@ Phase 3: Ecosystem Growth
 
 
 
-<!-- Poem Popup -->
 
 
-<div id="poem"
-class="modal">
+<!-- POEM -->
+
+
+<div id="poem" class="modal">
 
 
 <div class="modal-content">
 
 
+
 <span class="close"
+
 onclick="closePoem()">
 
-&times;
+×
 
 </span>
 
 
 
+
 <h1>
+
 Toward Victory
+
 </h1>
 
 
 
 <h2>
-By Tae-wan Kim
+
+A Poem by Tae-wan Kim
+
 </h2>
 
 
@@ -555,7 +656,8 @@ By Tae-wan Kim
 <p>
 
 
-Youth that knows how to look toward the highest place in life,
+Youth that knows how to look toward
+the highest place in life,
 
 </p>
 
@@ -567,6 +669,7 @@ Youth that carries the strongest energy of life,
 </p>
 
 
+
 <p>
 
 The cries you shouted from the valley
@@ -576,9 +679,11 @@ now return as an echo.
 </p>
 
 
+
 <h3>
 Move forward, youth.
 </h3>
+
 
 
 <p>
@@ -590,10 +695,6 @@ will your determination ever break?
 </p>
 
 
-
-<h3>
-Move forward, youth.
-</h3>
 
 
 <p>
@@ -612,6 +713,7 @@ and keep moving forward.
 
 
 
+
 <p>
 
 God has said:
@@ -619,6 +721,8 @@ God has said:
 Your passion will never be meaningless.
 
 </p>
+
+
 
 
 <p>
@@ -633,11 +737,225 @@ and a mountain that you can climb.
 
 
 
+
 <p>
 
 Never abandon the purpose given to you.
 
 </p>
+
+
+
+
+</div>
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- AUTO TRADING -->
+
+
+<div id="trading" class="modal">
+
+
+<div class="modal-content">
+
+
+
+<span class="close"
+
+onclick="closeTrading()">
+
+×
+
+</span>
+
+
+
+
+<h1>
+
+W-donation Auto Trading System
+
+</h1>
+
+
+
+<h2>
+
+Python Blockchain Trading Engine
+
+</h2>
+
+
+
+
+<hr>
+
+
+
+
+<h3>
+
+System Status
+
+</h3>
+
+
+
+<p>
+
+Server : Running
+
+</p>
+
+
+
+<p>
+
+Database : SQLite Connected
+
+</p>
+
+
+
+<p>
+
+Market Data : Coinbase API
+
+</p>
+
+
+
+
+
+<h3>
+
+Price Monitor
+
+</h3>
+
+
+
+<table>
+
+
+<tr>
+
+<th>
+Asset
+</th>
+
+<th>
+Price
+</th>
+
+<th>
+Status
+</th>
+
+
+</tr>
+
+
+
+<tr>
+
+<td>
+ETH
+</td>
+
+<td>
+API Connected
+</td>
+
+<td>
+Monitoring
+</td>
+
+
+</tr>
+
+
+
+<tr>
+
+<td>
+W-donation
+</td>
+
+<td>
+0.0001 USD
+</td>
+
+<td>
+Simulation
+</td>
+
+
+</tr>
+
+
+</table>
+
+
+
+
+
+
+<h3>
+
+Trading Strategy
+
+</h3>
+
+
+<p>
+
+Moving Average Analysis
+
+<br>
+
+Price Monitoring
+
+<br>
+
+Risk Management
+
+<br>
+
+Future Exchange API Integration
+
+</p>
+
+
+
+
+
+
+<h3>
+
+Trading Mode
+
+</h3>
+
+
+<p>
+
+No live trading.
+
+Currently running simulation mode.
+
+</p>
+
+
 
 
 </div>
@@ -655,14 +973,15 @@ Never abandon the purpose given to you.
 <script>
 
 
+
 function openWhitepaper(){
 
 document.getElementById(
 "whitepaper"
 ).style.display="block";
 
-}
 
+}
 
 
 function closeWhitepaper(){
@@ -671,7 +990,9 @@ document.getElementById(
 "whitepaper"
 ).style.display="none";
 
+
 }
+
 
 
 
@@ -681,8 +1002,8 @@ document.getElementById(
 "poem"
 ).style.display="block";
 
-}
 
+}
 
 
 function closePoem(){
@@ -691,11 +1012,36 @@ document.getElementById(
 "poem"
 ).style.display="none";
 
+
+}
+
+
+
+
+function openTrading(){
+
+document.getElementById(
+"trading"
+).style.display="block";
+
+
+}
+
+
+function closeTrading(){
+
+document.getElementById(
+"trading"
+).style.display="none";
+
+
 }
 
 
 
 </script>
+
+
 
 
 
