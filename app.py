@@ -1,15 +1,16 @@
 from flask import Flask, jsonify, render_template
 import requests
-import sqlite3
+import psycopg2
+import os
 from datetime import datetime
 
 
 app = Flask(__name__)
 
 
-import os
-import psycopg2
-
+# =========================
+# PostgreSQL 연결
+# =========================
 
 def get_db():
 
@@ -20,22 +21,22 @@ def get_db():
 
 
 # =========================
-# SQLite 초기화
+# 데이터베이스 초기화
 # =========================
 
 def init_db():
 
-    conn = sqlite3.connect(DB)
+    conn = get_db()
 
     cursor = conn.cursor()
 
 
-    # 가격 저장 테이블
+    # 가격 기록
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS prices(
 
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
 
         symbol TEXT,
 
@@ -43,19 +44,19 @@ def init_db():
 
         source TEXT,
 
-        created TEXT
+        created TIMESTAMP
 
     )
     """)
 
 
 
-    # 거래 기록 테이블
+    # 거래 기록
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS trades(
 
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
 
         symbol TEXT,
 
@@ -63,7 +64,7 @@ def init_db():
 
         price REAL,
 
-        created TEXT
+        created TIMESTAMP
 
     )
     """)
@@ -75,7 +76,8 @@ def init_db():
     conn.close()
 
 
-    print("SQLite price.db initialized successfully")
+    print("PostgreSQL initialized")
+
 
 
 init_db()
@@ -91,7 +93,6 @@ init_db()
 @app.route("/")
 def home():
 
-
     return """
 
     <h1>
@@ -100,9 +101,7 @@ def home():
 
 
     <p>
-
-    Blockchain Price Oracle System
-
+    PostgreSQL Blockchain Price Oracle System
     </p>
 
     """
@@ -118,7 +117,6 @@ def home():
 @app.route("/donation")
 def donation():
 
-
     return render_template(
         "donation.html"
     )
@@ -127,10 +125,8 @@ def donation():
 
 
 
-
-
 # =========================
-# Coinbase ETH 가격
+# ETH 가격 조회
 # =========================
 
 def get_eth_price():
@@ -161,8 +157,6 @@ def get_eth_price():
 
 
 
-
-
 # =========================
 # ETH 가격 API
 # =========================
@@ -170,12 +164,10 @@ def get_eth_price():
 @app.route("/price")
 def price():
 
-
     try:
 
 
         eth=get_eth_price()
-
 
 
         return jsonify({
@@ -187,7 +179,6 @@ def price():
             "source":"Coinbase"
 
         })
-
 
 
     except Exception as e:
@@ -220,18 +211,19 @@ def save_price():
 
 
 
-        conn=sqlite3.connect(DB)
+        conn=get_db()
 
         cursor=conn.cursor()
 
 
 
         cursor.execute("""
+        
         INSERT INTO prices
 
         (symbol,price,source,created)
 
-        VALUES(?,?,?,?)
+        VALUES(%s,%s,%s,%s)
 
         """,
 
@@ -258,11 +250,11 @@ def save_price():
         return jsonify({
 
 
-        "saved":True,
+            "saved":True,
 
-        "symbol":"ETH",
+            "symbol":"ETH",
 
-        "price":eth
+            "price":eth
 
 
         })
@@ -285,26 +277,28 @@ def save_price():
 
 
 # =========================
-# 가격 기록 조회
+# 가격 기록
 # =========================
 
 @app.route("/history")
 def history():
 
 
-    conn=sqlite3.connect(DB)
+    conn=get_db()
 
     cursor=conn.cursor()
 
 
 
-    cursor.execute(
-        """
-        SELECT *
-        FROM prices
-        ORDER BY id DESC
-        """
-    )
+    cursor.execute("""
+
+    SELECT *
+
+    FROM prices
+
+    ORDER BY id DESC
+
+    """)
 
 
     rows=cursor.fetchall()
@@ -348,7 +342,6 @@ def ktw_price():
 
 
 
-
 # =========================
 # 자동매매 시뮬레이션
 # =========================
@@ -368,8 +361,6 @@ def trade_check():
 
 
 
-        # 테스트 전략
-
         if eth < 1700:
 
 
@@ -386,8 +377,7 @@ def trade_check():
 
 
 
-
-        conn=sqlite3.connect(DB)
+        conn=get_db()
 
         cursor=conn.cursor()
 
@@ -399,7 +389,8 @@ def trade_check():
 
         (symbol,action,price,created)
 
-        VALUES(?,?,?,?)
+        VALUES(%s,%s,%s,%s)
+
 
         """,
 
@@ -423,9 +414,8 @@ def trade_check():
 
 
 
-
-
         return jsonify({
+
 
             "symbol":"ETH",
 
@@ -437,6 +427,7 @@ def trade_check():
 
 
         })
+
 
 
 
@@ -464,7 +455,7 @@ def trade_check():
 def trades():
 
 
-    conn=sqlite3.connect(DB)
+    conn=get_db()
 
     cursor=conn.cursor()
 
@@ -478,8 +469,8 @@ def trades():
 
     ORDER BY id DESC
 
-
     """)
+
 
 
     data=cursor.fetchall()
@@ -499,9 +490,8 @@ def trades():
 
 
 
-
 # =========================
-# Render 실행
+# 실행
 # =========================
 
 if __name__=="__main__":
