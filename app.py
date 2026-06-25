@@ -66,7 +66,7 @@ def init_db():
 
     conn.close()
 
-
+    print("SQLite price.db initialized successfully")
 
 
 
