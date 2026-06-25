@@ -5,19 +5,23 @@
 
 <meta charset="UTF-8">
 
-<title>
-W-donation
-</title>
+<title>W-donation</title>
 
 
 <style>
 
+*{
+
+box-sizing:border-box;
+
+}
+
 
 body{
 
-font-family:"Segoe UI",Arial,sans-serif;
+font-family:"Segoe UI", Arial, sans-serif;
 
-background:#f4f6f8;
+background:#f2f4f7;
 
 margin:0;
 
@@ -28,66 +32,79 @@ padding:40px;
 
 .container{
 
-
 width:900px;
 
 margin:auto;
 
 background:white;
 
-padding:45px;
+padding:50px;
 
 border-radius:20px;
 
 box-shadow:0 5px 25px rgba(0,0,0,0.15);
 
+}
+
+
+
+/* 제목 중앙 */
+
+.title{
+
+text-align:center;
 
 }
 
 
 
-h1{
+.title h1{
 
+font-size:50px;
 
-font-size:46px;
-
-color:#111;
-
+margin:0;
 
 }
 
 
 
-h2{
+.title h2{
 
+font-size:24px;
 
-color:#333;
-
-margin-top:35px;
-
+font-weight:normal;
 
 }
+
+
 
 
 
 p{
 
-
 font-size:18px;
 
 line-height:1.8;
-
 
 }
 
 
 
-.worldvision{
 
+.section{
+
+margin-top:35px;
+
+}
+
+
+
+
+.worldvision{
 
 text-align:center;
 
-margin-top:30px;
+margin:30px 0;
 
 }
 
@@ -95,24 +112,19 @@ margin-top:30px;
 
 .worldvision img{
 
-
-width:180px;
-
+width:200px;
 
 }
 
 
 
 
-table{
 
+table{
 
 width:100%;
 
 border-collapse:collapse;
-
-margin-top:20px;
-
 
 }
 
@@ -120,30 +132,28 @@ margin-top:20px;
 
 th,td{
 
-
 border:1px solid #ddd;
 
 padding:12px;
 
 text-align:center;
 
-
 }
 
 
 
 
-.menu{
+.system{
 
+text-align:center;
 
-margin-top:30px;
-
+margin:35px 0;
 
 }
 
 
 
-.menu a{
+.btn{
 
 
 display:inline-block;
@@ -162,26 +172,20 @@ cursor:pointer;
 
 text-decoration:none;
 
-font-size:18px;
-
 
 }
 
 
 
-.menu a:hover{
-
+.btn:hover{
 
 background:#003f88;
-
 
 }
 
 
 
 </style>
-
-
 
 
 <script>
@@ -204,8 +208,8 @@ url,
 }
 
 
-</script>
 
+</script>
 
 
 </head>
@@ -220,12 +224,14 @@ url,
 
 
 
+<div class="title">
+
+
 <h1>
 
 W-donation
 
 </h1>
-
 
 
 <h2>
@@ -235,12 +241,18 @@ Blockchain With Social Responsibility
 </h2>
 
 
+</div>
+
+
+
+
 
 <p>
 
 Creating technology that creates social impact.
 
 </p>
+
 
 
 
@@ -259,6 +271,23 @@ Donation records and transaction details will be publicly disclosed.
 </p>
 
 
+
+
+
+<div class="worldvision">
+
+
+<img src="https://upload.wikimedia.org/wikipedia/en/thumb/7/7e/World_Vision_logo.svg/512px-World_Vision_logo.svg.png">
+
+
+</div>
+
+
+
+
+
+
+<div class="section">
 
 
 <h2>
@@ -280,15 +309,54 @@ Through transparent operation and community participation, we aim to build a sus
 </p>
 
 
+</div>
 
 
-<div class="worldvision">
 
 
-<img src="https://www.worldvision.org/wp-content/uploads/2020/03/world-vision-logo.png">
+
+
+
+<div class="system">
+
+
+<h2>
+
+System
+
+</h2>
+
+
+
+<a class="btn"
+onclick="popup('/trading')">
+
+Automatic Trading System
+
+</a>
+
+
+
+<a class="btn"
+onclick="popup('/whitepaper')">
+
+Whitepaper
+
+</a>
+
+
+
+<a class="btn"
+onclick="popup('/poem')">
+
+Toward Victory
+
+</a>
+
 
 
 </div>
+
 
 
 
@@ -348,9 +416,7 @@ Q1 2026
 Preparing
 </td>
 
-
 </tr>
-
 
 
 
@@ -372,7 +438,6 @@ Q2 2026
 Preparing
 </td>
 
-
 </tr>
 
 
@@ -382,54 +447,12 @@ Preparing
 
 
 
-
-
-
-<h2>
-
-System
-
-</h2>
-
-
-
-<div class="menu">
-
-
-<a onclick="popup('/trading')">
-
-Automatic Trading System
-
-</a>
-
-
-
-<a onclick="popup('/whitepaper')">
-
-Whitepaper
-
-</a>
-
-
-
-<a onclick="popup('/poem')">
-
-Toward Victory
-
-</a>
-
-
-
 </div>
-
-
-
-
-
-</div>
-
 
 
 </body>
 
+
 </html>
+
+그리고 시가 각본처럼 나오는 문제는 poem.html을 바꿔야 합니다.
