@@ -1,5 +1,10 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
 <title>
-W-donation Auto Trading
+Auto Trading System
 </title>
 
 
@@ -26,36 +31,39 @@ background:#0066cc;
 
 color:white;
 
+border-radius:10px;
+
 text-decoration:none;
 
-border-radius:8px;
+cursor:pointer;
 
 }
 
+
+a:hover{
+
+background:#003f88;
+
+}
 
 </style>
 
 
 <script>
 
-
-function popup(url){
-
+function api(url){
 
 window.open(
 
 url,
 
-"API",
+"api",
 
 "width=600,height=400"
 
 );
 
-
 }
-
-
 
 </script>
 
@@ -68,50 +76,44 @@ url,
 
 
 <h1>
-Auto Trading System
+
+Automatic Trading System
+
 </h1>
 
 
 
-<a onclick="popup('/price')">
+<a onclick="api('/price')">
 
 ETH Price
 
 </a>
 
 
-<a onclick="popup('/save-price')">
+<a onclick="api('/save-price')">
 
-Save Price
+Save Price To Database
 
 </a>
 
 
-
-<a onclick="popup('/history')">
+<a onclick="api('/history')">
 
 Price History
 
 </a>
 
 
-
-<a onclick="popup('/trade-check')">
+<a onclick="api('/trade-check')">
 
 Auto Trading Signal
 
 </a>
 
 
-
-<a onclick="popup('/trades')">
+<a onclick="api('/trades')">
 
 Trading Records
 
 </a>
 
-
-
-</body>
-
-</html>
