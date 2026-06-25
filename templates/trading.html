@@ -1,11 +1,94 @@
+<title>
+W-donation Auto Trading
+</title>
+
+
+<style>
+
+body{
+
+font-family:Arial;
+
+padding:30px;
+
+}
+
+
+a{
+
+display:block;
+
+padding:15px;
+
+margin:15px;
+
+background:#0066cc;
+
+color:white;
+
+text-decoration:none;
+
+border-radius:8px;
+
+}
+
+
+</style>
+
+
+<script>
+
+
+function popup(url){
+
+
+window.open(
+
+url,
+
+"API",
+
+"width=600,height=400"
+
+);
+
+
+}
+
+
+
+</script>
+
+
+</head>
+
+
+
+<body>
+
+
+<h1>
+Auto Trading System
+</h1>
+
+
+
+<a onclick="popup('/price')">
+
+ETH Price
+
+</a>
+
+
+<a onclick="popup('/save-price')">
+
+Save Price
+
 </a>
 
 
 
-
-
-<a href="#"
-onclick="popup('/history')">
+<a onclick="popup('/history')">
 
 Price History
 
@@ -13,10 +96,7 @@ Price History
 
 
 
-
-
-<a href="#"
-onclick="popup('/trade-check')">
+<a onclick="popup('/trade-check')">
 
 Auto Trading Signal
 
@@ -24,10 +104,7 @@ Auto Trading Signal
 
 
 
-
-
-<a href="#"
-onclick="popup('/trades')">
+<a onclick="popup('/trades')">
 
 Trading Records
 
@@ -35,12 +112,6 @@ Trading Records
 
 
 
-
-</div>
-
-
-
 </body>
-
 
 </html>
