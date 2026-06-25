@@ -21,7 +21,7 @@ def get_db():
 
 
 # =========================
-# 데이터베이스 초기화
+# DB 생성
 # =========================
 
 def init_db():
@@ -30,8 +30,6 @@ def init_db():
 
     cursor = conn.cursor()
 
-
-    # 가격 기록
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS prices(
@@ -50,9 +48,6 @@ def init_db():
     """)
 
 
-
-    # 거래 기록
-
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS trades(
 
@@ -68,7 +63,6 @@ def init_db():
 
     )
     """)
-
 
 
     conn.commit()
@@ -93,25 +87,14 @@ init_db()
 @app.route("/")
 def home():
 
-    return """
-
-    <h1>
-    W-donation Oracle Server Running
-    </h1>
-
-
-    <p>
-    PostgreSQL Blockchain Price Oracle System
-    </p>
-
-    """
+    return "W-donation Oracle Server Running"
 
 
 
 
 
 # =========================
-# Donation 홈페이지
+# 홈페이지
 # =========================
 
 @app.route("/donation")
@@ -125,40 +108,58 @@ def donation():
 
 
 
+
 # =========================
-# ETH 가격 조회
+# 자동매매 팝업 페이지
+# =========================
+
+@app.route("/trading")
+def trading():
+
+    return render_template(
+        "trading.html"
+    )
+
+
+
+
+
+
+
+# =========================
+# ETH 가격
 # =========================
 
 def get_eth_price():
 
 
-    url = (
-    "https://api.coinbase.com/v2/prices/ETH-USD/spot"
-    )
+    url = "https://api.coinbase.com/v2/prices/ETH-USD/spot"
 
 
     response = requests.get(
+
         url,
+
         timeout=10
+
     )
 
 
     data=response.json()
 
 
-    price=float(
+    return float(
         data["data"]["amount"]
     )
 
 
-    return price
 
 
 
 
 
 # =========================
-# ETH 가격 API
+# ETH Price API
 # =========================
 
 @app.route("/price")
@@ -177,6 +178,7 @@ def price():
             "price_usd":eth,
 
             "source":"Coinbase"
+
 
         })
 
@@ -204,71 +206,56 @@ def price():
 def save_price():
 
 
-    try:
+    eth=get_eth_price()
 
 
-        eth=get_eth_price()
+    conn=get_db()
 
-
-
-        conn=get_db()
-
-        cursor=conn.cursor()
+    cursor=conn.cursor()
 
 
 
-        cursor.execute("""
-        
-        INSERT INTO prices
+    cursor.execute("""
+    
+    INSERT INTO prices
 
-        (symbol,price,source,created)
+    (symbol,price,source,created)
 
-        VALUES(%s,%s,%s,%s)
+    VALUES(%s,%s,%s,%s)
 
-        """,
+    """,
 
-        (
+    (
 
-        "ETH",
+    "ETH",
 
-        eth,
+    eth,
 
-        "Coinbase",
+    "Coinbase",
 
-        datetime.now()
+    datetime.now()
 
-        ))
-
-
-
-        conn.commit()
-
-        conn.close()
+    ))
 
 
 
-        return jsonify({
+    conn.commit()
 
-
-            "saved":True,
-
-            "symbol":"ETH",
-
-            "price":eth
-
-
-        })
+    conn.close()
 
 
 
-    except Exception as e:
+    return jsonify({
+
+        "saved":True,
+
+        "symbol":"ETH",
+
+        "price":eth
 
 
-        return jsonify({
+    })
 
-            "error":str(e)
-
-        })
 
 
 
@@ -289,7 +276,6 @@ def history():
     cursor=conn.cursor()
 
 
-
     cursor.execute("""
 
     SELECT *
@@ -301,14 +287,15 @@ def history():
     """)
 
 
-    rows=cursor.fetchall()
+
+    data=cursor.fetchall()
 
 
     conn.close()
 
 
+    return jsonify(data)
 
-    return jsonify(rows)
 
 
 
@@ -317,7 +304,7 @@ def history():
 
 
 # =========================
-# W-donation 테스트 가격
+# W-donation 가격
 # =========================
 
 @app.route("/ktw-price")
@@ -326,13 +313,11 @@ def ktw_price():
 
     return jsonify({
 
-
         "symbol":"W-donation",
 
         "price_usd":"0.0001",
 
         "source":"Oracle Test Price"
-
 
     })
 
@@ -343,103 +328,81 @@ def ktw_price():
 
 
 # =========================
-# 자동매매 시뮬레이션
+# 자동매매 신호
 # =========================
 
 @app.route("/trade-check")
 def trade_check():
 
 
-    try:
+    eth=get_eth_price()
 
 
-        eth=get_eth_price()
-
-
-
-        action="HOLD"
+    signal="HOLD"
 
 
 
-        if eth < 1700:
+    if eth < 1700:
+
+        signal="BUY"
 
 
-            action="BUY"
 
+    elif eth > 2000:
 
-
-        elif eth > 2000:
-
-
-            action="SELL"
+        signal="SELL"
 
 
 
 
 
-        conn=get_db()
+    conn=get_db()
 
-        cursor=conn.cursor()
-
-
-
-        cursor.execute("""
-
-        INSERT INTO trades
-
-        (symbol,action,price,created)
-
-        VALUES(%s,%s,%s,%s)
-
-
-        """,
-
-        (
-
-        "ETH",
-
-        action,
-
-        eth,
-
-        datetime.now()
-
-        ))
+    cursor=conn.cursor()
 
 
 
-        conn.commit()
+    cursor.execute("""
+    
+    INSERT INTO trades
 
-        conn.close()
+    (symbol,action,price,created)
 
+    VALUES(%s,%s,%s,%s)
 
+    """,
 
-        return jsonify({
+    (
 
+    "ETH",
 
-            "symbol":"ETH",
+    signal,
 
-            "price":eth,
+    eth,
 
-            "signal":action,
+    datetime.now()
 
-            "mode":"simulation"
-
-
-        })
-
-
-
-
-    except Exception as e:
+    ))
 
 
-        return jsonify({
 
-            "error":str(e)
+    conn.commit()
 
-        })
+    conn.close()
 
+
+
+    return jsonify({
+
+        "symbol":"ETH",
+
+        "signal":signal,
+
+        "price":eth,
+
+        "mode":"simulation"
+
+    })
 
 
 
@@ -476,13 +439,11 @@ def trades():
     data=cursor.fetchall()
 
 
-
     conn.close()
 
 
 
     return jsonify(data)
-
 
 
 
