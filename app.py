@@ -8,9 +8,12 @@ from datetime import datetime
 app = Flask(__name__)
 
 
-# =========================
+
+
+
+# ==================================
 # PostgreSQL 연결
-# =========================
+# ==================================
 
 def get_db():
 
@@ -20,9 +23,11 @@ def get_db():
 
 
 
-# =========================
+
+
+# ==================================
 # DB 생성
-# =========================
+# ==================================
 
 def init_db():
 
@@ -48,6 +53,7 @@ def init_db():
     """)
 
 
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS trades(
 
@@ -65,12 +71,16 @@ def init_db():
     """)
 
 
+
     conn.commit()
 
     conn.close()
 
 
-    print("PostgreSQL initialized")
+    print(
+        "PostgreSQL initialized successfully"
+    )
+
 
 
 
@@ -80,22 +90,34 @@ init_db()
 
 
 
-# =========================
+
+
+# ==================================
 # 메인
-# =========================
+# ==================================
 
 @app.route("/")
 def home():
 
-    return "W-donation Oracle Server Running"
+    return """
+
+    <h1>
+    W-donation Oracle Server Running
+    </h1>
+
+    """
 
 
 
 
 
-# =========================
+
+
+
+
+# ==================================
 # 홈페이지
-# =========================
+# ==================================
 
 @app.route("/donation")
 def donation():
@@ -109,9 +131,11 @@ def donation():
 
 
 
-# =========================
-# 자동매매 팝업 페이지
-# =========================
+
+
+# ==================================
+# 자동매매 팝업
+# ==================================
 
 @app.route("/trading")
 def trading():
@@ -126,14 +150,56 @@ def trading():
 
 
 
-# =========================
-# ETH 가격
-# =========================
+
+# ==================================
+# 백서 팝업
+# ==================================
+
+@app.route("/whitepaper")
+def whitepaper():
+
+    return render_template(
+        "whitepaper.html"
+    )
+
+
+
+
+
+
+
+
+# ==================================
+# 승리를 향하여 팝업
+# ==================================
+
+@app.route("/poem")
+def poem():
+
+    return render_template(
+        "poem.html"
+    )
+
+
+
+
+
+
+
+
+
+
+# ==================================
+# ETH 가격 가져오기
+# ==================================
 
 def get_eth_price():
 
+    url = (
 
-    url = "https://api.coinbase.com/v2/prices/ETH-USD/spot"
+    "https://api.coinbase.com/v2/prices/ETH-USD/spot"
+
+    )
 
 
     response = requests.get(
@@ -149,7 +215,9 @@ def get_eth_price():
 
 
     return float(
+
         data["data"]["amount"]
+
     )
 
 
@@ -158,9 +226,11 @@ def get_eth_price():
 
 
 
-# =========================
+
+
+# ==================================
 # ETH Price API
-# =========================
+# ==================================
 
 @app.route("/price")
 def price():
@@ -198,15 +268,18 @@ def price():
 
 
 
-# =========================
+
+
+# ==================================
 # 가격 저장
-# =========================
+# ==================================
 
 @app.route("/save-price")
 def save_price():
 
 
     eth=get_eth_price()
+
 
 
     conn=get_db()
@@ -216,12 +289,14 @@ def save_price():
 
 
     cursor.execute("""
-    
+
+
     INSERT INTO prices
 
     (symbol,price,source,created)
 
     VALUES(%s,%s,%s,%s)
+
 
     """,
 
@@ -253,7 +328,6 @@ def save_price():
 
         "price":eth
 
-
     })
 
 
@@ -263,9 +337,12 @@ def save_price():
 
 
 
-# =========================
+
+
+
+# ==================================
 # 가격 기록
-# =========================
+# ==================================
 
 @app.route("/history")
 def history():
@@ -278,23 +355,25 @@ def history():
 
     cursor.execute("""
 
+
     SELECT *
 
     FROM prices
 
     ORDER BY id DESC
 
+
     """)
 
 
 
-    data=cursor.fetchall()
+    rows=cursor.fetchall()
 
 
     conn.close()
 
 
-    return jsonify(data)
+    return jsonify(rows)
 
 
 
@@ -303,9 +382,10 @@ def history():
 
 
 
-# =========================
-# W-donation 가격
-# =========================
+
+# ==================================
+# W-donation 가격 테스트
+# ==================================
 
 @app.route("/ktw-price")
 def ktw_price():
@@ -327,9 +407,11 @@ def ktw_price():
 
 
 
-# =========================
+
+
+# ==================================
 # 자동매매 신호
-# =========================
+# ==================================
 
 @app.route("/trade-check")
 def trade_check():
@@ -344,13 +426,16 @@ def trade_check():
 
     if eth < 1700:
 
+
         signal="BUY"
 
 
 
     elif eth > 2000:
 
+
         signal="SELL"
+
 
 
 
@@ -363,12 +448,14 @@ def trade_check():
 
 
     cursor.execute("""
-    
+
+
     INSERT INTO trades
 
     (symbol,action,price,created)
 
     VALUES(%s,%s,%s,%s)
+
 
     """,
 
@@ -396,9 +483,9 @@ def trade_check():
 
         "symbol":"ETH",
 
-        "signal":signal,
-
         "price":eth,
+
+        "signal":signal,
 
         "mode":"simulation"
 
@@ -410,9 +497,11 @@ def trade_check():
 
 
 
-# =========================
+
+
+# ==================================
 # 거래 기록
-# =========================
+# ==================================
 
 @app.route("/trades")
 def trades():
@@ -423,8 +512,8 @@ def trades():
     cursor=conn.cursor()
 
 
-
     cursor.execute("""
+
 
     SELECT *
 
@@ -432,15 +521,14 @@ def trades():
 
     ORDER BY id DESC
 
-    """)
 
+    """)
 
 
     data=cursor.fetchall()
 
 
     conn.close()
-
 
 
     return jsonify(data)
@@ -451,9 +539,11 @@ def trades():
 
 
 
-# =========================
+
+
+# ==================================
 # 실행
-# =========================
+# ==================================
 
 if __name__=="__main__":
 
