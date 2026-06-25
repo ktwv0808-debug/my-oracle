@@ -1,41 +1,47 @@
 <!DOCTYPE html>
+
 <html>
 
 <head>
 
+
 <title>
-Auto Trading System
+Automatic Trading System
 </title>
 
 
 <style>
 
+
 body{
 
-font-family:Arial;
+font-family:"Segoe UI",Arial;
 
-padding:30px;
+padding:40px;
 
 }
 
 
+
 a{
 
+
 display:block;
-
-padding:15px;
-
-margin:15px;
 
 background:#0066cc;
 
 color:white;
+
+padding:15px;
+
+margin:15px;
 
 border-radius:10px;
 
 text-decoration:none;
 
 cursor:pointer;
+
 
 }
 
@@ -46,12 +52,16 @@ background:#003f88;
 
 }
 
+
 </style>
+
 
 
 <script>
 
-function api(url){
+
+function openApi(url){
+
 
 window.open(
 
@@ -63,7 +73,9 @@ url,
 
 );
 
+
 }
+
 
 </script>
 
@@ -71,8 +83,8 @@ url,
 </head>
 
 
-
 <body>
+
 
 
 <h1>
@@ -83,37 +95,47 @@ Automatic Trading System
 
 
 
-<a onclick="api('/price')">
+<a onclick="openApi('/price')">
 
 ETH Price
 
 </a>
 
 
-<a onclick="api('/save-price')">
+
+<a onclick="openApi('/save-price')">
 
 Save Price To Database
 
 </a>
 
 
-<a onclick="api('/history')">
+
+<a onclick="openApi('/history')">
 
 Price History
 
 </a>
 
 
-<a onclick="api('/trade-check')">
+
+<a onclick="openApi('/trade-check')">
 
 Auto Trading Signal
 
 </a>
 
 
-<a onclick="api('/trades')">
+
+<a onclick="openApi('/trades')">
 
 Trading Records
 
 </a>
 
+
+
+</body>
+
+
+</html>
