@@ -15,11 +15,9 @@ Automatic Trading System
 
 body{
 
-font-family:"Segoe UI", Arial, sans-serif;
+font-family:"Segoe UI",Arial,sans-serif;
 
 background:#f4f6f8;
-
-margin:0;
 
 padding:40px;
 
@@ -49,16 +47,11 @@ h1{
 
 text-align:center;
 
-font-size:36px;
-
-margin-bottom:30px;
-
 }
 
 
 
 .item{
-
 
 display:block;
 
@@ -66,20 +59,15 @@ background:#0066cc;
 
 color:white;
 
-padding:16px;
+padding:15px;
 
-margin:15px 0;
+margin:15px;
 
 border-radius:10px;
 
 text-align:center;
 
-font-size:18px;
-
-text-decoration:none;
-
 cursor:pointer;
-
 
 }
 
@@ -87,12 +75,40 @@ cursor:pointer;
 
 .item:hover{
 
-
 background:#003f88;
-
 
 }
 
+
+
+.close{
+
+display:block;
+
+margin:30px auto 0;
+
+background:#555;
+
+color:white;
+
+padding:12px 30px;
+
+border-radius:10px;
+
+border:none;
+
+cursor:pointer;
+
+font-size:16px;
+
+}
+
+
+.close:hover{
+
+background:#222;
+
+}
 
 
 </style>
@@ -119,6 +135,12 @@ url,
 }
 
 
+function closePopup(){
+
+window.close();
+
+}
+
 
 </script>
 
@@ -127,9 +149,7 @@ url,
 </head>
 
 
-
 <body>
-
 
 
 <div class="container">
@@ -143,47 +163,56 @@ Automatic Trading System
 
 
 
-<a class="item" onclick="popup('/price')">
+<div class="item" onclick="popup('/price')">
 
 ETH Price
 
-</a>
+</div>
 
 
 
-<a class="item" onclick="popup('/save-price')">
+<div class="item" onclick="popup('/save-price')">
 
 Save ETH Price
-</a>
+
+</div>
 
 
 
-<a class="item" onclick="popup('/history')">
+<div class="item" onclick="popup('/history')">
 
 Price History
 
-</a>
+</div>
 
 
 
-<a class="item" onclick="popup('/trade-check')">
+<div class="item" onclick="popup('/trade-check')">
 
 Auto Trading Signal
 
-</a>
+</div>
 
 
 
-<a class="item" onclick="popup('/trades')">
+<div class="item" onclick="popup('/trades')">
 
 Trading Records
 
-</a>
+</div>
+
+
+
+
+<button class="close" onclick="closePopup()">
+
+Close Window
+
+</button>
 
 
 
 </div>
-
 
 
 </body>
