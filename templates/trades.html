@@ -1,18 +1,161 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="en">
 
 <head>
+
+<meta charset="UTF-8">
 
 <title>
 Trading Records
 </title>
 
 
+<style>
+
+
+body{
+
+margin:0;
+
+padding:35px;
+
+font-family:"Segoe UI",Arial,sans-serif;
+
+background:#f4f6f8;
+
+}
+
+
+.container{
+
+width:800px;
+
+margin:auto;
+
+background:white;
+
+padding:35px;
+
+border-radius:20px;
+
+box-shadow:0 5px 20px rgba(0,0,0,0.15);
+
+}
+
+
+h1{
+
+text-align:center;
+
+margin-bottom:30px;
+
+}
+
+
+
+table{
+
+
+width:100%;
+
+border-collapse:collapse;
+
+
+}
+
+
+
+th{
+
+
+background:#0066cc;
+
+color:white;
+
+padding:12px;
+
+
+}
+
+
+
+td{
+
+
+border:1px solid #ddd;
+
+padding:10px;
+
+text-align:center;
+
+
+}
+
+
+
+.close{
+
+
+display:block;
+
+margin:30px auto 0;
+
+padding:12px 35px;
+
+background:#555;
+
+color:white;
+
+border:none;
+
+border-radius:10px;
+
+cursor:pointer;
+
+
+}
+
+
+
+.close:hover{
+
+
+background:#222;
+
+
+}
+
+
+</style>
+
+
+
+<script>
+
+
+function closePopup(){
+
+window.close();
+
+}
+
+
+
+
+</script>
+
+
+
 </head>
 
 
-<body style="text-align:center;padding:50px;font-family:Segoe UI">
+
+<body>
+
+
+
+<div class="container">
+
 
 
 <h1>
@@ -23,28 +166,81 @@ Trading Records
 
 
 
-<a href="/trades" target="_blank">
+<table>
 
 
-<button>
+<tr>
 
-Open Records
+<th>ID</th>
 
-</button>
+<th>Symbol</th>
+
+<th>Action</th>
+
+<th>Price</th>
+
+<th>Date</th>
+
+</tr>
 
 
-</a>
+
+{% for row in trades %}
+
+
+<tr>
+
+<td>
+{{ row[0] }}
+</td>
+
+
+<td>
+{{ row[1] }}
+</td>
+
+
+<td>
+{{ row[2] }}
+</td>
+
+
+<td>
+{{ row[3] }}
+</td>
+
+
+<td>
+{{ row[4] }}
+</td>
+
+
+</tr>
 
 
 
-<br><br>
+{% endfor %}
 
 
-<button onclick="window.close()">
+
+</table>
+
+
+
+
+
+<button class="close"
+
+onclick="closePopup()">
 
 Close
 
 </button>
+
+
+
+
+</div>
 
 
 </body>
