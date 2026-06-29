@@ -5,28 +5,27 @@
 
 <meta charset="UTF-8">
 
-<title>
-Save ETH Price
-</title>
+<title>Save ETH Price</title>
 
 
 <style>
 
 body{
 
+background:#f5f7fa;
+
 font-family:Arial;
 
 text-align:center;
 
-padding:50px;
-
-background:#f5f7fa;
-
 }
 
 
-
 .box{
+
+width:600px;
+
+margin:50px auto;
 
 background:white;
 
@@ -34,70 +33,67 @@ padding:40px;
 
 border-radius:20px;
 
-box-shadow:0 5px 20px #aaa;
-
-width:500px;
-
-margin:auto;
+box-shadow:0 0 20px #aaa;
 
 }
-
-
-
-.language{
-
-text-align:right;
-
-}
-
 
 
 button{
 
-padding:12px 30px;
+padding:12px 40px;
+
+background:#0066cc;
+
+color:white;
+
+border:0;
+
+border-radius:10px;
 
 cursor:pointer;
 
 }
 
 
-</style>
+select{
 
+padding:8px;
+
+}
+
+</style>
 
 
 <script>
 
 
-function changeLang(){
+function change(){
 
 
-let l =
-document.getElementById("lang").value;
+if(lang.value=="ko"){
 
 
-
-if(l=="ko"){
-
+title.innerHTML="ETH 가격 저장";
 
 
-document.getElementById("title").innerHTML=
-"ETH 가격 저장";
+close.innerHTML="닫기";
 
 
-document.getElementById("db").innerHTML=
-"PostgreSQL 데이터베이스";
+}
+
+else{
 
 
-document.getElementById("close").innerHTML=
-"닫기";
+title.innerHTML="Save ETH Price";
+
+
+close.innerHTML="Close";
 
 
 }
 
 
-
 }
-
 
 
 </script>
@@ -113,18 +109,14 @@ document.getElementById("close").innerHTML=
 <div class="box">
 
 
-<div class="language">
-
+<div style="text-align:right">
 
 Language :
 
-
-<select id="lang"
-onchange="changeLang()">
+<select id="lang" onchange="change()">
 
 
-
-<option value="en" selected>
+<option value="en">
 
 English
 
@@ -155,34 +147,23 @@ Save ETH Price
 
 <h2>
 
-ETH : {{price}} USD
+Price Saved Successfully
 
 </h2>
 
 
 
-<p id="db">
-
-PostgreSQL Database
-
-</p>
-
-
-
-<button onclick="window.close()"
-id="close">
+<button id="close"
+onclick="window.close()">
 
 Close
 
 </button>
 
 
-
 </div>
 
 
-
 </body>
-
 
 </html>
