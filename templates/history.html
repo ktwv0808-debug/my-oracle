@@ -2,39 +2,55 @@
 
 <html>
 
-<head>
-
-<title>
-Price History
-</title>
-
-
-</head>
-
-
-<body style="text-align:center;padding:50px;font-family:Segoe UI">
+<body style="padding:30px;font-family:Arial">
 
 
 <h1>
 
-ETH Price History
+Price History
 
 </h1>
 
 
-<a href="/history" target="_blank">
-
-<button>
-
-Open History
-
-</button>
-
-</a>
+<table border="1" width="100%">
 
 
+<tr>
 
-<br><br>
+<th>ID</th>
+<th>ETH</th>
+<th>Price</th>
+<th>Date</th>
+
+</tr>
+
+
+
+{% for p in prices %}
+
+<tr>
+
+<td>{{p[0]}}</td>
+
+<td>{{p[1]}}</td>
+
+<td>{{p[2]}}</td>
+
+<td>{{p[4]}}</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+
+</table>
+
+
+
+<br>
 
 
 <button onclick="window.close()">
