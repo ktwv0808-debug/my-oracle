@@ -1,8 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
 <meta charset="UTF-8">
 
 <title>Automatic Trading System</title>
@@ -10,122 +5,60 @@
 
 <style>
 
-
 body{
 
-margin:0;
+background:#f4f7fb;
 
-background:#f1f4f8;
-
-font-family:"Segoe UI",Arial,sans-serif;
-
-}
-
-
-.container{
-
-
-width:800px;
-
-
-margin:40px auto;
-
-
-background:white;
-
-
-padding:40px;
-
-
-border-radius:25px;
-
-
-box-shadow:0 5px 25px #aaa;
-
+font-family:Arial;
 
 text-align:center;
 
-
 }
 
 
+.box{
 
-.language{
+width:750px;
 
+margin:40px auto;
 
-text-align:right;
+background:white;
 
+padding:40px;
+
+border-radius:20px;
+
+box-shadow:0 0 20px #aaa;
 
 }
-
 
 
 select{
 
-
 padding:8px;
-
 
 cursor:pointer;
 
-
 }
-
-
-
-
-h1{
-
-
-font-size:36px;
-
-
-color:#003b80;
-
-
-}
-
-
-
-.card{
-
-
-margin-top:30px;
-
-
-}
-
 
 
 .btn{
 
-
-display:block;
-
-
-width:400px;
-
+width:350px;
 
 margin:15px auto;
 
-
 padding:15px;
-
 
 background:#0066cc;
 
-
 color:white;
-
 
 border-radius:15px;
 
-
-font-size:18px;
-
-
 cursor:pointer;
 
+font-size:18px;
 
 }
 
@@ -133,9 +66,7 @@ cursor:pointer;
 
 .btn:hover{
 
-
 background:#003b80;
-
 
 }
 
@@ -143,27 +74,12 @@ background:#003b80;
 
 .close{
 
-
 background:#333;
 
-
 }
-
-
-
-.close:hover{
-
-
-background:#000;
-
-
-}
-
 
 
 </style>
-
-
 
 
 
@@ -171,7 +87,7 @@ background:#000;
 
 
 
-const lang = {
+let lang={
 
 
 en:{
@@ -179,21 +95,15 @@ en:{
 
 title:"Automatic Trading System",
 
-
 price:"ETH Price",
-
 
 save:"Save ETH Price",
 
-
 history:"Price History",
-
 
 signal:"Auto Trading Signal",
 
-
 trades:"Trading Records",
-
 
 close:"Close"
 
@@ -202,27 +112,20 @@ close:"Close"
 
 
 
-
 ko:{
 
 
 title:"자동매매 시스템",
 
-
 price:"ETH 가격",
-
 
 save:"ETH 가격 저장",
 
-
 history:"가격 기록",
-
 
 signal:"자동 거래 신호",
 
-
 trades:"거래 기록",
-
 
 close:"닫기"
 
@@ -230,10 +133,7 @@ close:"닫기"
 }
 
 
-
 };
-
-
 
 
 
@@ -241,38 +141,28 @@ close:"닫기"
 function changeLanguage(){
 
 
-
-let value=document.getElementById("language").value;
-
-
-let t=lang[value];
+let l=document.getElementById("lang").value;
 
 
-
-document.getElementById("title").innerHTML=t.title;
-
-
-document.getElementById("price").innerHTML=t.price;
+let t=lang[l];
 
 
-document.getElementById("save").innerHTML=t.save;
+title.innerHTML=t.title;
 
+price.innerHTML=t.price;
 
-document.getElementById("history").innerHTML=t.history;
+save.innerHTML=t.save;
 
+history.innerHTML=t.history;
 
-document.getElementById("signal").innerHTML=t.signal;
+signal.innerHTML=t.signal;
 
+trades.innerHTML=t.trades;
 
-document.getElementById("trades").innerHTML=t.trades;
-
-
-document.getElementById("close").innerHTML=t.close;
-
+close.innerHTML=t.close;
 
 
 }
-
 
 
 
@@ -281,17 +171,15 @@ document.getElementById("close").innerHTML=t.close;
 function popup(url){
 
 
-
 window.open(
 
 url,
 
-"popup",
+"child",
 
-"width=750,height=550,left=400,top=200"
+"width=700,height=600"
 
 );
-
 
 
 }
@@ -301,39 +189,34 @@ url,
 </script>
 
 
-
 </head>
-
 
 
 <body>
 
 
-
-<div class="container">
-
+<div class="box">
 
 
 
-
-<div class="language">
+<div style="text-align:right">
 
 
 Language :
 
 
-
-<select id="language"
+<select id="lang"
 
 onchange="changeLanguage()">
 
 
 
-<option value="en" selected>
+<option value="en">
 
 English
 
 </option>
+
 
 
 <option value="ko">
@@ -352,24 +235,11 @@ English
 
 
 
-
-
-
 <h1 id="title">
 
 Automatic Trading System
 
 </h1>
-
-
-
-
-
-
-
-
-
-<div class="card">
 
 
 
@@ -384,10 +254,7 @@ onclick="popup('/price')">
 
 ETH Price
 
-
 </div>
-
-
 
 
 
@@ -400,10 +267,7 @@ onclick="popup('/save-price')">
 
 Save ETH Price
 
-
 </div>
-
-
 
 
 
@@ -417,10 +281,7 @@ onclick="popup('/history')">
 
 Price History
 
-
 </div>
-
-
 
 
 
@@ -434,10 +295,7 @@ onclick="popup('/trade-check')">
 
 Auto Trading Signal
 
-
 </div>
-
-
 
 
 
@@ -451,11 +309,7 @@ onclick="popup('/trades')">
 
 Trading Records
 
-
 </div>
-
-
-
 
 
 
@@ -469,21 +323,11 @@ onclick="window.close()">
 
 Close
 
-
 </div>
 
 
 
-
-
 </div>
-
-
-
-
-
-</div>
-
 
 
 </body>
