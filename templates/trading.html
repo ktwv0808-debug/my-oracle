@@ -12,20 +12,25 @@ Automatic Trading System
 
 <style>
 
+
 body{
 
-font-family:"Segoe UI",Arial,sans-serif;
-
-background:#f4f6f8;
 
 margin:0;
 
 padding:40px;
 
+background:#f2f4f7;
+
+font-family:"Segoe UI",Arial,sans-serif;
+
+
 }
 
 
+
 .container{
+
 
 width:700px;
 
@@ -33,31 +38,46 @@ margin:auto;
 
 background:white;
 
-padding:40px;
+padding:45px;
 
 border-radius:20px;
 
-box-shadow:0 5px 20px rgba(0,0,0,0.15);
+box-shadow:0 5px 25px rgba(0,0,0,0.15);
+
 
 }
 
 
+
+
+
 h1{
+
 
 text-align:center;
 
 font-size:36px;
 
+color:#222;
+
+margin-bottom:35px;
+
+
 }
+
+
+
 
 
 .menu{
 
 
-margin-top:30px;
+margin-top:20px;
 
 
 }
+
+
 
 
 
@@ -70,20 +90,23 @@ background:#0066cc;
 
 color:white;
 
-padding:15px;
+padding:16px;
 
 margin:15px 0;
 
-border-radius:10px;
+border-radius:12px;
 
 text-align:center;
 
+font-size:19px;
+
 cursor:pointer;
 
-font-size:18px;
+transition:0.3s;
 
 
 }
+
 
 
 
@@ -92,8 +115,12 @@ font-size:18px;
 
 background:#003f88;
 
+transform:scale(1.03);
+
 
 }
+
+
 
 
 
@@ -115,19 +142,25 @@ padding:12px 35px;
 
 border-radius:10px;
 
-cursor:pointer;
-
 font-size:16px;
+
+cursor:pointer;
 
 
 }
+
+
+
 
 
 .close:hover{
 
+
 background:#222;
 
+
 }
+
 
 
 </style>
@@ -137,16 +170,16 @@ background:#222;
 <script>
 
 
-function openApi(url){
+function openPopup(url){
 
 
 window.open(
 
 url,
 
-"api",
+"popup",
 
-"width=600,height=400,scrollbars=yes"
+"width=700,height=500,scrollbars=yes"
 
 );
 
@@ -155,13 +188,16 @@ url,
 
 
 
-function closeWindow(){
+
+
+function closePopup(){
 
 
 window.close();
 
 
 }
+
 
 
 </script>
@@ -171,11 +207,13 @@ window.close();
 </head>
 
 
+
 <body>
 
 
 
 <div class="container">
+
 
 
 <h1>
@@ -192,7 +230,8 @@ Automatic Trading System
 
 
 <div class="item"
-onclick="openApi('/price')">
+
+onclick="openPopup('/price-page')">
 
 ETH Price
 
@@ -200,8 +239,11 @@ ETH Price
 
 
 
+
+
 <div class="item"
-onclick="openApi('/save-price')">
+
+onclick="openPopup('/save-price-page')">
 
 Save ETH Price
 
@@ -210,8 +252,10 @@ Save ETH Price
 
 
 
+
 <div class="item"
-onclick="openApi('/history')">
+
+onclick="openPopup('/history-page')">
 
 Price History
 
@@ -219,8 +263,11 @@ Price History
 
 
 
+
+
 <div class="item"
-onclick="openApi('/trade-check')">
+
+onclick="openPopup('/trade-check-page')">
 
 Auto Trading Signal
 
@@ -228,8 +275,11 @@ Auto Trading Signal
 
 
 
+
+
 <div class="item"
-onclick="openApi('/trades')">
+
+onclick="openPopup('/trades-page')">
 
 Trading Records
 
@@ -237,13 +287,18 @@ Trading Records
 
 
 
+
+
 </div>
 
 
 
 
+
+
 <button class="close"
-onclick="closeWindow()">
+
+onclick="closePopup()">
 
 Close Window
 
@@ -256,5 +311,6 @@ Close Window
 
 
 </body>
+
 
 </html>
