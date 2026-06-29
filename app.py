@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, render_template, jsonify
 import requests
 import psycopg2
 import os
@@ -8,11 +8,9 @@ from datetime import datetime
 app = Flask(__name__)
 
 
-
 # =========================
-# PostgreSQL 연결
+# PostgreSQL
 # =========================
-
 
 def get_db():
 
@@ -23,31 +21,20 @@ def get_db():
 
 
 
-
-# =========================
-# DB 초기화
-# =========================
-
-
 def init_db():
 
-    conn = get_db()
+    conn=get_db()
 
-    cursor = conn.cursor()
+    cur=conn.cursor()
 
 
-
-    cursor.execute("""
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS prices(
 
         id SERIAL PRIMARY KEY,
-
         symbol TEXT,
-
         price REAL,
-
         source TEXT,
-
         created TIMESTAMP
 
     )
@@ -55,17 +42,13 @@ def init_db():
 
 
 
-    cursor.execute("""
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS trades(
 
         id SERIAL PRIMARY KEY,
-
         symbol TEXT,
-
         action TEXT,
-
         price REAL,
-
         created TIMESTAMP
 
     )
@@ -78,8 +61,9 @@ def init_db():
     conn.close()
 
 
-    print("PostgreSQL database initialized successfully")
-
+    print(
+    "PostgreSQL database initialized successfully"
+    )
 
 
 
@@ -87,36 +71,22 @@ init_db()
 
 
 
-
-
 # =========================
-# 메인
+# Home
 # =========================
 
 
 @app.route("/")
 def home():
 
-    return """
-
-    <h1>
-    W-donation Oracle Server Running
-    </h1>
-
-
-    <p>
-    Blockchain With Social Responsibility
-    </p>
-
-    """
-
-
-
+    return render_template(
+        "donation.html"
+    )
 
 
 
 # =========================
-# 홈페이지
+# Donation
 # =========================
 
 
@@ -131,79 +101,67 @@ def donation():
 
 
 
+# =========================
+# Trading main popup
+# =========================
+
+
+@app.route("/trading")
+def trading():
+
+    return render_template(
+        "trading.html"
+    )
+
+
+
+
 
 # =========================
-# ETH 가격 API
+# ETH API
 # =========================
 
 
 def get_eth_price():
 
-
-    url = (
-
-    "https://api.coinbase.com/v2/prices/ETH-USD/spot"
-
-    )
+    url="https://api.coinbase.com/v2/prices/ETH-USD/spot"
 
 
-    r = requests.get(
-
+    r=requests.get(
         url,
-
         timeout=10
-
     )
 
 
-    data = r.json()
+    data=r.json()
 
 
     return float(
-
         data["data"]["amount"]
-
     )
-
-
 
 
 
 
 
 # =========================
-# ETH Price 팝업
+# ETH Price popup
 # =========================
 
 
 @app.route("/price-page")
 def price_page():
 
+    price=get_eth_price()
+
+
     return render_template(
-        "price.html"
+
+        "price.html",
+
+        price=price
+
     )
-
-
-
-
-
-@app.route("/price")
-def price():
-
-    eth = get_eth_price()
-
-
-    return jsonify({
-
-        "symbol":"ETH",
-
-        "price_usd":eth,
-
-        "source":"Coinbase"
-
-    })
-
-
 
 
 
@@ -211,44 +169,28 @@ def price():
 
 
 # =========================
-# 저장 팝업
+# Save price popup
 # =========================
 
 
 @app.route("/save-price-page")
 def save_price_page():
 
-    return render_template(
-        "save_price.html"
-    )
+
+    price=get_eth_price()
+
+
+    conn=get_db()
+
+    cur=conn.cursor()
 
 
 
-
-
-
-@app.route("/save-price")
-def save_price():
-
-
-    eth = get_eth_price()
-
-
-    conn = get_db()
-
-    cursor = conn.cursor()
-
-
-
-    cursor.execute("""
-
-
+    cur.execute("""
     INSERT INTO prices
-
     (symbol,price,source,created)
 
     VALUES(%s,%s,%s,%s)
-
 
     """,
 
@@ -256,7 +198,7 @@ def save_price():
 
     "ETH",
 
-    eth,
+    price,
 
     "Coinbase",
 
@@ -272,67 +214,45 @@ def save_price():
 
 
 
-    return jsonify({
-
-        "saved":True,
-
-        "symbol":"ETH",
-
-        "price":eth,
-
-        "database":"PostgreSQL"
-
-    })
-
-
-
-
-
-
-
-
-
-# =========================
-# 가격 기록
-# =========================
-
-
-
-@app.route("/history-page")
-def history_page():
-
     return render_template(
-        "history.html"
+
+        "save_price.html",
+
+        price=price
+
     )
 
 
 
 
 
+# =========================
+# History popup
+# =========================
 
-@app.route("/history")
-def history():
+
+@app.route("/history-page")
+def history_page():
 
 
     conn=get_db()
 
-    cursor=conn.cursor()
+    cur=conn.cursor()
 
 
 
-    cursor.execute("""
-
+    cur.execute("""
     SELECT *
 
     FROM prices
 
     ORDER BY id DESC
 
-
     """)
 
 
-    rows=cursor.fetchall()
+
+    rows=cur.fetchall()
 
 
 
@@ -340,26 +260,12 @@ def history():
 
 
 
-    return jsonify(rows)
-
-
-
-
-
-
-
-
-
-# =========================
-# 자동매매 신호
-# =========================
-
-
-@app.route("/trade-check-page")
-def trade_check_page():
-
     return render_template(
-        "trade_check.html"
+
+        "history.html",
+
+        prices=rows
+
     )
 
 
@@ -368,50 +274,46 @@ def trade_check_page():
 
 
 
-
-@app.route("/trade-check")
-def trade_check():
-
-
-    eth=get_eth_price()
+# =========================
+# Trade signal popup
+# =========================
 
 
-    action="HOLD"
+@app.route("/trade-check-page")
+def trade_check_page():
+
+
+    price=get_eth_price()
+
+
+    signal="HOLD"
+
+
+    if price < 1700:
+
+        signal="BUY"
 
 
 
-    if eth < 1700:
+    elif price > 2000:
 
-
-        action="BUY"
-
-
-
-    elif eth > 2000:
-
-
-        action="SELL"
-
-
+        signal="SELL"
 
 
 
 
     conn=get_db()
 
-    cursor=conn.cursor()
+    cur=conn.cursor()
 
 
 
-    cursor.execute("""
-
-
+    cur.execute("""
     INSERT INTO trades
 
     (symbol,action,price,created)
 
     VALUES(%s,%s,%s,%s)
-
 
     """,
 
@@ -419,9 +321,9 @@ def trade_check():
 
     "ETH",
 
-    action,
+    signal,
 
-    eth,
+    price,
 
     datetime.now()
 
@@ -435,16 +337,81 @@ def trade_check():
 
 
 
+    return render_template(
+
+        "trade_check.html",
+
+        price=price,
+
+        signal=signal
+
+    )
+
+
+
+
+
+
+# =========================
+# Trade records popup
+# =========================
+
+
+@app.route("/trades-page")
+def trades_page():
+
+
+    conn=get_db()
+
+    cur=conn.cursor()
+
+
+
+    cur.execute("""
+    SELECT *
+
+    FROM trades
+
+    ORDER BY id DESC
+
+    """)
+
+
+
+    rows=cur.fetchall()
+
+
+
+    conn.close()
+
+
+
+    return render_template(
+
+        "trades.html",
+
+        trades=rows
+
+    )
+
+
+
+
+
+
+# =========================
+# API JSON
+# =========================
+
+
+@app.route("/price")
+def price():
 
     return jsonify({
 
-        "symbol":"ETH",
+        "ETH":
 
-        "price":eth,
-
-        "signal":action,
-
-        "mode":"simulation"
+        get_eth_price()
 
     })
 
@@ -453,22 +420,42 @@ def trade_check():
 
 
 
+@app.route("/save-price")
+def save_price():
+
+    return jsonify({
+
+        "status":"use popup"
+
+    })
 
 
 
-# =========================
-# 거래 기록
-# =========================
 
 
 
-@app.route("/trades-page")
-def trades_page():
+@app.route("/history")
+def history():
 
-    return render_template(
-        "trades.html"
-    )
+    return jsonify({
 
+        "status":"use popup"
+
+    })
+
+
+
+
+
+
+@app.route("/trade-check")
+def trade_check():
+
+    return jsonify({
+
+        "status":"use popup"
+
+    })
 
 
 
@@ -478,35 +465,11 @@ def trades_page():
 @app.route("/trades")
 def trades():
 
+    return jsonify({
 
-    conn=get_db()
+        "status":"use popup"
 
-    cursor=conn.cursor()
-
-
-
-    cursor.execute("""
-
-    SELECT *
-
-    FROM trades
-
-    ORDER BY id DESC
-
-
-    """)
-
-
-
-    rows=cursor.fetchall()
-
-
-    conn.close()
-
-
-    return jsonify(rows)
-
-
+    })
 
 
 
@@ -515,24 +478,7 @@ def trades():
 
 
 # =========================
-# 자동매매 시스템 팝업
-# =========================
-
-
-@app.route("/trading")
-def trading():
-
-    return render_template(
-        "trading.html"
-    )
-
-
-
-
-
-
-# =========================
-# 백서 팝업
+# Whitepaper
 # =========================
 
 
@@ -548,7 +494,7 @@ def whitepaper():
 
 
 # =========================
-# 시 팝업
+# Poem
 # =========================
 
 
@@ -564,13 +510,7 @@ def poem():
 
 
 
-
-# =========================
-# Render 실행
-# =========================
-
-
-if __name__ == "__main__":
+if __name__=="__main__":
 
 
     app.run(
