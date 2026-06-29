@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
 
@@ -12,155 +12,70 @@ Automatic Trading System
 
 <style>
 
-
 body{
 
+font-family:Arial;
 
-margin:0;
+background:#f4f6f8;
 
 padding:40px;
-
-background:#f2f4f7;
-
-font-family:"Segoe UI",Arial,sans-serif;
-
 
 }
 
 
+.box{
 
-.container{
-
-
-width:700px;
+width:650px;
 
 margin:auto;
 
 background:white;
 
-padding:45px;
+padding:40px;
 
 border-radius:20px;
 
-box-shadow:0 5px 25px rgba(0,0,0,0.15);
-
-
 }
-
-
-
-
-
-h1{
-
-
-text-align:center;
-
-font-size:36px;
-
-color:#222;
-
-margin-bottom:35px;
-
-
-}
-
-
-
-
-
-.menu{
-
-
-margin-top:20px;
-
-
-}
-
-
 
 
 
 .item{
 
-
-display:block;
-
 background:#0066cc;
 
 color:white;
 
-padding:16px;
+padding:15px;
 
-margin:15px 0;
+margin:15px;
 
-border-radius:12px;
+border-radius:10px;
 
 text-align:center;
 
-font-size:19px;
-
 cursor:pointer;
 
-transition:0.3s;
-
-
 }
-
 
 
 
 .item:hover{
 
-
 background:#003f88;
 
-transform:scale(1.03);
-
-
 }
-
-
-
 
 
 
 .close{
 
+margin-top:30px;
 
-display:block;
-
-margin:35px auto 0;
-
-background:#555;
-
-color:white;
-
-border:none;
-
-padding:12px 35px;
-
-border-radius:10px;
-
-font-size:16px;
+padding:12px 30px;
 
 cursor:pointer;
 
-
 }
-
-
-
-
-
-.close:hover{
-
-
-background:#222;
-
-
-}
-
 
 
 </style>
@@ -179,21 +94,9 @@ url,
 
 "popup",
 
-"width=700,height=500,scrollbars=yes"
+"width=700,height=500"
 
 );
-
-
-}
-
-
-
-
-
-function closePopup(){
-
-
-window.close();
 
 
 }
@@ -203,17 +106,14 @@ window.close();
 </script>
 
 
-
 </head>
-
 
 
 <body>
 
 
 
-<div class="container">
-
+<div class="box">
 
 
 <h1>
@@ -224,13 +124,7 @@ Automatic Trading System
 
 
 
-
-<div class="menu">
-
-
-
 <div class="item"
-
 onclick="openPopup('/price-page')">
 
 ETH Price
@@ -239,10 +133,7 @@ ETH Price
 
 
 
-
-
 <div class="item"
-
 onclick="openPopup('/save-price-page')">
 
 Save ETH Price
@@ -251,10 +142,7 @@ Save ETH Price
 
 
 
-
-
 <div class="item"
-
 onclick="openPopup('/history-page')">
 
 Price History
@@ -263,10 +151,7 @@ Price History
 
 
 
-
-
 <div class="item"
-
 onclick="openPopup('/trade-check-page')">
 
 Auto Trading Signal
@@ -275,10 +160,7 @@ Auto Trading Signal
 
 
 
-
-
 <div class="item"
-
 onclick="openPopup('/trades-page')">
 
 Trading Records
@@ -287,20 +169,10 @@ Trading Records
 
 
 
-
-
-</div>
-
-
-
-
-
-
 <button class="close"
+onclick="window.close()">
 
-onclick="closePopup()">
-
-Close Window
+Close
 
 </button>
 
@@ -309,8 +181,7 @@ Close Window
 </div>
 
 
-
 </body>
 
-
 </html>
+3. price.html
