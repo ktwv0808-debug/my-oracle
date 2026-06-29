@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html>
 
 
 <head>
@@ -23,13 +23,11 @@ Toward Victory
 body{
 
 
-margin:0;
+font-family:"Batang","Times New Roman";
 
-padding:50px;
+background:#f5f7fa;
 
-background:white;
-
-font-family:"Georgia","Times New Roman",serif;
+padding:40px;
 
 
 }
@@ -39,10 +37,29 @@ font-family:"Georgia","Times New Roman",serif;
 .box{
 
 
-width:750px;
+background:white;
+
+max-width:800px;
 
 margin:auto;
 
+padding:50px;
+
+border-radius:20px;
+
+box-shadow:0 5px 20px #aaa;
+
+line-height:2;
+
+}
+
+
+
+.language{
+
+text-align:right;
+
+font-family:Arial;
 
 }
 
@@ -50,11 +67,7 @@ margin:auto;
 
 h1{
 
-
 text-align:center;
-
-font-size:42px;
-
 
 }
 
@@ -62,58 +75,19 @@ font-size:42px;
 
 .author{
 
-
 text-align:center;
 
-font-size:20px;
-
-margin-bottom:40px;
-
+font-size:22px;
 
 }
 
 
 
-.poem{
+button{
 
-
-font-size:21px;
-
-line-height:2.1;
-
-white-space:pre-line;
-
-
-}
-
-
-
-.close{
-
-
-display:block;
-
-margin:40px auto;
-
-padding:12px 35px;
-
-border:none;
-
-border-radius:10px;
-
-background:#555;
-
-color:white;
+padding:12px 30px;
 
 cursor:pointer;
-
-
-}
-
-
-.close:hover{
-
-background:#222;
 
 }
 
@@ -126,9 +100,27 @@ background:#222;
 <script>
 
 
-function closeWindow(){
+function changeLang(){
 
-window.close();
+
+let l=document.getElementById("lang").value;
+
+
+
+if(l=="ko"){
+
+
+document.getElementById("title").innerHTML=
+"승리를 향하여";
+
+
+document.getElementById("close").innerHTML=
+"닫기";
+
+
+}
+
+
 
 }
 
@@ -136,26 +128,51 @@ window.close();
 </script>
 
 
-
 </head>
 
 
-
 <body>
-<div class="language">
-Language :
-<select>
-<option selected>English</option>
-<option>한국어</option>
-</select>
-</div>
+
 
 
 <div class="box">
 
 
 
-<h1>
+<div class="language">
+
+
+Language :
+
+
+<select id="lang"
+onchange="changeLang()">
+
+
+
+<option selected value="en">
+
+English
+
+</option>
+
+
+<option value="ko">
+
+한국어
+
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+
+<h1 id="title">
 
 Toward Victory
 
@@ -165,103 +182,136 @@ Toward Victory
 
 <div class="author">
 
-Poem by Tae-Wan Kim
+Kim Tae Wan
 
 </div>
 
 
 
-<div class="poem">
+
+<p>
 
 
-Youth who can see the highest place in life,
-
-Youth full of the greatest strength in life,
+Young people who know how to see the highest place in life,
 
 
-The cries you shouted from the valley
-
-Now return to you as an echo.
+<br><br>
 
 
-Go, young spirit.
+Young people full of powerful energy,
 
 
-Even if rain and fierce winds
-
-stand in your way,
-
-Will you let your will be broken?
+<br><br>
 
 
-Go, young spirit.
+The cries you shouted in the valley
+
+<br>
+
+are now returning as echoes.
+
+<br><br>
 
 
-On the road you walk,
+Go, young people.
 
-the thorn trees are your companions.
-
-
-You know when to avoid,
-
-You know how to endure.
+<br><br>
 
 
-Go, young spirit.
+
+Even if rain and wind stand in your way,
+
+<br>
+
+will you break your will?
+
+<br><br>
 
 
-On the road you walk,
+Go, young people.
 
-let the sound of fallen leaves beneath your feet
-
-bring joy to your heart.
+<br><br>
 
 
-On the road you walk,
 
-learn to be grateful
+The thorn tree on your road
 
-for the songs of mountain birds.
+<br>
+
+is your friend.
+
+<br><br>
 
 
-Go, young spirit.
+Know when to avoid,
+
+<br>
+
+know how to endure.
+
+<br><br>
 
 
-God has said:
+Go, young people.
 
-Your fighting spirit will never be in vain.
+<br><br>
+
+
+
+Enjoy the sound of fallen leaves beneath your feet,
+
+<br>
+
+and appreciate the songs of mountain birds.
+
+<br><br>
+
+
+
+God said:
+
+<br>
+
+Your struggle will not be in vain.
+
+<br><br>
 
 
 God has given you:
 
-your strong legs,
+<br>
 
-and the mountains
+Strong legs,
 
-that you are able to climb.
+<br>
+
+and mountains you can climb.
+
+<br><br>
 
 
 Never abandon
+
+<br>
 
 the will of God.
 
 
 
-</div>
+</p>
 
 
 
+<button onclick="window.close()"
+id="close">
 
-<button class="close"
-onclick="closeWindow()">
-
-Close Window
+Close
 
 </button>
 
 
-
 </div>
+
 
 
 </body>
