@@ -1,23 +1,175 @@
 <!DOCTYPE html>
-
 <html>
 
 
-<body style="padding:30px;font-family:Arial">
+<head>
+
+<meta charset="UTF-8">
+
+<title>
+Trading Records
+</title>
+
+
+<style>
+
+
+body{
+
+font-family:Arial;
+
+background:#f5f7fa;
+
+padding:30px;
+
+}
+
+
+
+.box{
+
+background:white;
+
+padding:30px;
+
+border-radius:20px;
+
+box-shadow:0 5px 20px #aaa;
+
+}
+
+
+
+.language{
+
+text-align:right;
+
+}
+
+
+
+table{
+
+width:100%;
+
+border-collapse:collapse;
+
+margin-top:20px;
+
+}
+
+
+
+th{
+
+background:#0066cc;
+
+color:white;
+
+padding:12px;
+
+}
+
+
+
+td{
+
+padding:10px;
+
+border:1px solid #ddd;
+
+text-align:center;
+
+}
+
+
+
+button{
+
+margin-top:20px;
+
+padding:12px 30px;
+
+cursor:pointer;
+
+}
+
+
+
+</style>
+
+
+
+<script>
+
+
+function changeLang(){
+
+
+let l=document.getElementById("lang").value;
+
+
+
+if(l=="ko"){
+
+
+document.getElementById("title").innerHTML=
+"거래 기록";
+
+
+document.getElementById("action").innerHTML=
+"매매";
+
+
+document.getElementById("price").innerHTML=
+"가격";
+
+
+document.getElementById("close").innerHTML=
+"닫기";
+
+
+}
+
+
+}
+
+
+
+</script>
+
+
+
+</head>
+
+
+<body>
+
+
+<div class="box">
+
+
+
+<div class="language">
 
 
 Language :
 
-<select>
 
-<option selected>
+<select id="lang"
+onchange="changeLang()">
+
+
+
+<option value="en" selected>
 
 English
 
 </option>
 
 
-<option>
+
+<option value="ko">
 
 한국어
 
@@ -27,9 +179,11 @@ English
 </select>
 
 
+</div>
 
 
-<h1>
+
+<h1 id="title">
 
 Trading Records
 
@@ -37,20 +191,46 @@ Trading Records
 
 
 
-<table border="1" width="100%">
+<table>
 
 
 <tr>
 
-<th>ID</th>
 
-<th>Symbol</th>
+<th>
 
-<th>Action</th>
+ID
 
-<th>Price</th>
+</th>
 
-<th>Date</th>
+
+<th>
+
+Symbol
+
+</th>
+
+
+<th id="action">
+
+Action
+
+</th>
+
+
+<th id="price">
+
+Price
+
+</th>
+
+
+<th>
+
+Date
+
+</th>
+
 
 </tr>
 
@@ -62,15 +242,45 @@ Trading Records
 
 <tr>
 
-<td>{{t[0]}}</td>
 
-<td>{{t[1]}}</td>
+<td>
 
-<td>{{t[2]}}</td>
+{{t[0]}}
 
-<td>{{t[3]}}</td>
+</td>
 
-<td>{{t[4]}}</td>
+
+
+<td>
+
+{{t[1]}}
+
+</td>
+
+
+
+<td>
+
+{{t[2]}}
+
+</td>
+
+
+
+<td>
+
+{{t[3]}}
+
+</td>
+
+
+
+<td>
+
+{{t[4]}}
+
+</td>
+
 
 
 </tr>
@@ -83,14 +293,17 @@ Trading Records
 </table>
 
 
-<br>
 
-
-<button onclick="window.close()">
+<button onclick="window.close()"
+id="close">
 
 Close
 
 </button>
+
+
+
+</div>
 
 
 </body>
