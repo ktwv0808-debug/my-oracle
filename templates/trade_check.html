@@ -2,19 +2,12 @@
 
 <html>
 
-
 <head>
-
 
 <meta charset="UTF-8">
 
 
-<title>
-
-Auto Trading Signal
-
-</title>
-
+<title>Auto Trading Signal</title>
 
 
 <style>
@@ -22,15 +15,11 @@ Auto Trading Signal
 
 body{
 
+background:#f5f7fa;
 
 font-family:Arial;
 
-background:#f5f7fa;
-
 text-align:center;
-
-padding:50px;
-
 
 }
 
@@ -38,28 +27,17 @@ padding:50px;
 
 .box{
 
+width:650px;
+
+margin:50px auto;
 
 background:white;
-
-width:500px;
-
-margin:auto;
 
 padding:40px;
 
 border-radius:20px;
 
-box-shadow:0 5px 20px #aaa;
-
-
-}
-
-
-
-.language{
-
-
-text-align:right;
+box-shadow:0 0 20px #aaa;
 
 }
 
@@ -67,11 +45,17 @@ text-align:right;
 
 button{
 
+padding:12px 40px;
 
-padding:12px 30px;
+background:#0066cc;
+
+color:white;
+
+border:0;
+
+border-radius:10px;
 
 cursor:pointer;
-
 
 }
 
@@ -80,46 +64,7 @@ cursor:pointer;
 </style>
 
 
-
-<script>
-
-
-function changeLang(){
-
-
-let l =
-document.getElementById("lang").value;
-
-
-
-if(l=="ko"){
-
-
-document.getElementById("title").innerHTML=
-"자동매매 신호";
-
-
-document.getElementById("signalTitle").innerHTML=
-"신호";
-
-
-document.getElementById("close").innerHTML=
-"닫기";
-
-
-}
-
-
-
-}
-
-
-
-</script>
-
-
 </head>
-
 
 
 <body>
@@ -130,26 +75,19 @@ document.getElementById("close").innerHTML=
 
 
 
-<div class="language">
-
-
 Language :
 
-
-<select id="lang"
-onchange="changeLang()">
+<select>
 
 
-
-<option selected value="en">
+<option>
 
 English
 
 </option>
 
 
-
-<option value="ko">
+<option>
 
 한국어
 
@@ -159,12 +97,10 @@ English
 </select>
 
 
-</div>
 
 
 
-
-<h1 id="title">
+<h1>
 
 Auto Trading Signal
 
@@ -172,48 +108,21 @@ Auto Trading Signal
 
 
 
-
 <h2>
 
-ETH : {{price}} USD
-
-</h2>
-
-
-
-<h2>
-
-
-<span id="signalTitle">
-
-Signal
-
-</span>
-
-:
-
-{{signal}}
-
+{{ signal }}
 
 </h2>
 
 
 
 
-<p>
-
-Simulation Trading Mode
-
-</p>
-
-
-
-<button onclick="window.close()"
-id="close">
+<button onclick="window.close()">
 
 Close
 
 </button>
+
 
 
 
