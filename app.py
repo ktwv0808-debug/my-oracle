@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template
+  1from flask import Flask, jsonify, render_template
 import requests
 import psycopg2
 import os
@@ -9,11 +9,10 @@ app = Flask(__name__)
 
 
 
-
-
-# ==================================
+# =========================
 # PostgreSQL 연결
-# ==================================
+# =========================
+
 
 def get_db():
 
@@ -25,15 +24,17 @@ def get_db():
 
 
 
-# ==================================
-# DB 생성
-# ==================================
+# =========================
+# DB 초기화
+# =========================
+
 
 def init_db():
 
     conn = get_db()
 
     cursor = conn.cursor()
+
 
 
     cursor.execute("""
@@ -77,9 +78,7 @@ def init_db():
     conn.close()
 
 
-    print(
-        "PostgreSQL initialized successfully"
-    )
+    print("PostgreSQL database initialized successfully")
 
 
 
@@ -90,11 +89,10 @@ init_db()
 
 
 
-
-
-# ==================================
+# =========================
 # 메인
-# ==================================
+# =========================
+
 
 @app.route("/")
 def home():
@@ -105,6 +103,11 @@ def home():
     W-donation Oracle Server Running
     </h1>
 
+
+    <p>
+    Blockchain With Social Responsibility
+    </p>
+
     """
 
 
@@ -112,12 +115,10 @@ def home():
 
 
 
-
-
-
-# ==================================
+# =========================
 # 홈페이지
-# ==================================
+# =========================
+
 
 @app.route("/donation")
 def donation():
@@ -131,69 +132,13 @@ def donation():
 
 
 
+# =========================
+# ETH 가격 API
+# =========================
 
-
-# ==================================
-# 자동매매 팝업
-# ==================================
-
-@app.route("/trading")
-def trading():
-
-    return render_template(
-        "trading.html"
-    )
-
-
-
-
-
-
-
-
-# ==================================
-# 백서 팝업
-# ==================================
-
-@app.route("/whitepaper")
-def whitepaper():
-
-    return render_template(
-        "whitepaper.html"
-    )
-
-
-
-
-
-
-
-
-# ==================================
-# 승리를 향하여 팝업
-# ==================================
-
-@app.route("/poem")
-def poem():
-
-    return render_template(
-        "poem.html"
-    )
-
-
-
-
-
-
-
-
-
-
-# ==================================
-# ETH 가격 가져오기
-# ==================================
 
 def get_eth_price():
+
 
     url = (
 
@@ -202,7 +147,7 @@ def get_eth_price():
     )
 
 
-    response = requests.get(
+    r = requests.get(
 
         url,
 
@@ -211,7 +156,7 @@ def get_eth_price():
     )
 
 
-    data=response.json()
+    data = r.json()
 
 
     return float(
@@ -226,41 +171,37 @@ def get_eth_price():
 
 
 
+# =========================
+# ETH Price 팝업
+# =========================
 
 
-# ==================================
-# ETH Price API
-# ==================================
+@app.route("/price-page")
+def price_page():
+
+    return render_template(
+        "price.html"
+    )
+
+
+
+
 
 @app.route("/price")
 def price():
 
-    try:
+    eth = get_eth_price()
 
 
-        eth=get_eth_price()
+    return jsonify({
 
+        "symbol":"ETH",
 
-        return jsonify({
+        "price_usd":eth,
 
-            "symbol":"ETH",
+        "source":"Coinbase"
 
-            "price_usd":eth,
-
-            "source":"Coinbase"
-
-
-        })
-
-
-    except Exception as e:
-
-
-        return jsonify({
-
-            "error":str(e)
-
-        })
+    })
 
 
 
@@ -269,22 +210,33 @@ def price():
 
 
 
+# =========================
+# 저장 팝업
+# =========================
 
-# ==================================
-# 가격 저장
-# ==================================
+
+@app.route("/save-price-page")
+def save_price_page():
+
+    return render_template(
+        "save_price.html"
+    )
+
+
+
+
+
 
 @app.route("/save-price")
 def save_price():
 
 
-    eth=get_eth_price()
+    eth = get_eth_price()
 
 
+    conn = get_db()
 
-    conn=get_db()
-
-    cursor=conn.cursor()
+    cursor = conn.cursor()
 
 
 
@@ -326,7 +278,9 @@ def save_price():
 
         "symbol":"ETH",
 
-        "price":eth
+        "price":eth,
+
+        "database":"PostgreSQL"
 
     })
 
@@ -338,11 +292,23 @@ def save_price():
 
 
 
-
-
-# ==================================
+# =========================
 # 가격 기록
-# ==================================
+# =========================
+
+
+
+@app.route("/history-page")
+def history_page():
+
+    return render_template(
+        "history.html"
+    )
+
+
+
+
+
 
 @app.route("/history")
 def history():
@@ -353,8 +319,8 @@ def history():
     cursor=conn.cursor()
 
 
-    cursor.execute("""
 
+    cursor.execute("""
 
     SELECT *
 
@@ -366,11 +332,12 @@ def history():
     """)
 
 
-
     rows=cursor.fetchall()
 
 
+
     conn.close()
+
 
 
     return jsonify(rows)
@@ -383,35 +350,24 @@ def history():
 
 
 
-# ==================================
-# W-donation 가격 테스트
-# ==================================
-
-@app.route("/ktw-price")
-def ktw_price():
-
-
-    return jsonify({
-
-        "symbol":"W-donation",
-
-        "price_usd":"0.0001",
-
-        "source":"Oracle Test Price"
-
-    })
-
-
-
-
-
-
-
-
-
-# ==================================
+# =========================
 # 자동매매 신호
-# ==================================
+# =========================
+
+
+@app.route("/trade-check-page")
+def trade_check_page():
+
+    return render_template(
+        "trade_check.html"
+    )
+
+
+
+
+
+
+
 
 @app.route("/trade-check")
 def trade_check():
@@ -420,21 +376,21 @@ def trade_check():
     eth=get_eth_price()
 
 
-    signal="HOLD"
+    action="HOLD"
 
 
 
     if eth < 1700:
 
 
-        signal="BUY"
+        action="BUY"
 
 
 
     elif eth > 2000:
 
 
-        signal="SELL"
+        action="SELL"
 
 
 
@@ -463,7 +419,7 @@ def trade_check():
 
     "ETH",
 
-    signal,
+    action,
 
     eth,
 
@@ -479,13 +435,14 @@ def trade_check():
 
 
 
+
     return jsonify({
 
         "symbol":"ETH",
 
         "price":eth,
 
-        "signal":signal,
+        "signal":action,
 
         "mode":"simulation"
 
@@ -499,9 +456,24 @@ def trade_check():
 
 
 
-# ==================================
+# =========================
 # 거래 기록
-# ==================================
+# =========================
+
+
+
+@app.route("/trades-page")
+def trades_page():
+
+    return render_template(
+        "trades.html"
+    )
+
+
+
+
+
+
 
 @app.route("/trades")
 def trades():
@@ -512,8 +484,8 @@ def trades():
     cursor=conn.cursor()
 
 
-    cursor.execute("""
 
+    cursor.execute("""
 
     SELECT *
 
@@ -525,13 +497,14 @@ def trades():
     """)
 
 
-    data=cursor.fetchall()
+
+    rows=cursor.fetchall()
 
 
     conn.close()
 
 
-    return jsonify(data)
+    return jsonify(rows)
 
 
 
@@ -541,11 +514,63 @@ def trades():
 
 
 
-# ==================================
-# 실행
-# ==================================
+# =========================
+# 자동매매 시스템 팝업
+# =========================
 
-if __name__=="__main__":
+
+@app.route("/trading")
+def trading():
+
+    return render_template(
+        "trading.html"
+    )
+
+
+
+
+
+
+# =========================
+# 백서 팝업
+# =========================
+
+
+@app.route("/whitepaper")
+def whitepaper():
+
+    return render_template(
+        "whitepaper.html"
+    )
+
+
+
+
+
+# =========================
+# 시 팝업
+# =========================
+
+
+@app.route("/poem")
+def poem():
+
+    return render_template(
+        "poem.html"
+    )
+
+
+
+
+
+
+
+# =========================
+# Render 실행
+# =========================
+
+
+if __name__ == "__main__":
 
 
     app.run(
@@ -555,3 +580,17 @@ if __name__=="__main__":
         port=5000
 
     )
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
