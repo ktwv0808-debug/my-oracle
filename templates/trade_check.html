@@ -3,21 +3,153 @@
 <html>
 
 
-<body style="text-align:center;padding:50px;font-family:Arial">
+<head>
+
+
+<meta charset="UTF-8">
+
+
+<title>
+
+Auto Trading Signal
+
+</title>
+
+
+
+<style>
+
+
+body{
+
+
+font-family:Arial;
+
+background:#f5f7fa;
+
+text-align:center;
+
+padding:50px;
+
+
+}
+
+
+
+.box{
+
+
+background:white;
+
+width:500px;
+
+margin:auto;
+
+padding:40px;
+
+border-radius:20px;
+
+box-shadow:0 5px 20px #aaa;
+
+
+}
+
+
+
+.language{
+
+
+text-align:right;
+
+}
+
+
+
+button{
+
+
+padding:12px 30px;
+
+cursor:pointer;
+
+
+}
+
+
+
+</style>
+
+
+
+<script>
+
+
+function changeLang(){
+
+
+let l =
+document.getElementById("lang").value;
+
+
+
+if(l=="ko"){
+
+
+document.getElementById("title").innerHTML=
+"자동매매 신호";
+
+
+document.getElementById("signalTitle").innerHTML=
+"신호";
+
+
+document.getElementById("close").innerHTML=
+"닫기";
+
+
+}
+
+
+
+}
+
+
+
+</script>
+
+
+</head>
+
+
+
+<body>
+
+
+
+<div class="box">
+
+
+
+<div class="language">
 
 
 Language :
 
-<select>
 
-<option selected>
+<select id="lang"
+onchange="changeLang()">
+
+
+
+<option selected value="en">
 
 English
 
 </option>
 
 
-<option>
+
+<option value="ko">
 
 한국어
 
@@ -27,34 +159,65 @@ English
 </select>
 
 
+</div>
 
-<h1>
+
+
+
+<h1 id="title">
 
 Auto Trading Signal
 
 </h1>
 
 
-<h2>
-
-ETH : {{price}}
-
-</h2>
 
 
 <h2>
 
-Signal : {{signal}}
+ETH : {{price}} USD
 
 </h2>
 
 
 
-<button onclick="window.close()">
+<h2>
+
+
+<span id="signalTitle">
+
+Signal
+
+</span>
+
+:
+
+{{signal}}
+
+
+</h2>
+
+
+
+
+<p>
+
+Simulation Trading Mode
+
+</p>
+
+
+
+<button onclick="window.close()"
+id="close">
 
 Close
 
 </button>
+
+
+
+</div>
 
 
 
