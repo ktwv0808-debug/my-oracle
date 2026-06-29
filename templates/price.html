@@ -1,29 +1,66 @@
 <!DOCTYPE html>
-
-<html>
-
+<html lang="en">
 
 <head>
 
 <meta charset="UTF-8">
 
-<title>
-
-ETH Price
-
-</title>
-
+<title>ETH Price</title>
 
 <style>
 
-
 body{
 
-text-align:center;
+background:#f5f7fa;
 
 font-family:Arial;
 
-padding:50px;
+text-align:center;
+
+}
+
+
+.box{
+
+width:600px;
+
+margin:50px auto;
+
+background:white;
+
+padding:40px;
+
+border-radius:20px;
+
+box-shadow:0 0 20px #aaa;
+
+}
+
+
+select{
+
+padding:8px;
+
+cursor:pointer;
+
+}
+
+
+button{
+
+margin-top:30px;
+
+padding:12px 40px;
+
+background:#0066cc;
+
+color:white;
+
+border:0;
+
+border-radius:10px;
+
+cursor:pointer;
 
 }
 
@@ -34,7 +71,7 @@ padding:50px;
 <script>
 
 
-function changeLang(){
+function langChange(){
 
 
 let l=document.getElementById("lang").value;
@@ -43,14 +80,34 @@ let l=document.getElementById("lang").value;
 if(l=="ko"){
 
 
-document.getElementById("title").innerHTML=
-"ETH 가격";
+title.innerHTML="ETH 가격";
+
+
+desc.innerHTML="현재 ETH 가격";
+
+
+close.innerHTML="닫기";
+
+
+}
+
+else{
+
+
+title.innerHTML="ETH Price";
+
+
+desc.innerHTML="Current ETH Price";
+
+
+close.innerHTML="Close";
 
 
 }
 
 
 }
+
 
 
 </script>
@@ -62,19 +119,25 @@ document.getElementById("title").innerHTML=
 <body>
 
 
+
+<div class="box">
+
+
+
+<div style="text-align:right">
+
 Language :
 
-<select id="lang"
-onchange="changeLang()">
+
+<select id="lang" onchange="langChange()">
 
 
 
-<option selected value="en">
+<option value="en">
 
 English
 
 </option>
-
 
 
 <option value="ko">
@@ -89,6 +152,11 @@ English
 
 
 
+</div>
+
+
+
+
 
 <h1 id="title">
 
@@ -97,20 +165,38 @@ ETH Price
 </h1>
 
 
-<h2>
 
-{{price}} USD
+
+<h2 id="desc">
+
+Current ETH Price
 
 </h2>
 
 
 
-<button onclick="window.close()">
+<h2>
+
+{{ price }}
+
+</h2>
+
+
+
+
+
+
+<button id="close"
+onclick="window.close()">
 
 Close
 
 </button>
 
+
+
+
+</div>
 
 
 </body>
