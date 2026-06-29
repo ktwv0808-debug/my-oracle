@@ -351,3 +351,7 @@ if __name__=="__main__":
         host="0.0.0.0",
         port=5000
     )
+@app.route("/test")
+def test():
+
+    return "SERVER UPDATED"
