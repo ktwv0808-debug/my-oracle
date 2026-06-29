@@ -1,79 +1,19 @@
 <!DOCTYPE html>
-
 <html>
 
-<head>
-
-<title>ETH Price</title>
-
-
-<style>
-
-body{
-
-font-family:Segoe UI;
-
-padding:40px;
-
-text-align:center;
-
-}
-
-
-button{
-
-background:#0066cc;
-
-color:white;
-
-padding:15px 30px;
-
-border:0;
-
-border-radius:10px;
-
-cursor:pointer;
-
-}
-
-
-</style>
-
-
-</head>
-
-
-<body>
+<body style="text-align:center;padding:50px;font-family:Arial">
 
 
 <h1>
-
 ETH Price
-
 </h1>
 
 
-<p>
+<h2>
 
-Live ETH price from Coinbase API
+{{ price }} USD
 
-</p>
-
-
-
-<a href="/price" target="_blank">
-
-<button>
-
-View ETH Price
-
-</button>
-
-</a>
-
-
-
-<br><br>
+</h2>
 
 
 <button onclick="window.close()">
@@ -81,6 +21,11 @@ View ETH Price
 Close
 
 </button>
+
+
+</body>
+
+</html>
 
 
 </body>
