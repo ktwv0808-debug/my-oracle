@@ -1,26 +1,34 @@
 <!DOCTYPE html>
+
 <html>
 
 <head>
 
+
 <meta charset="UTF-8">
 
+
 <title>
+
 Automatic Trading System
+
 </title>
 
 
+
 <style>
+
 
 body{
 
 font-family:Arial;
 
-background:#f3f5f7;
+background:#f4f6f8;
 
 padding:40px;
 
 }
+
 
 
 .box{
@@ -39,12 +47,6 @@ box-shadow:0 5px 20px #aaa;
 
 }
 
-
-.language{
-
-text-align:right;
-
-}
 
 
 .item{
@@ -74,16 +76,16 @@ background:#003d80;
 }
 
 
-button{
 
-padding:12px 30px;
+.language{
 
-cursor:pointer;
+text-align:right;
 
 }
 
 
 </style>
+
 
 
 <script>
@@ -104,44 +106,44 @@ url,
 }
 
 
-
-function lang(){
-
-
-let x=document
-.getElementById("lang")
-.value;
+function changeLang(){
 
 
+let l=document.getElementById("lang").value;
 
-if(x=="ko"){
+
+if(l=="ko"){
 
 
-document.getElementById("title").innerHTML="자동매매 시스템";
+document.getElementById("title").innerHTML=
+"자동매매 시스템";
 
-document.getElementById("eth").innerHTML="ETH 가격";
 
-document.getElementById("save").innerHTML="ETH 가격 저장";
+document.getElementById("a").innerHTML=
+"ETH 가격";
 
-document.getElementById("history").innerHTML="가격 기록";
 
-document.getElementById("signal").innerHTML="자동매매 신호";
+document.getElementById("b").innerHTML=
+"ETH 가격 저장";
 
-document.getElementById("records").innerHTML="거래 기록";
+
+document.getElementById("c").innerHTML=
+"가격 기록";
+
+
+document.getElementById("d").innerHTML=
+"자동매매 신호";
+
+
+document.getElementById("e").innerHTML=
+"거래 기록";
+
+
+}
 
 
 }
 
-else{
-
-
-location.reload();
-
-
-}
-
-
-}
 
 
 </script>
@@ -153,17 +155,19 @@ location.reload();
 <body>
 
 
-<div class="box">
 
+<div class="box">
 
 
 <div class="language">
 
 Language :
 
-<select id="lang" onchange="lang()">
+<select id="lang"
+onchange="changeLang()">
 
-<option selected>
+
+<option selected value="en">
 
 English
 
@@ -192,9 +196,12 @@ Automatic Trading System
 
 
 
+
 <div class="item"
+
 onclick="popup('/price-page')"
-id="eth">
+
+id="a">
 
 ETH Price
 
@@ -203,8 +210,10 @@ ETH Price
 
 
 <div class="item"
+
 onclick="popup('/save-price-page')"
-id="save">
+
+id="b">
 
 Save ETH Price
 
@@ -213,8 +222,10 @@ Save ETH Price
 
 
 <div class="item"
+
 onclick="popup('/history-page')"
-id="history">
+
+id="c">
 
 Price History
 
@@ -223,8 +234,10 @@ Price History
 
 
 <div class="item"
+
 onclick="popup('/trade-check-page')"
-id="signal">
+
+id="d">
 
 Auto Trading Signal
 
@@ -233,8 +246,10 @@ Auto Trading Signal
 
 
 <div class="item"
+
 onclick="popup('/trades-page')"
-id="records">
+
+id="e">
 
 Trading Records
 
@@ -242,17 +257,10 @@ Trading Records
 
 
 
-
-<button onclick="window.close()">
-
-Close
-
-</button>
-
-
 </div>
 
 
 </body>
+
 
 </html>
