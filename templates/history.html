@@ -3,30 +3,201 @@
 <html>
 
 
-<body style="padding:30px;font-family:Arial">
+<head>
+
+
+<meta charset="UTF-8">
+
+
+<title>
+Price History
+</title>
+
+
+
+<style>
+
+
+body{
+
+font-family:Arial;
+
+padding:30px;
+
+background:#f5f7fa;
+
+}
+
+
+
+.box{
+
+background:white;
+
+padding:30px;
+
+border-radius:20px;
+
+box-shadow:0 5px 20px #aaa;
+
+}
+
+
+
+.language{
+
+text-align:right;
+
+}
+
+
+table{
+
+width:100%;
+
+border-collapse:collapse;
+
+margin-top:20px;
+
+}
+
+
+
+th{
+
+background:#0066cc;
+
+color:white;
+
+padding:12px;
+
+}
+
+
+
+td{
+
+padding:10px;
+
+border:1px solid #ddd;
+
+text-align:center;
+
+}
+
+
+
+button{
+
+margin-top:20px;
+
+padding:12px 30px;
+
+cursor:pointer;
+
+}
+
+
+
+</style>
+
+
+<script>
+
+
+function changeLang(){
+
+
+let l =
+document.getElementById("lang").value;
+
+
+
+if(l=="ko"){
+
+
+
+document.getElementById("title").innerHTML=
+"가격 기록";
+
+
+document.getElementById("id").innerHTML=
+"번호";
+
+
+document.getElementById("symbol").innerHTML=
+"종목";
+
+
+document.getElementById("price").innerHTML=
+"가격";
+
+
+document.getElementById("date").innerHTML=
+"날짜";
+
+
+document.getElementById("close").innerHTML=
+"닫기";
+
+
+}
+
+
+
+}
+
+
+
+</script>
+
+
+</head>
+
+
+
+<body>
+
+
+
+<div class="box">
+
+
+<div class="language">
 
 
 Language :
 
-<select>
 
-<option selected>
+<select id="lang"
+onchange="changeLang()">
+
+
+
+<option selected value="en">
 
 English
 
 </option>
 
-<option>
+
+
+<option value="ko">
 
 한국어
 
 </option>
 
+
 </select>
 
 
+</div>
 
-<h1>
+
+
+
+<h1 id="title">
 
 Price History
 
@@ -34,18 +205,40 @@ Price History
 
 
 
-<table border="1" width="100%">
+<table>
 
 
 <tr>
 
-<th>ID</th>
 
-<th>Symbol</th>
+<th id="id">
 
-<th>Price</th>
+ID
 
-<th>Date</th>
+</th>
+
+
+<th id="symbol">
+
+Symbol
+
+</th>
+
+
+<th id="price">
+
+Price
+
+</th>
+
+
+<th id="date">
+
+Date
+
+</th>
+
+
 
 </tr>
 
@@ -53,15 +246,40 @@ Price History
 
 {% for p in prices %}
 
+
 <tr>
 
-<td>{{p[0]}}</td>
 
-<td>{{p[1]}}</td>
+<td>
 
-<td>{{p[2]}}</td>
+{{p[0]}}
 
-<td>{{p[4]}}</td>
+</td>
+
+
+
+<td>
+
+{{p[1]}}
+
+</td>
+
+
+
+<td>
+
+{{p[2]}}
+
+</td>
+
+
+
+<td>
+
+{{p[4]}}
+
+</td>
+
 
 
 </tr>
@@ -74,16 +292,21 @@ Price History
 </table>
 
 
-<br>
 
-
-<button onclick="window.close()">
+<button onclick="window.close()"
+id="close">
 
 Close
 
 </button>
 
 
+
+</div>
+
+
+
 </body>
+
 
 </html>
