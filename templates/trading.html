@@ -1,9 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
 <meta charset="UTF-8">
 
 <title>Automatic Trading System</title>
 
 
 <style>
+
 
 body{
 
@@ -14,6 +20,7 @@ font-family:Arial;
 text-align:center;
 
 }
+
 
 
 .box{
@@ -33,6 +40,7 @@ box-shadow:0 0 20px #aaa;
 }
 
 
+
 select{
 
 padding:8px;
@@ -42,23 +50,33 @@ cursor:pointer;
 }
 
 
+
 .btn{
+
 
 width:350px;
 
+
 margin:15px auto;
+
 
 padding:15px;
 
+
 background:#0066cc;
+
 
 color:white;
 
+
 border-radius:15px;
+
 
 cursor:pointer;
 
+
 font-size:18px;
+
 
 }
 
@@ -79,6 +97,7 @@ background:#333;
 }
 
 
+
 </style>
 
 
@@ -87,7 +106,8 @@ background:#333;
 
 
 
-let lang={
+const text = {
+
 
 
 en:{
@@ -109,6 +129,7 @@ close:"Close"
 
 
 },
+
 
 
 
@@ -138,31 +159,53 @@ close:"닫기"
 
 
 
+
+
 function changeLanguage(){
 
 
-let l=document.getElementById("lang").value;
+
+let lang = document.getElementById("language").value;
 
 
-let t=lang[l];
+
+document.getElementById("title").innerText =
+text[lang].title;
 
 
-title.innerHTML=t.title;
 
-price.innerHTML=t.price;
+document.getElementById("priceBtn").innerText =
+text[lang].price;
 
-save.innerHTML=t.save;
 
-history.innerHTML=t.history;
 
-signal.innerHTML=t.signal;
+document.getElementById("saveBtn").innerText =
+text[lang].save;
 
-trades.innerHTML=t.trades;
 
-close.innerHTML=t.close;
+
+document.getElementById("historyBtn").innerText =
+text[lang].history;
+
+
+
+document.getElementById("signalBtn").innerText =
+text[lang].signal;
+
+
+
+document.getElementById("tradesBtn").innerText =
+text[lang].trades;
+
+
+
+document.getElementById("closeBtn").innerText =
+text[lang].close;
+
 
 
 }
+
 
 
 
@@ -171,22 +214,26 @@ close.innerHTML=t.close;
 function popup(url){
 
 
+
 window.open(
 
 url,
 
-"child",
+"popup",
 
-"width=700,height=600"
+"width=750,height=600"
 
 );
+
 
 
 }
 
 
 
+
 </script>
+
 
 
 </head>
@@ -195,7 +242,10 @@ url,
 <body>
 
 
+
 <div class="box">
+
+
 
 
 
@@ -205,7 +255,8 @@ url,
 Language :
 
 
-<select id="lang"
+
+<select id="language"
 
 onchange="changeLanguage()">
 
@@ -216,7 +267,6 @@ onchange="changeLanguage()">
 English
 
 </option>
-
 
 
 <option value="ko">
@@ -230,7 +280,9 @@ English
 </select>
 
 
+
 </div>
+
 
 
 
@@ -245,9 +297,11 @@ Automatic Trading System
 
 
 
+
+
 <div class="btn"
 
-id="price"
+id="priceBtn"
 
 onclick="popup('/price')">
 
@@ -258,9 +312,12 @@ ETH Price
 
 
 
+
+
+
 <div class="btn"
 
-id="save"
+id="saveBtn"
 
 onclick="popup('/save-price')">
 
@@ -272,9 +329,12 @@ Save ETH Price
 
 
 
+
+
+
 <div class="btn"
 
-id="history"
+id="historyBtn"
 
 onclick="popup('/history')">
 
@@ -286,9 +346,12 @@ Price History
 
 
 
+
+
+
 <div class="btn"
 
-id="signal"
+id="signalBtn"
 
 onclick="popup('/trade-check')">
 
@@ -300,9 +363,12 @@ Auto Trading Signal
 
 
 
+
+
+
 <div class="btn"
 
-id="trades"
+id="tradesBtn"
 
 onclick="popup('/trades')">
 
@@ -314,9 +380,12 @@ Trading Records
 
 
 
+
+
+
 <div class="btn close"
 
-id="close"
+id="closeBtn"
 
 onclick="window.close()">
 
@@ -327,7 +396,10 @@ Close
 
 
 
+
+
 </div>
+
 
 
 </body>
