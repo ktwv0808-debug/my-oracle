@@ -5,29 +5,23 @@
 
 <meta charset="UTF-8">
 
-<title>W-donation</title>
+<title>
+W-donation
+</title>
 
 
 <style>
 
-*{
-
-box-sizing:border-box;
-
-}
-
-
 body{
-
-font-family:"Segoe UI", Arial, sans-serif;
-
-background:#f2f4f7;
 
 margin:0;
 
-padding:40px;
+font-family:"Segoe UI",Arial;
+
+background:#f4f6f8;
 
 }
+
 
 
 .container{
@@ -40,121 +34,51 @@ background:white;
 
 padding:50px;
 
+text-align:center;
+
 border-radius:20px;
 
-box-shadow:0 5px 25px rgba(0,0,0,0.15);
+box-shadow:0 5px 25px #aaa;
 
 }
 
 
 
-/* 제목 중앙 */
+.language{
 
-.title{
-
-text-align:center;
+text-align:right;
 
 }
 
 
 
-.title h1{
+h1{
 
-font-size:50px;
-
-margin:0;
+font-size:42px;
 
 }
 
 
 
-.title h2{
+.subtitle{
 
-font-size:24px;
+font-size:22px;
 
-font-weight:normal;
-
-}
-
-
-
-
-
-p{
-
-font-size:18px;
-
-line-height:1.8;
+color:#555;
 
 }
 
 
 
+.menu{
 
-.section{
-
-margin-top:35px;
-
-}
-
-
-
-
-.worldvision{
-
-text-align:center;
-
-margin:30px 0;
+margin-top:40px;
 
 }
 
 
 
-.worldvision img{
-
-width:200px;
-
-}
-
-
-
-
-
-table{
-
-width:100%;
-
-border-collapse:collapse;
-
-}
-
-
-
-th,td{
-
-border:1px solid #ddd;
-
-padding:12px;
-
-text-align:center;
-
-}
-
-
-
-
-.system{
-
-text-align:center;
-
-margin:35px 0;
-
-}
-
-
-
-.btn{
-
+.button{
 
 display:inline-block;
 
@@ -162,24 +86,21 @@ background:#0066cc;
 
 color:white;
 
-padding:15px 25px;
+padding:15px 35px;
 
-margin:8px;
+margin:10px;
 
 border-radius:10px;
 
 cursor:pointer;
 
-text-decoration:none;
-
-
 }
 
 
 
-.btn:hover{
+.button:hover{
 
-background:#003f88;
+background:#003d80;
 
 }
 
@@ -193,20 +114,68 @@ background:#003f88;
 
 function popup(url){
 
-
 window.open(
 
 url,
 
 "popup",
 
-"width=900,height=700,scrollbars=yes"
+"width=750,height=600"
 
 );
+
+}
+
+
+
+
+
+function changeLang(){
+
+
+let l=document.getElementById("lang").value;
+
+
+
+if(l=="ko"){
+
+
+document.getElementById("title").innerHTML=
+"W-donation";
+
+
+document.getElementById("sub").innerHTML=
+"사회적 책임을 위한 블록체인";
+
+
+document.getElementById("mission").innerHTML=
+"우리의 목표";
+
+
+document.getElementById("system").innerHTML=
+"자동매매 시스템";
+
+
+document.getElementById("paper").innerHTML=
+"백서";
+
+
+document.getElementById("poem").innerHTML=
+"승리를 향하여";
 
 
 }
 
+else{
+
+
+location.reload();
+
+
+}
+
+
+}
 
 
 </script>
@@ -215,42 +184,56 @@ url,
 </head>
 
 
-
 <body>
-<div class="language">
-Language :
-<select>
-<option selected>English</option>
-<option>한국어</option>
-</select>
-</div>
 
 
 <div class="container">
 
 
+<div class="language">
 
-<div class="title">
+
+Language :
+
+<select id="lang"
+onchange="changeLang()">
 
 
-<h1>
+
+<option value="en" selected>
+
+English
+
+</option>
+
+
+<option value="ko">
+
+한국어
+
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+
+<h1 id="title">
 
 W-donation
 
 </h1>
 
 
-<h2>
+<h2 class="subtitle" id="sub">
 
 Blockchain With Social Responsibility
 
 </h2>
-
-
-</div>
-
-
-
 
 
 <p>
@@ -258,7 +241,6 @@ Blockchain With Social Responsibility
 Creating technology that creates social impact.
 
 </p>
-
 
 
 
@@ -279,28 +261,7 @@ Donation records and transaction details will be publicly disclosed.
 
 
 
-
-<div class="worldvision">
-
-
-<div class="worldvision">
-
-<img src="/static/worldvision.png">
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-<div class="section">
-
-
-<h2>
+<h2 id="mission">
 
 Our Mission
 
@@ -310,150 +271,55 @@ Our Mission
 
 <p>
 
-
 W-donation believes that blockchain technology can create positive change beyond digital assets.
-
-Through transparent operation and community participation, we aim to build a sustainable ecosystem where technology supports social responsibility.
-
 
 </p>
 
 
-</div>
 
 
 
+<div class="menu">
 
 
 
+<div class="button"
 
-<div class="system">
+onclick="popup('/trading')"
 
-
-<h2>
-
-System
-
-</h2>
-
-
-
-<a class="btn"
-onclick="popup('/trading')">
+id="system">
 
 Automatic Trading System
 
-</a>
+</div>
 
 
 
-<a class="btn"
-onclick="popup('/whitepaper')">
+<div class="button"
+
+onclick="popup('/whitepaper')"
+
+id="paper">
 
 Whitepaper
-
-</a>
-
-
-
-<a class="btn"
-onclick="popup('/poem')">
-
-Toward Victory
-
-</a>
-
-
 
 </div>
 
 
 
+<div class="button"
+
+onclick="popup('/poem')"
+
+id="poem">
+
+Toward Victory
+
+</div>
 
 
 
-
-
-<h2>
-
-Quarterly Donation Report
-
-</h2>
-
-
-
-<table>
-
-
-<tr>
-
-<th>
-Quarter
-</th>
-
-<th>
-Net Profit
-</th>
-
-<th>
-Donation(10%)
-</th>
-
-<th>
-Transaction Proof
-</th>
-
-
-</tr>
-
-
-
-<tr>
-
-<td>
-Q1 2026
-</td>
-
-<td>
-0 ETH
-</td>
-
-<td>
-0 ETH
-</td>
-
-<td>
-Preparing
-</td>
-
-</tr>
-
-
-
-<tr>
-
-<td>
-Q2 2026
-</td>
-
-<td>
-0 ETH
-</td>
-
-<td>
-0 ETH
-</td>
-
-<td>
-Preparing
-</td>
-
-</tr>
-
-
-
-</table>
-
+</div>
 
 
 
