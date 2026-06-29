@@ -1,40 +1,96 @@
 <!DOCTYPE html>
+
 <html>
+
 
 <head>
 
 <meta charset="UTF-8">
 
-<title>ETH Price</title>
+<title>
+
+ETH Price
+
+</title>
+
+
+<style>
+
+
+body{
+
+text-align:center;
+
+font-family:Arial;
+
+padding:50px;
+
+}
+
+
+</style>
+
+
+<script>
+
+
+function changeLang(){
+
+
+let l=document.getElementById("lang").value;
+
+
+if(l=="ko"){
+
+
+document.getElementById("title").innerHTML=
+"ETH 가격";
+
+
+}
+
+
+}
+
+
+</script>
+
 
 </head>
 
 
-<body style="text-align:center;padding:50px;font-family:Arial">
+<body>
 
 
 Language :
 
-<select>
+<select id="lang"
+onchange="changeLang()">
 
-<option selected>
+
+
+<option selected value="en">
 
 English
 
 </option>
 
-<option>
+
+
+<option value="ko">
 
 한국어
 
 </option>
 
 
+
 </select>
 
 
 
-<h1>
+
+<h1 id="title">
 
 ETH Price
 
@@ -56,6 +112,8 @@ Close
 </button>
 
 
+
 </body>
+
 
 </html>
