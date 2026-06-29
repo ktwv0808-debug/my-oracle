@@ -2,7 +2,31 @@
 
 <html>
 
+
 <body style="padding:30px;font-family:Arial">
+
+
+Language :
+
+<select>
+
+<option selected>
+
+English
+
+</option>
+
+
+<option>
+
+한국어
+
+</option>
+
+
+</select>
+
+
 
 
 <h1>
@@ -10,6 +34,7 @@
 Trading Records
 
 </h1>
+
 
 
 <table border="1" width="100%">
@@ -31,6 +56,7 @@ Trading Records
 
 
 
+
 {% for t in trades %}
 
 
@@ -46,6 +72,7 @@ Trading Records
 
 <td>{{t[4]}}</td>
 
+
 </tr>
 
 
@@ -56,7 +83,6 @@ Trading Records
 </table>
 
 
-
 <br>
 
 
@@ -65,7 +91,6 @@ Trading Records
 Close
 
 </button>
-
 
 
 </body>
