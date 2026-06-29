@@ -1,4 +1,4 @@
-  1from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template
 import requests
 import psycopg2
 import os
