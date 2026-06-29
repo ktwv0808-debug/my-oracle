@@ -1,58 +1,188 @@
 <!DOCTYPE html>
-
 <html>
 
-<body style="text-align:center;padding:50px;font-family:Arial">
+<head>
+
+<meta charset="UTF-8">
+
+<title>
+Save ETH Price
+</title>
+
+
+<style>
+
+body{
+
+font-family:Arial;
+
+text-align:center;
+
+padding:50px;
+
+background:#f5f7fa;
+
+}
+
+
+
+.box{
+
+background:white;
+
+padding:40px;
+
+border-radius:20px;
+
+box-shadow:0 5px 20px #aaa;
+
+width:500px;
+
+margin:auto;
+
+}
+
+
+
+.language{
+
+text-align:right;
+
+}
+
+
+
+button{
+
+padding:12px 30px;
+
+cursor:pointer;
+
+}
+
+
+</style>
+
+
+
+<script>
+
+
+function changeLang(){
+
+
+let l =
+document.getElementById("lang").value;
+
+
+
+if(l=="ko"){
+
+
+
+document.getElementById("title").innerHTML=
+"ETH 가격 저장";
+
+
+document.getElementById("db").innerHTML=
+"PostgreSQL 데이터베이스";
+
+
+document.getElementById("close").innerHTML=
+"닫기";
+
+
+}
+
+
+
+}
+
+
+
+</script>
+
+
+</head>
+
+
+<body>
+
+
+
+<div class="box">
+
+
+<div class="language">
 
 
 Language :
 
-<select>
 
-<option selected>
+<select id="lang"
+onchange="changeLang()">
+
+
+
+<option value="en" selected>
 
 English
 
 </option>
 
 
-<option>
+<option value="ko">
 
 한국어
 
 </option>
 
+
 </select>
 
 
-<h1>
+</div>
 
-ETH Price Saved
+
+
+<h1 id="title">
+
+Save ETH Price
 
 </h1>
 
 
+
 <h2>
 
-{{price}} USD
+ETH : {{price}} USD
 
 </h2>
 
 
-<p>
+
+<p id="db">
 
 PostgreSQL Database
 
 </p>
 
 
-<button onclick="window.close()">
+
+<button onclick="window.close()"
+id="close">
 
 Close
 
 </button>
 
 
+
+</div>
+
+
+
 </body>
+
 
 </html>
