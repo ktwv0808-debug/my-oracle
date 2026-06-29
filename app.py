@@ -1,15 +1,15 @@
 from flask import Flask, render_template, jsonify
-import requests
-import psycopg2
 import os
+import psycopg2
 from datetime import datetime
 
 
 app = Flask(__name__)
 
 
+
 # =========================
-# PostgreSQL
+# PostgreSQL 연결
 # =========================
 
 def get_db():
@@ -20,22 +20,25 @@ def get_db():
 
 
 
+# =========================
+# DB 초기화
+# =========================
 
 def init_db():
 
-    conn=get_db()
+    conn = get_db()
 
-    cur=conn.cursor()
+    cur = conn.cursor()
 
 
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS prices(
+    CREATE TABLE IF NOT EXISTS price_history(
 
         id SERIAL PRIMARY KEY,
-        symbol TEXT,
-        price REAL,
-        source TEXT,
-        created TIMESTAMP
+
+        eth_price FLOAT,
+
+        created_at TIMESTAMP
 
     )
     """)
@@ -46,35 +49,33 @@ def init_db():
     CREATE TABLE IF NOT EXISTS trades(
 
         id SERIAL PRIMARY KEY,
-        symbol TEXT,
+
         action TEXT,
-        price REAL,
-        created TIMESTAMP
+
+        price FLOAT,
+
+        created_at TIMESTAMP
 
     )
     """)
 
 
-
     conn.commit()
+
+    cur.close()
 
     conn.close()
 
 
-    print(
-    "PostgreSQL database initialized successfully"
-    )
+    print("PostgreSQL database initialized successfully")
 
 
-
-init_db()
 
 
 
 # =========================
-# Home
+# 메인 홈페이지
 # =========================
-
 
 @app.route("/")
 def home():
@@ -85,26 +86,11 @@ def home():
 
 
 
-# =========================
-# Donation
-# =========================
-
-
-@app.route("/donation")
-def donation():
-
-    return render_template(
-        "donation.html"
-    )
-
-
-
 
 
 # =========================
-# Trading main popup
+# 자동매매 시스템 팝업
 # =========================
-
 
 @app.route("/trading")
 def trading():
@@ -117,49 +103,23 @@ def trading():
 
 
 
-# =========================
-# ETH API
-# =========================
-
-
-def get_eth_price():
-
-    url="https://api.coinbase.com/v2/prices/ETH-USD/spot"
-
-
-    r=requests.get(
-        url,
-        timeout=10
-    )
-
-
-    data=r.json()
-
-
-    return float(
-        data["data"]["amount"]
-    )
-
-
-
-
 
 # =========================
-# ETH Price popup
+# ETH Price 팝업
 # =========================
 
+@app.route("/price")
+def price():
 
-@app.route("/price-page")
-def price_page():
 
-    price=get_eth_price()
+    eth_price = 1578.325
 
 
     return render_template(
 
         "price.html",
 
-        price=price
+        price=eth_price
 
     )
 
@@ -169,15 +129,14 @@ def price_page():
 
 
 # =========================
-# Save price popup
+# ETH 가격 저장
 # =========================
 
+@app.route("/save-price")
+def save_price():
 
-@app.route("/save-price-page")
-def save_price_page():
 
-
-    price=get_eth_price()
+    eth_price = 1578.325
 
 
     conn=get_db()
@@ -186,29 +145,33 @@ def save_price_page():
 
 
 
-    cur.execute("""
-    INSERT INTO prices
-    (symbol,price,source,created)
+    cur.execute(
 
-    VALUES(%s,%s,%s,%s)
+    """
+
+    INSERT INTO price_history
+
+    (eth_price,created_at)
+
+    VALUES(%s,%s)
 
     """,
 
     (
 
-    "ETH",
-
-    price,
-
-    "Coinbase",
+    eth_price,
 
     datetime.now()
 
-    ))
+    )
+
+    )
 
 
 
     conn.commit()
+
+    cur.close()
 
     conn.close()
 
@@ -216,9 +179,7 @@ def save_price_page():
 
     return render_template(
 
-        "save_price.html",
-
-        price=price
+        "save_price.html"
 
     )
 
@@ -226,13 +187,14 @@ def save_price_page():
 
 
 
-# =========================
-# History popup
-# =========================
 
 
-@app.route("/history-page")
-def history_page():
+# =========================
+# 가격 기록
+# =========================
+
+@app.route("/history")
+def history():
 
 
     conn=get_db()
@@ -240,21 +202,26 @@ def history_page():
     cur=conn.cursor()
 
 
+    cur.execute(
 
-    cur.execute("""
-    SELECT *
+    """
 
-    FROM prices
+    SELECT eth_price,created_at
+
+    FROM price_history
 
     ORDER BY id DESC
 
-    """)
+    """
+
+    )
+
+
+    data=cur.fetchall()
 
 
 
-    rows=cur.fetchall()
-
-
+    cur.close()
 
     conn.close()
 
@@ -264,7 +231,7 @@ def history_page():
 
         "history.html",
 
-        prices=rows
+        history=data
 
     )
 
@@ -275,73 +242,20 @@ def history_page():
 
 
 # =========================
-# Trade signal popup
+# 자동거래 신호
 # =========================
 
-
-@app.route("/trade-check-page")
-def trade_check_page():
-
-
-    price=get_eth_price()
+@app.route("/trade-check")
+def trade_check():
 
 
-    signal="HOLD"
-
-
-    if price < 1700:
-
-        signal="BUY"
-
-
-
-    elif price > 2000:
-
-        signal="SELL"
-
-
-
-
-    conn=get_db()
-
-    cur=conn.cursor()
-
-
-
-    cur.execute("""
-    INSERT INTO trades
-
-    (symbol,action,price,created)
-
-    VALUES(%s,%s,%s,%s)
-
-    """,
-
-    (
-
-    "ETH",
-
-    signal,
-
-    price,
-
-    datetime.now()
-
-    ))
-
-
-
-    conn.commit()
-
-    conn.close()
+    signal="BUY SIGNAL"
 
 
 
     return render_template(
 
         "trade_check.html",
-
-        price=price,
 
         signal=signal
 
@@ -352,13 +266,13 @@ def trade_check_page():
 
 
 
+
 # =========================
-# Trade records popup
+# 거래 기록
 # =========================
 
-
-@app.route("/trades-page")
-def trades_page():
+@app.route("/trades")
+def trades():
 
 
     conn=get_db()
@@ -367,20 +281,26 @@ def trades_page():
 
 
 
-    cur.execute("""
-    SELECT *
+    cur.execute(
+
+    """
+
+    SELECT action,price,created_at
 
     FROM trades
 
     ORDER BY id DESC
 
-    """)
+    """
+
+    )
+
+
+    records=cur.fetchall()
 
 
 
-    rows=cur.fetchall()
-
-
+    cur.close()
 
     conn.close()
 
@@ -390,7 +310,7 @@ def trades_page():
 
         "trades.html",
 
-        trades=rows
+        trades=records
 
     )
 
@@ -399,111 +319,22 @@ def trades_page():
 
 
 
-# =========================
-# API JSON
-# =========================
 
 
-@app.route("/price")
-def price():
+# =========================
+# 테스트 API
+# =========================
+
+@app.route("/api/price")
+def api_price():
+
 
     return jsonify({
 
-        "ETH":
-
-        get_eth_price()
+        "ETH":1578.325
 
     })
 
-
-
-
-
-
-@app.route("/save-price")
-def save_price():
-
-    return jsonify({
-
-        "status":"use popup"
-
-    })
-
-
-
-
-
-
-@app.route("/history")
-def history():
-
-    return jsonify({
-
-        "status":"use popup"
-
-    })
-
-
-
-
-
-
-@app.route("/trade-check")
-def trade_check():
-
-    return jsonify({
-
-        "status":"use popup"
-
-    })
-
-
-
-
-
-
-@app.route("/trades")
-def trades():
-
-    return jsonify({
-
-        "status":"use popup"
-
-    })
-
-
-
-
-
-
-
-# =========================
-# Whitepaper
-# =========================
-
-
-@app.route("/whitepaper")
-def whitepaper():
-
-    return render_template(
-        "whitepaper.html"
-    )
-
-
-
-
-
-# =========================
-# Poem
-# =========================
-
-
-@app.route("/poem")
-def poem():
-
-    return render_template(
-        "poem.html"
-    )
 
 
 
@@ -513,10 +344,10 @@ def poem():
 if __name__=="__main__":
 
 
+    init_db()
+
+
     app.run(
-
         host="0.0.0.0",
-
         port=5000
-
     )
