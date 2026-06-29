@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
 
@@ -12,9 +12,10 @@ Automatic Trading System
 
 <style>
 
+
 body{
 
-font-family:Arial;
+font-family:"Segoe UI",Arial,sans-serif;
 
 background:#f4f6f8;
 
@@ -23,7 +24,9 @@ padding:40px;
 }
 
 
+
 .box{
+
 
 width:650px;
 
@@ -35,50 +38,121 @@ padding:40px;
 
 border-radius:20px;
 
+box-shadow:0 5px 25px rgba(0,0,0,0.15);
+
+
 }
+
+
+
+h1{
+
+text-align:center;
+
+color:#222;
+
+}
+
+
+
+
+.language{
+
+
+text-align:right;
+
+margin-bottom:20px;
+
+
+}
+
+
+
+select{
+
+
+padding:8px;
+
+border-radius:8px;
+
+cursor:pointer;
+
+
+}
+
 
 
 
 .item{
 
+
 background:#0066cc;
 
 color:white;
 
-padding:15px;
+padding:16px;
 
 margin:15px;
 
-border-radius:10px;
+border-radius:12px;
 
 text-align:center;
 
 cursor:pointer;
 
+font-size:18px;
+
+
 }
+
 
 
 
 .item:hover{
 
+
 background:#003f88;
 
+
 }
+
+
 
 
 
 .close{
 
-margin-top:30px;
 
-padding:12px 30px;
+display:block;
+
+margin:30px auto;
+
+padding:12px 35px;
+
+border:none;
+
+background:#555;
+
+color:white;
+
+border-radius:10px;
 
 cursor:pointer;
+
 
 }
 
 
+.close:hover{
+
+background:#222;
+
+}
+
+
+
 </style>
+
 
 
 
@@ -94,9 +168,83 @@ url,
 
 "popup",
 
-"width=700,height=500"
+"width=750,height=550,scrollbars=yes"
 
 );
+
+
+}
+
+
+
+
+
+
+function changeLang(){
+
+
+let lang=document.getElementById("lang").value;
+
+
+
+if(lang=="ko"){
+
+
+document.getElementById("title").innerHTML=
+"자동매매 시스템";
+
+
+document.getElementById("eth").innerHTML=
+"ETH 가격";
+
+
+document.getElementById("save").innerHTML=
+"ETH 가격 저장";
+
+
+document.getElementById("history").innerHTML=
+"가격 기록";
+
+
+document.getElementById("signal").innerHTML=
+"자동매매 신호";
+
+
+document.getElementById("records").innerHTML=
+"거래 기록";
+
+
+}
+
+else{
+
+
+document.getElementById("title").innerHTML=
+"Automatic Trading System";
+
+
+document.getElementById("eth").innerHTML=
+"ETH Price";
+
+
+document.getElementById("save").innerHTML=
+"Save ETH Price";
+
+
+document.getElementById("history").innerHTML=
+"Price History";
+
+
+document.getElementById("signal").innerHTML=
+"Auto Trading Signal";
+
+
+document.getElementById("records").innerHTML=
+"Trading Records";
+
+
+}
+
 
 
 }
@@ -109,6 +257,7 @@ url,
 </head>
 
 
+
 <body>
 
 
@@ -116,7 +265,38 @@ url,
 <div class="box">
 
 
-<h1>
+<div class="language">
+
+
+Language :
+
+<select id="lang" onchange="changeLang()">
+
+
+<option value="en">
+
+English
+
+</option>
+
+
+
+<option value="ko">
+
+한국어
+
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+
+<h1 id="title">
 
 Automatic Trading System
 
@@ -124,8 +304,13 @@ Automatic Trading System
 
 
 
+
+
 <div class="item"
-onclick="openPopup('/price-page')">
+
+onclick="openPopup('/price-page')"
+
+id="eth">
 
 ETH Price
 
@@ -133,8 +318,13 @@ ETH Price
 
 
 
+
+
 <div class="item"
-onclick="openPopup('/save-price-page')">
+
+onclick="openPopup('/save-price-page')"
+
+id="save">
 
 Save ETH Price
 
@@ -142,8 +332,13 @@ Save ETH Price
 
 
 
+
+
 <div class="item"
-onclick="openPopup('/history-page')">
+
+onclick="openPopup('/history-page')"
+
+id="history">
 
 Price History
 
@@ -151,8 +346,13 @@ Price History
 
 
 
+
+
 <div class="item"
-onclick="openPopup('/trade-check-page')">
+
+onclick="openPopup('/trade-check-page')"
+
+id="signal">
 
 Auto Trading Signal
 
@@ -160,8 +360,13 @@ Auto Trading Signal
 
 
 
+
+
 <div class="item"
-onclick="openPopup('/trades-page')">
+
+onclick="openPopup('/trades-page')"
+
+id="records">
 
 Trading Records
 
@@ -169,7 +374,12 @@ Trading Records
 
 
 
+
+
+
+
 <button class="close"
+
 onclick="window.close()">
 
 Close
@@ -182,6 +392,7 @@ Close
 
 
 </body>
+
 
 </html>
 
