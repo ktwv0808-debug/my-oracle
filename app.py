@@ -7,7 +7,6 @@ from datetime import datetime
 app = Flask(__name__)
 
 
-
 # =========================
 # PostgreSQL
 # =========================
@@ -21,63 +20,70 @@ def get_db():
 
 
 # =========================
-# Database Init
+# DB 생성
 # =========================
 
 def init_db():
 
-    conn = get_db()
+    try:
 
-    cur = conn.cursor()
+        conn = get_db()
 
-
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS price_history(
-
-        id SERIAL PRIMARY KEY,
-
-        eth_price FLOAT,
-
-        created_at TIMESTAMP
-
-    )
-    """)
+        cur = conn.cursor()
 
 
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS trades(
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS price_history(
 
-        id SERIAL PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
 
-        action TEXT,
+            eth_price FLOAT,
 
-        price FLOAT,
+            created_at TIMESTAMP
 
-        created_at TIMESTAMP
-
-    )
-    """)
+        )
+        """)
 
 
-    conn.commit()
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS trades(
 
-    cur.close()
+            id SERIAL PRIMARY KEY,
 
-    conn.close()
+            action TEXT,
+
+            price FLOAT,
+
+            created_at TIMESTAMP
+
+        )
+        """)
 
 
-    print("Database initialized")
 
+        conn.commit()
+
+        cur.close()
+
+        conn.close()
+
+
+        print("PostgreSQL initialized")
+
+
+    except Exception as e:
+
+        print("DB ERROR:",e)
 
 
 
 
 # =========================
-# MAIN HOMEPAGE
+# MAIN
 # =========================
 
 @app.route("/")
-def donation():
+def home():
 
     return render_template(
         "donation.html"
@@ -86,9 +92,8 @@ def donation():
 
 
 
-
 # =========================
-# Trading Popup
+# TRADING POPUP
 # =========================
 
 @app.route("/trading")
@@ -97,7 +102,6 @@ def trading():
     return render_template(
         "trading.html"
     )
-
 
 
 
@@ -129,40 +133,50 @@ def price():
 def save_price():
 
 
-    conn=get_db()
-
-    cur=conn.cursor()
+    try:
 
 
-    cur.execute(
+        conn=get_db()
 
-    """
-
-    INSERT INTO price_history
-
-    (eth_price,created_at)
-
-    VALUES(%s,%s)
-
-    """,
-
-    (
-
-    1578.325,
-
-    datetime.now()
-
-    )
-
-    )
+        cur=conn.cursor()
 
 
-    conn.commit()
+        cur.execute(
+
+        """
+
+        INSERT INTO price_history
+
+        (eth_price,created_at)
+
+        VALUES(%s,%s)
+
+        """,
+
+        (
+
+        1578.325,
+
+        datetime.now()
+
+        )
+
+        )
 
 
-    cur.close()
+        conn.commit()
 
-    conn.close()
+
+        cur.close()
+
+        conn.close()
+
+
+
+    except Exception as e:
+
+        print(e)
+
 
 
 
@@ -176,6 +190,8 @@ def save_price():
 
 
 
+
+
 # =========================
 # HISTORY
 # =========================
@@ -184,35 +200,45 @@ def save_price():
 def history():
 
 
-    conn=get_db()
-
-    cur=conn.cursor()
+    rows=[]
 
 
-
-    cur.execute(
-
-    """
-
-    SELECT eth_price,created_at
-
-    FROM price_history
-
-    ORDER BY id DESC
-
-    """
-
-    )
+    try:
 
 
+        conn=get_db()
 
-    rows=cur.fetchall()
+        cur=conn.cursor()
+
+
+        cur.execute(
+
+        """
+
+        SELECT eth_price,created_at
+
+        FROM price_history
+
+        ORDER BY id DESC
+
+        """
+
+        )
+
+
+        rows=cur.fetchall()
+
+
+        cur.close()
+
+        conn.close()
 
 
 
-    cur.close()
+    except Exception as e:
 
-    conn.close()
+
+        print(e)
 
 
 
@@ -228,8 +254,9 @@ def history():
 
 
 
+
 # =========================
-# TRADE SIGNAL
+# AUTO SIGNAL
 # =========================
 
 @app.route("/trade-check")
@@ -249,42 +276,55 @@ def trade_check():
 
 
 
+
+
 # =========================
-# TRADING RECORD
+# TRADING RECORDS
 # =========================
 
 @app.route("/trades")
 def trades():
 
 
-    conn=get_db()
-
-    cur=conn.cursor()
+    rows=[]
 
 
-
-    cur.execute(
-
-    """
-
-    SELECT action,price,created_at
-
-    FROM trades
-
-    ORDER BY id DESC
-
-    """
-
-    )
+    try:
 
 
-    rows=cur.fetchall()
+        conn=get_db()
+
+        cur=conn.cursor()
+
+
+        cur.execute(
+
+        """
+
+        SELECT action,price,created_at
+
+        FROM trades
+
+        ORDER BY id DESC
+
+        """
+
+        )
+
+
+        rows=cur.fetchall()
+
+
+        cur.close()
+
+        conn.close()
 
 
 
-    cur.close()
+    except Exception as e:
 
-    conn.close()
+
+        print(e)
 
 
 
@@ -300,12 +340,15 @@ def trades():
 
 
 
+
+
 # =========================
-# Whitepaper
+# WHITEPAPER
 # =========================
 
 @app.route("/whitepaper")
 def whitepaper():
+
 
     return render_template(
 
@@ -317,12 +360,15 @@ def whitepaper():
 
 
 
+
+
 # =========================
-# Poem
+# POEM
 # =========================
 
 @app.route("/poem")
 def poem():
+
 
     return render_template(
 
@@ -334,18 +380,29 @@ def poem():
 
 
 
+
+
+
 # =========================
-# TEST API
+# API TEST
 # =========================
 
 @app.route("/api/price")
 def api_price():
 
-    return jsonify({
+
+    return jsonify(
+
+        {
 
         "ETH":1578.325
 
-    })
+        }
+
+    )
+
+
+
 
 
 
