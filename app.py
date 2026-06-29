@@ -9,7 +9,7 @@ app = Flask(__name__)
 
 
 # =========================
-# PostgreSQL 연결
+# PostgreSQL
 # =========================
 
 def get_db():
@@ -21,7 +21,7 @@ def get_db():
 
 
 # =========================
-# DB 초기화
+# Database Init
 # =========================
 
 def init_db():
@@ -42,7 +42,6 @@ def init_db():
 
     )
     """)
-
 
 
     cur.execute("""
@@ -67,18 +66,18 @@ def init_db():
     conn.close()
 
 
-    print("PostgreSQL database initialized successfully")
+    print("Database initialized")
 
 
 
 
 
 # =========================
-# 메인 홈페이지
+# MAIN HOMEPAGE
 # =========================
 
 @app.route("/")
-def home():
+def donation():
 
     return render_template(
         "donation.html"
@@ -89,7 +88,7 @@ def home():
 
 
 # =========================
-# 자동매매 시스템 팝업
+# Trading Popup
 # =========================
 
 @app.route("/trading")
@@ -103,23 +102,18 @@ def trading():
 
 
 
-
 # =========================
-# ETH Price 팝업
+# ETH PRICE
 # =========================
 
 @app.route("/price")
 def price():
 
-
-    eth_price = 1578.325
-
-
     return render_template(
 
         "price.html",
 
-        price=eth_price
+        price=1578.325
 
     )
 
@@ -127,22 +121,17 @@ def price():
 
 
 
-
 # =========================
-# ETH 가격 저장
+# SAVE PRICE
 # =========================
 
 @app.route("/save-price")
 def save_price():
 
 
-    eth_price = 1578.325
-
-
     conn=get_db()
 
     cur=conn.cursor()
-
 
 
     cur.execute(
@@ -159,7 +148,7 @@ def save_price():
 
     (
 
-    eth_price,
+    1578.325,
 
     datetime.now()
 
@@ -168,8 +157,8 @@ def save_price():
     )
 
 
-
     conn.commit()
+
 
     cur.close()
 
@@ -187,10 +176,8 @@ def save_price():
 
 
 
-
-
 # =========================
-# 가격 기록
+# HISTORY
 # =========================
 
 @app.route("/history")
@@ -200,6 +187,7 @@ def history():
     conn=get_db()
 
     cur=conn.cursor()
+
 
 
     cur.execute(
@@ -217,7 +205,8 @@ def history():
     )
 
 
-    data=cur.fetchall()
+
+    rows=cur.fetchall()
 
 
 
@@ -231,7 +220,7 @@ def history():
 
         "history.html",
 
-        history=data
+        history=rows
 
     )
 
@@ -239,25 +228,19 @@ def history():
 
 
 
-
-
 # =========================
-# 자동거래 신호
+# TRADE SIGNAL
 # =========================
 
 @app.route("/trade-check")
 def trade_check():
 
 
-    signal="BUY SIGNAL"
-
-
-
     return render_template(
 
         "trade_check.html",
 
-        signal=signal
+        signal="BUY SIGNAL"
 
     )
 
@@ -266,9 +249,8 @@ def trade_check():
 
 
 
-
 # =========================
-# 거래 기록
+# TRADING RECORD
 # =========================
 
 @app.route("/trades")
@@ -296,7 +278,7 @@ def trades():
     )
 
 
-    records=cur.fetchall()
+    rows=cur.fetchall()
 
 
 
@@ -310,7 +292,7 @@ def trades():
 
         "trades.html",
 
-        trades=records
+        trades=rows
 
     )
 
@@ -318,24 +300,52 @@ def trades():
 
 
 
+# =========================
+# Whitepaper
+# =========================
+
+@app.route("/whitepaper")
+def whitepaper():
+
+    return render_template(
+
+        "whitepaper.html"
+
+    )
+
+
 
 
 
 # =========================
-# 테스트 API
+# Poem
+# =========================
+
+@app.route("/poem")
+def poem():
+
+    return render_template(
+
+        "poem.html"
+
+    )
+
+
+
+
+
+# =========================
+# TEST API
 # =========================
 
 @app.route("/api/price")
 def api_price():
-
 
     return jsonify({
 
         "ETH":1578.325
 
     })
-
-
 
 
 
@@ -348,10 +358,9 @@ if __name__=="__main__":
 
 
     app.run(
-        host="0.0.0.0",
-        port=5000
-    )
-@app.route("/test")
-def test():
 
-    return "SERVER UPDATED"
+        host="0.0.0.0",
+
+        port=5000
+
+    )
