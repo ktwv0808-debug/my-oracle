@@ -1,107 +1,15 @@
 <!DOCTYPE html>
-
 <html>
 
+
 <head>
-<script>
 
-const langData={
-
-
-en:{
-
-
-close:"Close",
-
-
-history:"Price History",
-
-
-signal:"Auto Trading Signal",
-
-
-trades:"Trading Records",
-
-
-whitepaper:"Whitepaper",
-
-
-poem:"Toward Victory",
-
-
-mission:"Our Mission"
-
-},
-
-
-
-ko:{
-
-
-close:"닫기",
-
-
-history:"가격 기록",
-
-
-signal:"자동 거래 신호",
-
-
-trades:"거래 기록",
-
-
-whitepaper:"백서",
-
-
-poem:"승리를 향하여",
-
-
-mission:"우리의 사명"
-
-}
-
-
-};
-
-
-
-function changeLang(){
-
-
-let l=document.getElementById("language").value;
-
-
-
-document.querySelectorAll("[data-en]").forEach(e=>{
-
-
-e.innerHTML=e.getAttribute("data-"+l);
-
-
-});
-
-
-}
-
-
-
-function closePopup(){
-
-
-window.open('','_self');
-
-window.close();
-
-
-}
-
-
-
-</script>
 <meta charset="UTF-8">
 
-
 <title>Auto Trading Signal</title>
+
+
+<script src="/static/language.js"></script>
 
 
 <style>
@@ -109,9 +17,9 @@ window.close();
 
 body{
 
-background:#f5f7fa;
-
 font-family:Arial;
+
+background:#f5f5f5;
 
 text-align:center;
 
@@ -121,7 +29,7 @@ text-align:center;
 
 .box{
 
-width:650px;
+width:600px;
 
 margin:50px auto;
 
@@ -136,12 +44,11 @@ box-shadow:0 0 20px #aaa;
 }
 
 
-
 button{
 
 padding:12px 40px;
 
-background:#0066cc;
+background:#333;
 
 color:white;
 
@@ -154,34 +61,34 @@ cursor:pointer;
 }
 
 
-
 </style>
 
 
 </head>
 
 
-<body>
 
+<body>
 
 
 <div class="box">
 
 
 
-Language :
+<select id="language"
 
-<select>
+onchange="changeLanguage()">
 
 
-<option>
+
+<option value="en">
 
 English
 
 </option>
 
 
-<option>
+<option value="ko">
 
 한국어
 
@@ -193,7 +100,6 @@ English
 
 
 
-
 <h1 data-lang="signal">
 
 Auto Trading Signal
@@ -201,23 +107,29 @@ Auto Trading Signal
 </h1>
 
 
+
+
 <h2>
 
-{{ signal }}
+{{signal}}
 
 </h2>
 
 
 
 
-<button onclick="window.close()">
+
+<button data-lang="close"
+
+onclick="window.close()">
+
 Close
+
 </button>
 
 
 
 </div>
-
 
 
 </body>
