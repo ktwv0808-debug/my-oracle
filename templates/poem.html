@@ -1,117 +1,18 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="en">
 
 
 <head>
-<script>
 
-const langData={
-
-
-en:{
-
-
-close:"Close",
-
-
-history:"Price History",
-
-
-signal:"Auto Trading Signal",
-
-
-trades:"Trading Records",
-
-
-whitepaper:"Whitepaper",
-
-
-poem:"Toward Victory",
-
-
-mission:"Our Mission"
-
-},
-
-
-
-ko:{
-
-
-close:"닫기",
-
-
-history:"가격 기록",
-
-
-signal:"자동 거래 신호",
-
-
-trades:"거래 기록",
-
-
-whitepaper:"백서",
-
-
-poem:"승리를 향하여",
-
-
-mission:"우리의 사명"
-
-}
-
-
-};
-
-
-
-function changeLang(){
-
-
-let l=document.getElementById("language").value;
-
-
-
-document.querySelectorAll("[data-en]").forEach(e=>{
-
-
-e.innerHTML=e.getAttribute("data-"+l);
-
-
-});
-
-
-}
-
-
-
-function closePopup(){
-
-
-window.open('','_self');
-
-window.close();
-
-
-}
-
-
-
-</script>
 
 <meta charset="UTF-8">
 
 
-<title>
+<title>Toward Victory</title>
 
-<h1 data-lang="poem">
 
-Toward Victory
 
-</h1>
-
-</title>
+<script src="/static/language.js"></script>
 
 
 
@@ -120,13 +21,11 @@ Toward Victory
 
 body{
 
+font-family:Arial;
 
-font-family:"Batang","Times New Roman";
+background:#f5f5f5;
 
-background:#f5f7fa;
-
-padding:40px;
-
+text-align:center;
 
 }
 
@@ -135,55 +34,27 @@ padding:40px;
 .box{
 
 
+width:750px;
+
+margin:40px auto;
+
 background:white;
 
-max-width:800px;
-
-margin:auto;
-
-padding:50px;
+padding:40px;
 
 border-radius:20px;
 
-box-shadow:0 5px 20px #aaa;
+box-shadow:0 0 20px #aaa;
 
-line-height:2;
-
-}
-
-
-
-.language{
-
-text-align:right;
-
-font-family:Arial;
+line-height:2.2;
 
 }
 
 
 
-h1{
+select{
 
-text-align:center;
-
-}
-
-
-
-.author{
-
-text-align:center;
-
-font-size:22px;
-
-}
-
-
-
-button{
-
-padding:12px 30px;
+padding:8px;
 
 cursor:pointer;
 
@@ -191,42 +62,45 @@ cursor:pointer;
 
 
 
+.poem{
+
+white-space:pre-line;
+
+text-align:center;
+
+font-size:18px;
+
+}
+
+
+
+button{
+
+
+margin-top:30px;
+
+padding:12px 50px;
+
+background:#333;
+
+color:white;
+
+border:0;
+
+border-radius:10px;
+
+cursor:pointer;
+
+
+}
+
+
 </style>
 
 
 
-<script>
-
-
-function changeLang(){
-
-
-let l=document.getElementById("lang").value;
-
-
-
-if(l=="ko"){
-
-
-document.getElementById("title").innerHTML=
-"승리를 향하여";
-
-
-document.getElementById("close").innerHTML=
-"닫기";
-
-
-}
-
-
-
-}
-
-
-</script>
-
-
 </head>
+
 
 
 <body>
@@ -237,18 +111,19 @@ document.getElementById("close").innerHTML=
 
 
 
-<div class="language">
+<div style="text-align:right">
 
 
 Language :
 
 
-<select id="lang"
-onchange="changeLang()">
+<select id="language"
+
+onchange="changeLanguage()">
 
 
 
-<option selected value="en">
+<option value="en">
 
 English
 
@@ -270,7 +145,8 @@ English
 
 
 
-<h1 id="title">
+
+<h1 data-lang="poem">
 
 Toward Victory
 
@@ -278,134 +154,310 @@ Toward Victory
 
 
 
-<div class="author">
 
-Kim Tae Wan
+<h3>
+
+김태완
+
+</h3>
+
+
+
+
+
+<div class="poem"
+
+
+
+data-en="
+
+
+
+The youth who can see the highest place in life,
+
+The youth who has the strongest power in life,
+
+The cries you shouted in the valley
+
+Now come back as an echo.
+
+Go, youth.
+
+
+
+Even if rain and wind become harsh
+
+On the road you walk,
+
+Will you break your will?
+
+Go, youth.
+
+
+
+On the road you walk,
+
+The thorn tree is your friend.
+
+Know when to avoid,
+
+Know when to endure.
+
+Go, youth.
+
+
+
+On the road you walk,
+
+Enjoy the sound of fallen leaves under your feet,
+
+Be grateful
+
+For the songs of mountain birds.
+
+
+
+Go, youth.
+
+
+
+God said,
+
+Your fighting spirit is never meaningless.
+
+God has given you
+
+Strong legs
+
+And a mountain you can climb.
+
+
+
+Never abandon
+
+The will of God."
+
+
+
+
+data-ko="
+
+
+
+인생에서 가장 높은 곳을 볼 줄 아는
+
+젊음이여,
+
+
+
+인생에서 가장 힘이 넘치는
+
+젊음이여,
+
+
+
+네가 골짜기에서 외치던 아우성은
+
+이제 메아리로써 들여오누니
+
+
+
+가자. 젊음이여,
+
+
+
+
+
+네가 가는 길에
+
+비, 바람 매서워도
+
+
+
+너의 의지 꺾겠느냐.
+
+
+
+가자, 젊음이여,
+
+
+
+
+
+네가 가는 길에
+
+가시나무는 너의 벗이니
+
+
+
+피해 갈 줄도 알며
+
+인내 할 줄도 알며
+
+
+
+가자, 젊음이여,
+
+
+
+
+
+네가 가는 길에
+
+낙엽밟는 소리에 흥을 돋구며
+
+
+
+네가 가는 길에
+
+산새 지저귀는 소리에
+
+고마워 할 줄도 알며
+
+
+
+가자, 젊음이여,
+
+
+
+
+
+신은 말했노라.
+
+
+
+너의 투혼이 헛되지 않음을,
+
+
+
+신은 베풀어 주었노라.
+
+
+
+너의 튼튼한 두다리와
+
+네가 올라 갈 수 있는 산을,
+
+
+
+
+
+정녕 너는 신의 뜻을
+
+져버리지 말지어라."
+
+
+
+>
+
+
+
+인생에서 가장 높은 곳을 볼 줄 아는
+
+젊음이여,
+
+
+
+인생에서 가장 힘이 넘치는
+
+젊음이여,
+
+
+
+네가 골짜기에서 외치던 아우성은
+
+이제 메아리로써 들여오누니
+
+
+
+가자. 젊음이여,
+
+
+
+네가 가는 길에
+
+비, 바람 매서워도
+
+
+
+너의 의지 꺾겠느냐.
+
+
+
+가자, 젊음이여,
+
+
+
+네가 가는 길에
+
+가시나무는 너의 벗이니
+
+
+
+피해 갈 줄도 알며
+
+인내 할 줄도 알며
+
+
+
+가자, 젊음이여,
+
+
+
+네가 가는 길에
+
+낙엽밟는 소리에 흥을 돋구며
+
+
+
+네가 가는 길에
+
+산새 지저귀는 소리에 고마워 할 줄도 알며
+
+
+
+가자, 젊음이여,
+
+
+
+신은 말했노라.
+
+
+
+너의 투혼이 헛되지 않음을,
+
+
+
+신은 베풀어 주었노라.
+
+
+
+너의 튼튼한 두다리와
+
+네가 올라 갈 수 있는 산을,
+
+
+
+정녕 너는 신의 뜻을
+
+져버리지 말지어라.
+
+
 
 </div>
 
 
 
 
-<p>
 
+<button data-lang="close"
 
-Young people who know how to see the highest place in life,
-
-
-<br><br>
-
-
-Young people full of powerful energy,
-
-
-<br><br>
-
-
-The cries you shouted in the valley
-
-<br>
-
-are now returning as echoes.
-
-<br><br>
-
-
-Go, young people.
-
-<br><br>
-
-
-
-Even if rain and wind stand in your way,
-
-<br>
-
-will you break your will?
-
-<br><br>
-
-
-Go, young people.
-
-<br><br>
-
-
-
-The thorn tree on your road
-
-<br>
-
-is your friend.
-
-<br><br>
-
-
-Know when to avoid,
-
-<br>
-
-know how to endure.
-
-<br><br>
-
-
-Go, young people.
-
-<br><br>
-
-
-
-Enjoy the sound of fallen leaves beneath your feet,
-
-<br>
-
-and appreciate the songs of mountain birds.
-
-<br><br>
-
-
-
-God said:
-
-<br>
-
-Your struggle will not be in vain.
-
-<br><br>
-
-
-God has given you:
-
-<br>
-
-Strong legs,
-
-<br>
-
-and mountains you can climb.
-
-<br><br>
-
-
-Never abandon
-
-<br>
-
-the will of God.
-
-
-
-</p>
-
-
-
-<button onclick="window.close()"
-id="close">
+onclick="window.close()">
 
 Close
 
 </button>
+
 
 
 </div>
