@@ -1,15 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 
-
 <head>
-
 
 <meta charset="UTF-8">
 
-
 <title>Toward Victory</title>
-
 
 
 <script src="/static/language.js"></script>
@@ -21,7 +17,7 @@
 
 body{
 
-font-family:Arial;
+font-family:Arial, sans-serif;
 
 background:#f5f5f5;
 
@@ -46,7 +42,14 @@ border-radius:20px;
 
 box-shadow:0 0 20px #aaa;
 
-line-height:2.2;
+
+}
+
+
+
+.language{
+
+text-align:right;
 
 }
 
@@ -62,13 +65,35 @@ cursor:pointer;
 
 
 
+h1{
+
+text-align:center;
+
+}
+
+
+
+.author{
+
+font-size:20px;
+
+margin-bottom:30px;
+
+}
+
+
+
 .poem{
+
 
 white-space:pre-line;
 
 text-align:center;
 
 font-size:18px;
+
+line-height:2.2;
+
 
 }
 
@@ -85,7 +110,7 @@ background:#333;
 
 color:white;
 
-border:0;
+border:none;
 
 border-radius:10px;
 
@@ -96,6 +121,22 @@ cursor:pointer;
 
 
 </style>
+
+
+
+<script>
+
+
+function closePopup(){
+
+
+self.close();
+
+
+}
+
+
+</script>
 
 
 
@@ -111,7 +152,7 @@ cursor:pointer;
 
 
 
-<div style="text-align:right">
+<div class="language">
 
 
 Language :
@@ -130,11 +171,13 @@ English
 </option>
 
 
+
 <option value="ko">
 
 한국어
 
 </option>
+
 
 
 </select>
@@ -154,12 +197,11 @@ Toward Victory
 
 
 
-
-<h3>
+<div class="author">
 
 김태완
 
-</h3>
+</div>
 
 
 
@@ -167,11 +209,7 @@ Toward Victory
 
 <div class="poem"
 
-
-
 data-en="
-
-
 
 The youth who can see the highest place in life,
 
@@ -179,7 +217,7 @@ The youth who has the strongest power in life,
 
 The cries you shouted in the valley
 
-Now come back as an echo.
+Now return as an echo.
 
 Go, youth.
 
@@ -209,21 +247,21 @@ Go, youth.
 
 On the road you walk,
 
-Enjoy the sound of fallen leaves under your feet,
+Enjoy the sound of fallen leaves,
 
-Be grateful
+And be thankful
 
 For the songs of mountain birds.
-
-
 
 Go, youth.
 
 
 
-God said,
+God said.
 
 Your fighting spirit is never meaningless.
+
+
 
 God has given you
 
@@ -235,14 +273,13 @@ And a mountain you can climb.
 
 Never abandon
 
-The will of God."
+The will of God.
 
+"
 
 
 
 data-ko="
-
-
 
 인생에서 가장 높은 곳을 볼 줄 아는
 
@@ -344,12 +381,11 @@ data-ko="
 
 정녕 너는 신의 뜻을
 
-져버리지 말지어라."
+져버리지 말지어라.
 
-
+"
 
 >
-
 
 
 인생에서 가장 높은 곳을 볼 줄 아는
@@ -452,11 +488,12 @@ data-ko="
 
 <button data-lang="close"
 
-onclick="window.close()">
+onclick="closePopup()">
 
 Close
 
 </button>
+
 
 
 
