@@ -2,115 +2,23 @@
 <html>
 
 <head>
-<script>
 
-const langData={
-
-
-en:{
-
-
-close:"Close",
-
-
-history:"Price History",
-
-
-signal:"Auto Trading Signal",
-
-
-trades:"Trading Records",
-
-
-whitepaper:"Whitepaper",
-
-
-poem:"Toward Victory",
-
-
-mission:"Our Mission"
-
-},
-
-
-
-ko:{
-
-
-close:"닫기",
-
-
-history:"가격 기록",
-
-
-signal:"자동 거래 신호",
-
-
-trades:"거래 기록",
-
-
-whitepaper:"백서",
-
-
-poem:"승리를 향하여",
-
-
-mission:"우리의 사명"
-
-}
-
-
-};
-
-
-
-function changeLang(){
-
-
-let l=document.getElementById("language").value;
-
-
-
-document.querySelectorAll("[data-en]").forEach(e=>{
-
-
-e.innerHTML=e.getAttribute("data-"+l);
-
-
-});
-
-
-}
-
-
-
-function closePopup(){
-
-
-window.open('','_self');
-
-window.close();
-
-
-}
-
-
-
-</script>
 <meta charset="UTF-8">
 
 <title>Save ETH Price</title>
+
+<script src="/static/language.js"></script>
 
 
 <style>
 
 body{
 
-background:#f5f7fa;
-
 font-family:Arial;
 
 text-align:center;
+
+background:#f5f5f5;
 
 }
 
@@ -136,7 +44,7 @@ button{
 
 padding:12px 40px;
 
-background:#0066cc;
+background:#333;
 
 color:white;
 
@@ -148,50 +56,7 @@ cursor:pointer;
 
 }
 
-
-select{
-
-padding:8px;
-
-}
-
 </style>
-
-
-<script>
-
-
-function change(){
-
-
-if(lang.value=="ko"){
-
-
-title.innerHTML="ETH 가격 저장";
-
-
-close.innerHTML="닫기";
-
-
-}
-
-else{
-
-
-title.innerHTML="Save ETH Price";
-
-
-close.innerHTML="Close";
-
-
-}
-
-
-}
-
-
-</script>
-
 
 </head>
 
@@ -199,63 +64,56 @@ close.innerHTML="Close";
 <body>
 
 
-
 <div class="box">
 
 
-<div style="text-align:right">
 
-Language :
+<select id="language"
 
-<select id="lang" onchange="change()">
+onchange="changeLanguage()">
+
 
 
 <option value="en">
-
 English
-
 </option>
 
 
 <option value="ko">
-
 한국어
-
 </option>
 
 
 </select>
 
 
-</div>
 
-
-
-<h1 id="title">
+<h1 data-lang="save">
 
 Save ETH Price
 
 </h1>
 
 
+<p>
 
-<h2>
+ETH Price Saved Successfully
 
-Price Saved Successfully
-
-</h2>
-
+</p>
 
 
-<button onclick="window.close()">
+
+<button data-lang="close"
+
+onclick="window.close()">
+
 Close
-</button>
-
 
 </button>
 
 
 </div>
+
 
 
 </body>
