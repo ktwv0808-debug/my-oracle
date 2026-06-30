@@ -10,17 +10,11 @@
 
 <style>
 
-
 body{
-
 background:#f4f7fb;
-
 font-family:Arial;
-
 text-align:center;
-
 }
-
 
 
 .box{
@@ -41,45 +35,25 @@ box-shadow:0 0 20px #aaa;
 
 
 
-select{
-
-padding:8px;
-
-cursor:pointer;
-
-}
-
-
-
 .btn{
-
 
 width:350px;
 
-
 margin:15px auto;
-
 
 padding:15px;
 
-
 background:#0066cc;
-
 
 color:white;
 
-
 border-radius:15px;
-
 
 cursor:pointer;
 
-
 font-size:18px;
 
-
 }
-
 
 
 .btn:hover{
@@ -87,7 +61,6 @@ font-size:18px;
 background:#003b80;
 
 }
-
 
 
 .close{
@@ -98,16 +71,22 @@ background:#333;
 
 
 
-</style>
+select{
 
+padding:8px;
+
+cursor:pointer;
+
+}
+
+
+</style>
 
 
 <script>
 
 
-
-const text = {
-
+const words = {
 
 
 en:{
@@ -132,7 +111,6 @@ close:"Close"
 
 
 
-
 ko:{
 
 
@@ -154,8 +132,8 @@ close:"닫기"
 }
 
 
-};
 
+};
 
 
 
@@ -164,43 +142,43 @@ close:"닫기"
 function changeLanguage(){
 
 
-
-let lang = document.getElementById("language").value;
-
-
-
-document.getElementById("title").innerText =
-text[lang].title;
+const value =
+document.getElementById("language").value;
 
 
 
-document.getElementById("priceBtn").innerText =
-text[lang].price;
+document.getElementById("title")
+.innerHTML = words[value].title;
 
 
 
-document.getElementById("saveBtn").innerText =
-text[lang].save;
+document.getElementById("priceBtn")
+.innerHTML = words[value].price;
 
 
 
-document.getElementById("historyBtn").innerText =
-text[lang].history;
+document.getElementById("saveBtn")
+.innerHTML = words[value].save;
 
 
 
-document.getElementById("signalBtn").innerText =
-text[lang].signal;
+document.getElementById("historyBtn")
+.innerHTML = words[value].history;
 
 
 
-document.getElementById("tradesBtn").innerText =
-text[lang].trades;
+document.getElementById("signalBtn")
+.innerHTML = words[value].signal;
 
 
 
-document.getElementById("closeBtn").innerText =
-text[lang].close;
+document.getElementById("tradesBtn")
+.innerHTML = words[value].trades;
+
+
+
+document.getElementById("closeBtn")
+.innerHTML = words[value].close;
 
 
 
@@ -211,7 +189,8 @@ text[lang].close;
 
 
 
-function popup(url){
+
+function openPopup(url){
 
 
 
@@ -219,12 +198,11 @@ window.open(
 
 url,
 
-"popup",
+"_blank",
 
 "width=750,height=600"
 
 );
-
 
 
 }
@@ -232,11 +210,12 @@ url,
 
 
 
+
 </script>
 
 
-
 </head>
+
 
 
 <body>
@@ -247,13 +226,10 @@ url,
 
 
 
-
-
 <div style="text-align:right">
 
 
 Language :
-
 
 
 <select id="language"
@@ -267,6 +243,7 @@ onchange="changeLanguage()">
 English
 
 </option>
+
 
 
 <option value="ko">
@@ -298,18 +275,17 @@ Automatic Trading System
 
 
 
-
 <div class="btn"
 
 id="priceBtn"
 
-onclick="popup('/price')">
+onclick="openPopup('/price')">
 
 
 ETH Price
 
-</div>
 
+</div>
 
 
 
@@ -319,13 +295,13 @@ ETH Price
 
 id="saveBtn"
 
-onclick="popup('/save-price')">
+onclick="openPopup('/save-price')">
 
 
 Save ETH Price
 
-</div>
 
+</div>
 
 
 
@@ -336,13 +312,13 @@ Save ETH Price
 
 id="historyBtn"
 
-onclick="popup('/history')">
+onclick="openPopup('/history')">
 
 
 Price History
 
-</div>
 
+</div>
 
 
 
@@ -353,13 +329,13 @@ Price History
 
 id="signalBtn"
 
-onclick="popup('/trade-check')">
+onclick="openPopup('/trade-check')">
 
 
 Auto Trading Signal
 
-</div>
 
+</div>
 
 
 
@@ -370,13 +346,13 @@ Auto Trading Signal
 
 id="tradesBtn"
 
-onclick="popup('/trades')">
+onclick="openPopup('/trades')">
 
 
 Trading Records
 
-</div>
 
+</div>
 
 
 
@@ -392,17 +368,15 @@ onclick="window.close()">
 
 Close
 
-</div>
-
-
-
-
 
 </div>
 
+
+
+
+</div>
 
 
 </body>
-
 
 </html>
