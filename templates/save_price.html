@@ -153,8 +153,22 @@ Price Saved Successfully
 
 
 
-<button id="close"
-onclick="self.close()">
+<button onclick="closePopup()">
+Close
+</button>
+
+
+<script>
+
+function closePopup(){
+
+    window.open('','_self');
+
+    window.close();
+
+}
+
+</script>
 
 Close
 
