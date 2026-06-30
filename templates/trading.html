@@ -1,63 +1,60 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
 <meta charset="UTF-8">
 
-<title>Automatic Trading System</title>
+<title id="pageTitle">
+Automatic Trading System
+</title>
 
 
 <style>
 
 body{
-    background:#f4f7fb;
-    font-family:Arial;
-    text-align:center;
+font-family:Arial;
+background:#f5f5f5;
+text-align:center;
 }
 
 
-.container{
+.box{
 
-    width:700px;
-    margin:40px auto;
-    background:white;
-    padding:40px;
-    border-radius:20px;
-}
-
-
-.button{
-
-    width:350px;
-    margin:15px auto;
-    padding:15px;
-
-    background:#0066cc;
-    color:white;
-
-    border-radius:15px;
-
-    cursor:pointer;
-
-    font-size:18px;
+width:700px;
+margin:50px auto;
+background:white;
+padding:40px;
+border-radius:20px;
 
 }
 
 
-.button:hover{
+button{
 
-    background:#003b80;
+display:block;
+
+width:350px;
+
+margin:15px auto;
+
+padding:15px;
+
+font-size:18px;
+
+background:#0066cc;
+
+color:white;
+
+border:none;
+
+border-radius:15px;
+
+cursor:pointer;
 
 }
 
 
 .close{
 
-    background:#333;
+background:#333;
 
 }
-
 
 
 </style>
@@ -67,10 +64,10 @@ body{
 <script>
 
 
-const languageData = {
+const text={
 
 
-English:{
+en:{
 
 
 title:"Automatic Trading System",
@@ -87,13 +84,11 @@ trades:"Trading Records",
 
 close:"Close"
 
-
 },
 
 
 
-
-한국어:{
+ko:{
 
 
 title:"자동매매 시스템",
@@ -110,7 +105,6 @@ trades:"거래 기록",
 
 close:"닫기"
 
-
 }
 
 
@@ -120,48 +114,34 @@ close:"닫기"
 
 
 
-
-function translate(){
-
+function langChange(){
 
 
-let lang = document.getElementById("lang").value;
+let l=document.getElementById("language").value;
 
 
-
-document.getElementById("title").innerText =
-languageData[lang].title;
+document.getElementById("pageTitle").innerText=text[l].title;
 
 
-
-document.getElementById("price").innerText =
-languageData[lang].price;
+document.getElementById("title").innerText=text[l].title;
 
 
-
-document.getElementById("save").innerText =
-languageData[lang].save;
+document.getElementById("price").innerText=text[l].price;
 
 
-
-document.getElementById("history").innerText =
-languageData[lang].history;
+document.getElementById("save").innerText=text[l].save;
 
 
-
-document.getElementById("signal").innerText =
-languageData[lang].signal;
+document.getElementById("history").innerText=text[l].history;
 
 
-
-document.getElementById("trades").innerText =
-languageData[lang].trades;
+document.getElementById("signal").innerText=text[l].signal;
 
 
+document.getElementById("trades").innerText=text[l].trades;
 
-document.getElementById("close").innerText =
-languageData[lang].close;
 
+document.getElementById("close").innerText=text[l].close;
 
 
 }
@@ -169,18 +149,16 @@ languageData[lang].close;
 
 
 
-
-
-function openPopup(url){
+function popup(url){
 
 
 window.open(
 
 url,
 
-"popup",
+"_blank",
 
-"width=750,height=600"
+"width=700,height=600"
 
 );
 
@@ -195,42 +173,43 @@ url,
 </head>
 
 
+
 <body>
 
 
-<div class="container">
+<div class="box">
 
 
-<div style="text-align:right">
+<div align="right">
 
 
 Language :
 
 
-<select id="lang" onchange="translate()">
+<select id="language"
+
+onchange="langChange()">
 
 
 
-<option>
+<option value="en">
 
 English
 
 </option>
 
 
-<option>
+<option value="ko">
 
 한국어
 
 </option>
 
 
-
 </select>
 
 
 </div>
-
 
 
 
@@ -244,96 +223,71 @@ Automatic Trading System
 
 
 
+<button id="price"
 
-<div class="button"
-
-id="price"
-
-onclick="openPopup('/price')">
-
+onclick="popup('/price')">
 
 ETH Price
 
-</div>
+</button>
 
 
 
 
+<button id="save"
 
-<div class="button"
-
-id="save"
-
-onclick="openPopup('/save-price')">
-
+onclick="popup('/save-price')">
 
 Save ETH Price
 
-</div>
+</button>
 
 
 
 
+<button id="history"
 
-
-<div class="button"
-
-id="history"
-
-onclick="openPopup('/history')">
-
+onclick="popup('/history')">
 
 Price History
 
-</div>
+</button>
 
 
 
 
+<button id="signal"
 
-
-<div class="button"
-
-id="signal"
-
-onclick="openPopup('/trade-check')">
-
+onclick="popup('/trade-check')">
 
 Auto Trading Signal
 
-</div>
+</button>
 
 
 
 
+<button id="trades"
 
-
-<div class="button"
-
-id="trades"
-
-onclick="openPopup('/trades')">
-
+onclick="popup('/trades')">
 
 Trading Records
 
-</div>
+</button>
 
 
 
 
+<button id="close"
 
-
-<div class="button close"
-
-id="close"
+class="close"
 
 onclick="window.close()">
 
-
 Close
 
-</div>
+</button>
+
 
 
 
@@ -341,6 +295,5 @@ Close
 
 
 </body>
-
 
 </html>
