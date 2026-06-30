@@ -3,7 +3,101 @@
 <html>
 
 <head>
+<script>
 
+const langData={
+
+
+en:{
+
+
+close:"Close",
+
+
+history:"Price History",
+
+
+signal:"Auto Trading Signal",
+
+
+trades:"Trading Records",
+
+
+whitepaper:"Whitepaper",
+
+
+poem:"Toward Victory",
+
+
+mission:"Our Mission"
+
+},
+
+
+
+ko:{
+
+
+close:"닫기",
+
+
+history:"가격 기록",
+
+
+signal:"자동 거래 신호",
+
+
+trades:"거래 기록",
+
+
+whitepaper:"백서",
+
+
+poem:"승리를 향하여",
+
+
+mission:"우리의 사명"
+
+}
+
+
+};
+
+
+
+function changeLang(){
+
+
+let l=document.getElementById("language").value;
+
+
+
+document.querySelectorAll("[data-en]").forEach(e=>{
+
+
+e.innerHTML=e.getAttribute("data-"+l);
+
+
+});
+
+
+}
+
+
+
+function closePopup(){
+
+
+window.open('','_self');
+
+window.close();
+
+
+}
+
+
+
+</script>
 <meta charset="UTF-8">
 
 
