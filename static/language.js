@@ -60,11 +60,11 @@ document.getElementById("language").value;
 
 
 
-document.querySelectorAll("[data-lang]").forEach(function(item){
+document.querySelectorAll("[data-lang]").forEach(function(el){
 
 
-item.innerHTML =
-translations[lang][item.dataset.lang];
+el.innerText =
+translations[lang][el.dataset.lang];
 
 
 });
