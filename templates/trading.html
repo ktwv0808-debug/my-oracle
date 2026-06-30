@@ -11,85 +11,66 @@
 <style>
 
 body{
-background:#f4f7fb;
-font-family:Arial;
-text-align:center;
+    background:#f4f7fb;
+    font-family:Arial;
+    text-align:center;
 }
 
 
-.box{
+.container{
 
-width:750px;
-
-margin:40px auto;
-
-background:white;
-
-padding:40px;
-
-border-radius:20px;
-
-box-shadow:0 0 20px #aaa;
-
+    width:700px;
+    margin:40px auto;
+    background:white;
+    padding:40px;
+    border-radius:20px;
 }
 
 
+.button{
 
-.btn{
+    width:350px;
+    margin:15px auto;
+    padding:15px;
 
-width:350px;
+    background:#0066cc;
+    color:white;
 
-margin:15px auto;
+    border-radius:15px;
 
-padding:15px;
+    cursor:pointer;
 
-background:#0066cc;
-
-color:white;
-
-border-radius:15px;
-
-cursor:pointer;
-
-font-size:18px;
+    font-size:18px;
 
 }
 
 
-.btn:hover{
+.button:hover{
 
-background:#003b80;
+    background:#003b80;
 
 }
 
 
 .close{
 
-background:#333;
+    background:#333;
 
 }
 
-
-
-select{
-
-padding:8px;
-
-cursor:pointer;
-
-}
 
 
 </style>
 
 
+
 <script>
 
 
-const words = {
+const languageData = {
 
 
-en:{
+English:{
 
 
 title:"Automatic Trading System",
@@ -111,7 +92,8 @@ close:"Close"
 
 
 
-ko:{
+
+한국어:{
 
 
 title:"자동매매 시스템",
@@ -132,53 +114,53 @@ close:"닫기"
 }
 
 
-
 };
 
 
 
 
 
-function changeLanguage(){
 
-
-const value =
-document.getElementById("language").value;
+function translate(){
 
 
 
-document.getElementById("title")
-.innerHTML = words[value].title;
+let lang = document.getElementById("lang").value;
 
 
 
-document.getElementById("priceBtn")
-.innerHTML = words[value].price;
+document.getElementById("title").innerText =
+languageData[lang].title;
 
 
 
-document.getElementById("saveBtn")
-.innerHTML = words[value].save;
+document.getElementById("price").innerText =
+languageData[lang].price;
 
 
 
-document.getElementById("historyBtn")
-.innerHTML = words[value].history;
+document.getElementById("save").innerText =
+languageData[lang].save;
 
 
 
-document.getElementById("signalBtn")
-.innerHTML = words[value].signal;
+document.getElementById("history").innerText =
+languageData[lang].history;
 
 
 
-document.getElementById("tradesBtn")
-.innerHTML = words[value].trades;
+document.getElementById("signal").innerText =
+languageData[lang].signal;
 
 
 
-document.getElementById("closeBtn")
-.innerHTML = words[value].close;
+document.getElementById("trades").innerText =
+languageData[lang].trades;
+
+
+
+document.getElementById("close").innerText =
+languageData[lang].close;
 
 
 
@@ -189,16 +171,14 @@ document.getElementById("closeBtn")
 
 
 
-
 function openPopup(url){
-
 
 
 window.open(
 
 url,
 
-"_blank",
+"popup",
 
 "width=750,height=600"
 
@@ -209,21 +189,16 @@ url,
 
 
 
-
-
 </script>
 
 
 </head>
 
 
-
 <body>
 
 
-
-<div class="box">
-
+<div class="container">
 
 
 <div style="text-align:right">
@@ -232,21 +207,18 @@ url,
 Language :
 
 
-<select id="language"
-
-onchange="changeLanguage()">
+<select id="lang" onchange="translate()">
 
 
 
-<option value="en">
+<option>
 
 English
 
 </option>
 
 
-
-<option value="ko">
+<option>
 
 한국어
 
@@ -255,7 +227,6 @@ English
 
 
 </select>
-
 
 
 </div>
@@ -274,33 +245,30 @@ Automatic Trading System
 
 
 
+<div class="button"
 
-<div class="btn"
-
-id="priceBtn"
+id="price"
 
 onclick="openPopup('/price')">
 
 
 ETH Price
 
-
 </div>
 
 
 
 
 
-<div class="btn"
+<div class="button"
 
-id="saveBtn"
+id="save"
 
 onclick="openPopup('/save-price')">
 
 
 Save ETH Price
 
-
 </div>
 
 
@@ -308,16 +276,15 @@ Save ETH Price
 
 
 
-<div class="btn"
+<div class="button"
 
-id="historyBtn"
+id="history"
 
 onclick="openPopup('/history')">
 
 
 Price History
 
-
 </div>
 
 
@@ -325,16 +292,15 @@ Price History
 
 
 
-<div class="btn"
+<div class="button"
 
-id="signalBtn"
+id="signal"
 
 onclick="openPopup('/trade-check')">
 
 
 Auto Trading Signal
 
-
 </div>
 
 
@@ -342,16 +308,15 @@ Auto Trading Signal
 
 
 
-<div class="btn"
+<div class="button"
 
-id="tradesBtn"
+id="trades"
 
 onclick="openPopup('/trades')">
 
 
 Trading Records
 
-
 </div>
 
 
@@ -359,18 +324,16 @@ Trading Records
 
 
 
-<div class="btn close"
+<div class="button close"
 
-id="closeBtn"
+id="close"
 
 onclick="window.close()">
 
 
 Close
 
-
 </div>
-
 
 
 
@@ -378,5 +341,6 @@ Close
 
 
 </body>
+
 
 </html>
