@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 
 <head>
 
@@ -12,7 +12,6 @@ Automatic Trading System
 
 <style>
 
-
 body{
 
 font-family:Arial;
@@ -24,9 +23,7 @@ text-align:center;
 }
 
 
-
 .box{
-
 
 width:700px;
 
@@ -40,53 +37,29 @@ border-radius:20px;
 
 box-shadow:0 0 20px #aaa;
 
-
 }
 
 
 
 button{
 
-
-display:block;
-
-
 width:350px;
-
-
-margin:15px auto;
-
 
 padding:15px;
 
+margin:15px;
 
 font-size:18px;
 
-
-background:#0066cc;
-
-
-color:white;
-
-
 border:none;
-
 
 border-radius:15px;
 
+background:#0066cc;
+
+color:white;
 
 cursor:pointer;
-
-
-}
-
-
-
-button:hover{
-
-
-background:#003b80;
-
 
 }
 
@@ -94,22 +67,7 @@ background:#003b80;
 
 .close{
 
-
 background:#333;
-
-
-}
-
-
-
-select{
-
-
-padding:8px;
-
-
-cursor:pointer;
-
 
 }
 
@@ -121,8 +79,11 @@ cursor:pointer;
 <script>
 
 
-const languageData = {
+let current="en";
 
+
+
+let lang={
 
 
 en:{
@@ -144,7 +105,6 @@ close:"Close"
 
 
 },
-
 
 
 
@@ -176,55 +136,45 @@ close:"닫기"
 
 
 
-function changeLanguage(){
+function translate(){
+
+
+let l=document.getElementById("language").value;
 
 
 
-let lang =
-
-document.getElementById("language").value;
-
-
-
-document.getElementById("title").innerText =
-
-languageData[lang].title;
+document.getElementById("title").innerHTML =
+lang[l].title;
 
 
 
-document.getElementById("priceBtn").innerText =
-
-languageData[lang].price;
-
-
-
-document.getElementById("saveBtn").innerText =
-
-languageData[lang].save;
+document.getElementById("price").innerHTML =
+lang[l].price;
 
 
 
-document.getElementById("historyBtn").innerText =
-
-languageData[lang].history;
-
-
-
-document.getElementById("signalBtn").innerText =
-
-languageData[lang].signal;
+document.getElementById("save").innerHTML =
+lang[l].save;
 
 
 
-document.getElementById("tradesBtn").innerText =
-
-languageData[lang].trades;
-
+document.getElementById("history").innerHTML =
+lang[l].history;
 
 
-document.getElementById("closeBtn").innerText =
 
-languageData[lang].close;
+document.getElementById("signal").innerHTML =
+lang[l].signal;
+
+
+
+document.getElementById("trades").innerHTML =
+lang[l].trades;
+
+
+
+document.getElementById("close").innerHTML =
+lang[l].close;
 
 
 
@@ -234,14 +184,16 @@ languageData[lang].close;
 
 
 
-function openPopup(url){
+
+
+function popup(url){
 
 
 window.open(
 
 url,
 
-"popup",
+"child",
 
 "width=700,height=600"
 
@@ -257,13 +209,11 @@ url,
 </script>
 
 
-
 </head>
 
 
 
 <body>
-
 
 
 <div class="box">
@@ -278,7 +228,7 @@ Language :
 
 <select id="language"
 
-onchange="changeLanguage()">
+onchange="translate()">
 
 
 
@@ -316,10 +266,9 @@ Automatic Trading System
 
 
 
+<button id="price"
 
-<button id="priceBtn"
-
-onclick="openPopup('/price')">
+onclick="popup('/price')">
 
 ETH Price
 
@@ -328,10 +277,9 @@ ETH Price
 
 
 
+<button id="save"
 
-<button id="saveBtn"
-
-onclick="openPopup('/save-price')">
+onclick="popup('/save-price')">
 
 Save ETH Price
 
@@ -340,11 +288,9 @@ Save ETH Price
 
 
 
+<button id="history"
 
-
-<button id="historyBtn"
-
-onclick="openPopup('/history')">
+onclick="popup('/history')">
 
 Price History
 
@@ -353,11 +299,9 @@ Price History
 
 
 
+<button id="signal"
 
-
-<button id="signalBtn"
-
-onclick="openPopup('/trade-check')">
+onclick="popup('/trade-check')">
 
 Auto Trading Signal
 
@@ -366,11 +310,9 @@ Auto Trading Signal
 
 
 
+<button id="trades"
 
-
-<button id="tradesBtn"
-
-onclick="openPopup('/trades')">
+onclick="popup('/trades')">
 
 Trading Records
 
@@ -379,9 +321,7 @@ Trading Records
 
 
 
-
-
-<button id="closeBtn"
+<button id="close"
 
 class="close"
 
@@ -393,11 +333,7 @@ Close
 
 
 
-
-
-
 </div>
-
 
 
 </body>
