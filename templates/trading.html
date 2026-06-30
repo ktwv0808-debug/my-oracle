@@ -5,7 +5,9 @@
 
 <meta charset="UTF-8">
 
-<title>Automatic Trading System</title>
+<title>
+Automatic Trading System
+</title>
 
 
 <script src="/static/language.js"></script>
@@ -118,6 +120,15 @@ url,
 }
 
 
+function closeTrading(){
+
+
+window.close();
+
+
+}
+
+
 
 </script>
 
@@ -129,11 +140,11 @@ url,
 <body>
 
 
-
 <div class="box">
 
 
-<div style="text-align:right">
+
+<div align="right">
 
 
 Language :
@@ -175,6 +186,7 @@ English
 Automatic Trading System
 
 </h1>
+
 
 
 
@@ -222,7 +234,6 @@ Price History
 
 
 
-
 <button
 
 data-lang="signal"
@@ -260,7 +271,7 @@ class="close"
 
 data-lang="close"
 
-onclick="window.close()">
+onclick="closeTrading()">
 
 Close
 
@@ -275,6 +286,5 @@ Close
 
 
 </body>
-
 
 </html>
