@@ -7,28 +7,30 @@ from psycopg2.extras import RealDictCursor
 app = Flask(__name__)
 
 
-# ==================================
-# Cloud PostgreSQL 연결
-# ==================================
+# =====================================
+# Cloud PostgreSQL Connection
+# =====================================
 
 def get_db():
 
-    url = os.environ.get("DATABASE_URL")
+    database_url = os.environ.get("DATABASE_URL")
 
-    if not url:
+    if not database_url:
         raise Exception(
-            "DATABASE_URL is not configured"
+            "DATABASE_URL is missing"
         )
 
-    return psycopg2.connect(url)
+    return psycopg2.connect(
+        database_url
+    )
 
 
 
-# ==================================
-# DB 테이블 생성
-# ==================================
+# =====================================
+# Create Database Tables
+# =====================================
 
-def create_tables():
+def init_db():
 
     conn = get_db()
 
@@ -45,7 +47,7 @@ def create_tables():
 
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-    )
+    );
 
     """)
 
@@ -57,13 +59,13 @@ def create_tables():
 
         id SERIAL PRIMARY KEY,
 
-        signal VARCHAR(50),
+        signal TEXT,
 
         price NUMERIC(18,6),
 
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-    )
+    );
 
     """)
 
@@ -77,10 +79,9 @@ def create_tables():
 
 
 
-
-# ==================================
+# =====================================
 # Main Homepage
-# ==================================
+# =====================================
 
 @app.route("/")
 def home():
@@ -91,9 +92,9 @@ def home():
 
 
 
-# ==================================
+# =====================================
 # Automatic Trading System
-# ==================================
+# =====================================
 
 @app.route("/trading")
 def trading():
@@ -104,14 +105,16 @@ def trading():
 
 
 
-# ==================================
-# ETH Price
-# ==================================
+# =====================================
+# ETH Price Popup
+# =====================================
 
 @app.route("/price")
 def price():
 
+
     conn = get_db()
+
 
     cur = conn.cursor(
         cursor_factory=RealDictCursor
@@ -119,7 +122,7 @@ def price():
 
 
     cur.execute("""
-
+    
     SELECT *
 
     FROM eth_price
@@ -134,9 +137,11 @@ def price():
     data = cur.fetchone()
 
 
+
     cur.close()
 
     conn.close()
+
 
 
     return render_template(
@@ -149,11 +154,9 @@ def price():
 
 
 
-
-
-# ==================================
+# =====================================
 # Save ETH Price
-# ==================================
+# =====================================
 
 @app.route(
     "/save-price",
@@ -163,32 +166,35 @@ def price():
 def save_price():
 
 
-    message = ""
+    message=""
 
 
-    if request.method == "POST":
+    if request.method=="POST":
 
 
-        price = request.form.get(
+        price=request.form.get(
             "price"
         )
 
 
-        conn = get_db()
+        conn=get_db()
 
-        cur = conn.cursor()
+
+        cur=conn.cursor()
 
 
 
         cur.execute("""
-
+        
         INSERT INTO eth_price(price)
 
         VALUES(%s)
 
         """,
 
-        (price,))
+        (
+            price,
+        ))
 
 
 
@@ -196,9 +202,7 @@ def save_price():
 
 
 
-        message = (
-            "ETH Price Saved Successfully"
-        )
+        message="ETH Price Saved Successfully"
 
 
 
@@ -218,14 +222,11 @@ def save_price():
 
 
 
-
-
-# ==================================
+# =====================================
 # Price History
-# ==================================
+# =====================================
 
 @app.route("/history")
-
 def history():
 
 
@@ -240,7 +241,7 @@ def history():
 
 
     cur.execute("""
-
+    
     SELECT *
 
     FROM eth_price
@@ -272,14 +273,11 @@ def history():
 
 
 
-
-
-# ==================================
+# =====================================
 # Auto Trading Signal
-# ==================================
+# =====================================
 
 @app.route("/trade-check")
-
 def trade_check():
 
 
@@ -294,7 +292,7 @@ def trade_check():
 
 
     cur.execute("""
-
+    
     SELECT price
 
     FROM eth_price
@@ -309,33 +307,33 @@ def trade_check():
     rows=cur.fetchall()
 
 
-
     signal="WAIT"
 
-    current=0
+    current_price=0
 
 
 
     if len(rows)>=2:
 
 
-        current=float(
+        current_price=float(
             rows[0]["price"]
         )
 
 
-        before=float(
+        old_price=float(
             rows[1]["price"]
         )
 
 
-        if current > before:
+
+        if current_price > old_price:
 
             signal="BUY SIGNAL"
 
 
 
-        elif current < before:
+        elif current_price < old_price:
 
             signal="SELL SIGNAL"
 
@@ -343,9 +341,8 @@ def trade_check():
 
 
     cur.execute("""
-
+    
     INSERT INTO trading_records
-
     (signal,price)
 
     VALUES(%s,%s)
@@ -356,14 +353,13 @@ def trade_check():
 
         signal,
 
-        current
+        current_price
 
     ))
 
 
 
     conn.commit()
-
 
 
     cur.close()
@@ -382,14 +378,11 @@ def trade_check():
 
 
 
-
-
-# ==================================
+# =====================================
 # Trading Records
-# ==================================
+# =====================================
 
 @app.route("/trades")
-
 def trades():
 
 
@@ -404,7 +397,7 @@ def trades():
 
 
     cur.execute("""
-
+    
     SELECT *
 
     FROM trading_records
@@ -414,7 +407,6 @@ def trades():
     LIMIT 100
 
     """)
-
 
 
     records=cur.fetchall()
@@ -437,14 +429,11 @@ def trades():
 
 
 
-
-
-# ==================================
-# API
-# ==================================
+# =====================================
+# API Price
+# =====================================
 
 @app.route("/api/price")
-
 def api_price():
 
 
@@ -459,7 +448,7 @@ def api_price():
 
 
     cur.execute("""
-
+    
     SELECT price
 
     FROM eth_price
@@ -469,6 +458,7 @@ def api_price():
     LIMIT 1
 
     """)
+
 
 
     data=cur.fetchone()
@@ -485,21 +475,17 @@ def api_price():
 
 
 
-
-
-# ==================================
-# Run
-# ==================================
+# =====================================
+# Render Start
+# =====================================
 
 if __name__=="__main__":
 
 
+    init_db()
+
+
     app.run(
-
         host="0.0.0.0",
-
-        port=5000,
-
-        debug=True
-
+        port=5000
     )
