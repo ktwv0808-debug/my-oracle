@@ -22,21 +22,18 @@ def get_db():
             database_url
         )
 
-    else:
+   def get_db():
 
-        # 로컬 PostgreSQL 테스트용
-        conn = psycopg2.connect(
+    database_url = os.environ.get("DATABASE_URL")
 
-            host="localhost",
-            database="wdonation",
-            user="postgres",
-            password="비밀번호",
-            port="5432"
-
-        )
-
+    conn = psycopg2.connect(
+        database_url
+    )
 
     return conn
+
+
+   
 
 
 
