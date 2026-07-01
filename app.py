@@ -6,7 +6,49 @@ from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 
+def init_db():
 
+    conn = get_db()
+
+    cur = conn.cursor()
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS eth_price(
+
+        id SERIAL PRIMARY KEY,
+
+        price NUMERIC(18,6),
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """)
+
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS trading_records(
+
+        id SERIAL PRIMARY KEY,
+
+        signal TEXT,
+
+        price NUMERIC(18,6),
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """)
+
+
+    conn.commit()
+
+    cur.close()
+
+    conn.close()
+
+
+
+init_db()
 # =====================================
 # Cloud PostgreSQL Connection
 # =====================================
