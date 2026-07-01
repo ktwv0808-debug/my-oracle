@@ -1,6 +1,7 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, request, jsonify
 import os
 import psycopg2
+from psycopg2.extras import RealDictCursor
 from datetime import datetime
 
 
@@ -8,92 +9,96 @@ app = Flask(__name__)
 
 
 # =========================
-# PostgreSQL
+# PostgreSQL 연결
 # =========================
 
 def get_db():
 
-    return psycopg2.connect(
-        os.environ["DATABASE_URL"]
-    )
+    database_url = os.environ.get("DATABASE_URL")
+
+    if database_url:
+
+        conn = psycopg2.connect(
+            database_url
+        )
+
+    else:
+
+        # 로컬 PostgreSQL 테스트용
+        conn = psycopg2.connect(
+
+            host="localhost",
+            database="wdonation",
+            user="postgres",
+            password="비밀번호",
+            port="5432"
+
+        )
+
+
+    return conn
 
 
 
 # =========================
-# DB 생성
+# 테이블 생성
 # =========================
 
 def init_db():
 
-    try:
+    conn = get_db()
 
-        conn = get_db()
-
-        cur = conn.cursor()
+    cur = conn.cursor()
 
 
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS price_history(
+    cur.execute("""
+    
+    CREATE TABLE IF NOT EXISTS eth_price (
 
-            id SERIAL PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
 
-            eth_price FLOAT,
+        price NUMERIC(18,6),
 
-            created_at TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-        )
-        """)
-
-
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS trades(
-
-            id SERIAL PRIMARY KEY,
-
-            action TEXT,
-
-            price FLOAT,
-
-            created_at TIMESTAMP
-
-        )
-        """)
-
-
-
-        conn.commit()
-
-        cur.close()
-
-        conn.close()
-
-
-        print("PostgreSQL initialized")
-
-
-    except Exception as e:
-
-        print("DB ERROR:",e)
-
-
-
-
-# =========================
-# MAIN
-# =========================
-
-@app.route("/")
-def home():
-
-    return render_template(
-        "donation.html"
     )
 
+    """)
+
+
+
+    cur.execute("""
+    
+    CREATE TABLE IF NOT EXISTS trading_records (
+
+        id SERIAL PRIMARY KEY,
+
+        signal VARCHAR(50),
+
+        price NUMERIC(18,6),
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    )
+
+    """)
+
+
+
+    conn.commit()
+
+    cur.close()
+
+    conn.close()
+
+
+
+init_db()
 
 
 
 # =========================
-# TRADING POPUP
+# 메인 자동매매 시스템
 # =========================
 
 @app.route("/trading")
@@ -105,66 +110,93 @@ def trading():
 
 
 
-
 # =========================
-# ETH PRICE
+# ETH 가격 팝업
 # =========================
 
 @app.route("/price")
 def price():
 
+    conn = get_db()
+
+    cur = conn.cursor(
+        cursor_factory=RealDictCursor
+    )
+
+
+    cur.execute("""
+
+        SELECT price, created_at
+
+        FROM eth_price
+
+        ORDER BY id DESC
+
+        LIMIT 1
+
+
+    """)
+
+
+    data = cur.fetchone()
+
+
+
+    cur.close()
+
+    conn.close()
+
+
+
     return render_template(
 
         "price.html",
 
-        price=1578.325
+        price=data
 
     )
 
 
 
 
-
 # =========================
-# SAVE PRICE
+# ETH 가격 저장
 # =========================
 
-@app.route("/save-price")
+@app.route("/save-price", methods=["GET","POST"])
 def save_price():
 
 
-    try:
+    if request.method == "POST":
 
 
-        conn=get_db()
+        price = request.form.get(
+            "price"
+        )
 
-        cur=conn.cursor()
+
+        conn = get_db()
+
+        cur = conn.cursor()
 
 
-        cur.execute(
 
-        """
+        cur.execute("""
 
-        INSERT INTO price_history
+        INSERT INTO eth_price(price)
 
-        (eth_price,created_at)
+        VALUES(%s)
 
-        VALUES(%s,%s)
 
         """,
-
         (
+            price,
+        ))
 
-        1578.325,
-
-        datetime.now()
-
-        )
-
-        )
 
 
         conn.commit()
+
 
 
         cur.close()
@@ -173,9 +205,13 @@ def save_price():
 
 
 
-    except Exception as e:
+        return render_template(
 
-        print(e)
+            "save_price.html",
+
+            message="ETH Price Saved Successfully"
+
+        )
 
 
 
@@ -190,55 +226,45 @@ def save_price():
 
 
 
-
-
 # =========================
-# HISTORY
+# 가격 기록
 # =========================
 
 @app.route("/history")
 def history():
 
 
-    rows=[]
+    conn = get_db()
 
 
-    try:
+    cur = conn.cursor(
+
+        cursor_factory=RealDictCursor
+
+    )
 
 
-        conn=get_db()
+    cur.execute("""
 
-        cur=conn.cursor()
+    SELECT *
 
+    FROM eth_price
 
-        cur.execute(
+    ORDER BY id DESC
 
-        """
-
-        SELECT eth_price,created_at
-
-        FROM price_history
-
-        ORDER BY id DESC
-
-        """
-
-        )
+    LIMIT 50
 
 
-        rows=cur.fetchall()
+    """)
 
 
-        cur.close()
-
-        conn.close()
+    prices = cur.fetchall()
 
 
 
-    except Exception as e:
+    cur.close()
 
-
-        print(e)
+    conn.close()
 
 
 
@@ -246,7 +272,7 @@ def history():
 
         "history.html",
 
-        history=rows
+        prices=prices
 
     )
 
@@ -254,20 +280,116 @@ def history():
 
 
 
-
 # =========================
-# AUTO SIGNAL
+# 자동 거래 신호
 # =========================
 
 @app.route("/trade-check")
 def trade_check():
 
 
+    conn = get_db()
+
+
+    cur = conn.cursor(
+
+        cursor_factory=RealDictCursor
+
+    )
+
+
+    cur.execute("""
+
+    SELECT price
+
+    FROM eth_price
+
+    ORDER BY id DESC
+
+    LIMIT 2
+
+
+    """)
+
+
+    rows = cur.fetchall()
+
+
+
+    signal = "WAIT"
+
+    price = 0
+
+
+
+    if len(rows) >= 2:
+
+
+        now = float(
+            rows[0]["price"]
+        )
+
+
+        before = float(
+            rows[1]["price"]
+        )
+
+
+        price = now
+
+
+
+        if now > before:
+
+            signal="BUY SIGNAL"
+
+
+        elif now < before:
+
+            signal="SELL SIGNAL"
+
+
+
+    cur.execute("""
+
+    INSERT INTO trading_records(
+
+        signal,
+
+        price
+
+    )
+
+    VALUES(%s,%s)
+
+
+    """,
+
+    (
+
+        signal,
+
+        price
+
+    ))
+
+
+
+    conn.commit()
+
+
+
+    cur.close()
+
+    conn.close()
+
+
+
     return render_template(
 
         "trade_check.html",
 
-        signal="BUY SIGNAL"
+        signal=signal
 
     )
 
@@ -276,55 +398,45 @@ def trade_check():
 
 
 
-
-
 # =========================
-# TRADING RECORDS
+# 거래 기록
 # =========================
 
 @app.route("/trades")
 def trades():
 
 
-    rows=[]
+    conn=get_db()
 
 
-    try:
+    cur=conn.cursor(
+
+        cursor_factory=RealDictCursor
+
+    )
 
 
-        conn=get_db()
+    cur.execute("""
 
-        cur=conn.cursor()
+    SELECT *
 
+    FROM trading_records
 
-        cur.execute(
+    ORDER BY id DESC
 
-        """
-
-        SELECT action,price,created_at
-
-        FROM trades
-
-        ORDER BY id DESC
-
-        """
-
-        )
+    LIMIT 50
 
 
-        rows=cur.fetchall()
+    """)
 
 
-        cur.close()
-
-        conn.close()
+    records=cur.fetchall()
 
 
 
-    except Exception as e:
+    cur.close()
 
-
-        print(e)
+    conn.close()
 
 
 
@@ -332,7 +444,7 @@ def trades():
 
         "trades.html",
 
-        trades=rows
+        records=records
 
     )
 
@@ -340,69 +452,49 @@ def trades():
 
 
 
-
-
 # =========================
-# WHITEPAPER
-# =========================
-
-@app.route("/whitepaper")
-def whitepaper():
-
-
-    return render_template(
-
-        "whitepaper.html"
-
-    )
-
-
-
-
-
-
-
-# =========================
-# POEM
-# =========================
-
-@app.route("/poem")
-def poem():
-
-
-    return render_template(
-
-        "poem.html"
-
-    )
-
-
-
-
-
-
-
-
-# =========================
-# API TEST
+# API 테스트
 # =========================
 
 @app.route("/api/price")
 def api_price():
 
 
-    return jsonify(
+    conn=get_db()
 
-        {
 
-        "ETH":1578.325
+    cur=conn.cursor(
 
-        }
+        cursor_factory=RealDictCursor
 
     )
 
 
+    cur.execute("""
 
+    SELECT price
+
+    FROM eth_price
+
+    ORDER BY id DESC
+
+    LIMIT 1
+
+
+    """)
+
+
+    data=cur.fetchone()
+
+
+
+    cur.close()
+
+    conn.close()
+
+
+
+    return jsonify(data)
 
 
 
@@ -411,13 +503,12 @@ def api_price():
 if __name__=="__main__":
 
 
-    init_db()
-
-
     app.run(
 
         host="0.0.0.0",
 
-        port=5000
+        port=5000,
+
+        debug=True
 
     )
