@@ -6,13 +6,44 @@ from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 
+
+# =====================================
+# Cloud PostgreSQL 연결
+# =====================================
+
+def get_db():
+
+    database_url = os.environ.get(
+        "DATABASE_URL"
+    )
+
+    if not database_url:
+
+        raise Exception(
+            "DATABASE_URL missing"
+        )
+
+
+    return psycopg2.connect(
+        database_url
+    )
+
+
+
+# =====================================
+# DB 테이블 생성
+# =====================================
+
 def init_db():
 
     conn = get_db()
 
     cur = conn.cursor()
 
+
+
     cur.execute("""
+    
     CREATE TABLE IF NOT EXISTS eth_price(
 
         id SERIAL PRIMARY KEY,
@@ -21,11 +52,14 @@ def init_db():
 
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-    )
+    );
+
     """)
 
 
+
     cur.execute("""
+    
     CREATE TABLE IF NOT EXISTS trading_records(
 
         id SERIAL PRIMARY KEY,
@@ -36,77 +70,6 @@ def init_db():
 
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-    )
-    """)
-
-
-    conn.commit()
-
-    cur.close()
-
-    conn.close()
-
-
-
-init_db()
-# =====================================
-# Cloud PostgreSQL Connection
-# =====================================
-
-def get_db():
-
-    database_url = os.environ.get("DATABASE_URL")
-
-    if not database_url:
-        raise Exception(
-            "DATABASE_URL is missing"
-        )
-
-    return psycopg2.connect(
-        database_url
-    )
-
-
-
-# =====================================
-# Create Database Tables
-# =====================================
-
-def init_db():
-
-    conn = get_db()
-
-    cur = conn.cursor()
-
-
-    cur.execute("""
-    
-    CREATE TABLE IF NOT EXISTS eth_price (
-
-        id SERIAL PRIMARY KEY,
-
-        price NUMERIC(18,6),
-
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
-    );
-
-    """)
-
-
-
-    cur.execute("""
-    
-    CREATE TABLE IF NOT EXISTS trading_records (
-
-        id SERIAL PRIMARY KEY,
-
-        signal TEXT,
-
-        price NUMERIC(18,6),
-
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
     );
 
     """)
@@ -115,14 +78,16 @@ def init_db():
 
     conn.commit()
 
+
     cur.close()
 
     conn.close()
 
 
 
+
 # =====================================
-# Main Homepage
+# 메인 홈페이지
 # =====================================
 
 @app.route("/")
@@ -133,8 +98,9 @@ def home():
     )
 
 
+
 # =====================================
-# Automatic Trading System
+# 자동매매 시스템
 # =====================================
 
 @app.route("/trading")
@@ -147,7 +113,7 @@ def trading():
 
 
 # =====================================
-# ETH Price Popup
+# ETH 가격
 # =====================================
 
 @app.route("/price")
@@ -175,6 +141,7 @@ def price():
     """)
 
 
+
     data = cur.fetchone()
 
 
@@ -196,7 +163,7 @@ def price():
 
 
 # =====================================
-# Save ETH Price
+# ETH 가격 저장
 # =====================================
 
 @app.route(
@@ -210,12 +177,14 @@ def save_price():
     message=""
 
 
+
     if request.method=="POST":
 
 
         price=request.form.get(
             "price"
         )
+
 
 
         conn=get_db()
@@ -234,7 +203,9 @@ def save_price():
         """,
 
         (
+
             price,
+
         ))
 
 
@@ -264,7 +235,7 @@ def save_price():
 
 
 # =====================================
-# Price History
+# 가격 기록
 # =====================================
 
 @app.route("/history")
@@ -294,6 +265,7 @@ def history():
     """)
 
 
+
     prices=cur.fetchall()
 
 
@@ -315,7 +287,7 @@ def history():
 
 
 # =====================================
-# Auto Trading Signal
+# 자동 거래 신호
 # =====================================
 
 @app.route("/trade-check")
@@ -332,6 +304,7 @@ def trade_check():
     )
 
 
+
     cur.execute("""
     
     SELECT price
@@ -345,36 +318,42 @@ def trade_check():
     """)
 
 
+
     rows=cur.fetchall()
+
 
 
     signal="WAIT"
 
-    current_price=0
+    price=0
 
 
 
     if len(rows)>=2:
 
 
-        current_price=float(
+        now=float(
             rows[0]["price"]
         )
 
 
-        old_price=float(
+        before=float(
             rows[1]["price"]
         )
 
 
 
-        if current_price > old_price:
+        price=now
+
+
+
+        if now > before:
 
             signal="BUY SIGNAL"
 
 
 
-        elif current_price < old_price:
+        elif now < before:
 
             signal="SELL SIGNAL"
 
@@ -394,13 +373,14 @@ def trade_check():
 
         signal,
 
-        current_price
+        price
 
     ))
 
 
 
     conn.commit()
+
 
 
     cur.close()
@@ -420,7 +400,7 @@ def trade_check():
 
 
 # =====================================
-# Trading Records
+# 거래 기록
 # =====================================
 
 @app.route("/trades")
@@ -450,6 +430,7 @@ def trades():
     """)
 
 
+
     records=cur.fetchall()
 
 
@@ -471,7 +452,33 @@ def trades():
 
 
 # =====================================
-# API Price
+# 백서
+# =====================================
+
+@app.route("/whitepaper")
+def whitepaper():
+
+    return render_template(
+        "whitepaper.html"
+    )
+
+
+
+# =====================================
+# 시
+# =====================================
+
+@app.route("/poem")
+def poem():
+
+    return render_template(
+        "poem.html"
+    )
+
+
+
+# =====================================
+# API ETH 가격
 # =====================================
 
 @app.route("/api/price")
@@ -516,17 +523,37 @@ def api_price():
 
 
 
+
 # =====================================
-# Render Start
+# Render 배포용 DB 초기화
+# =====================================
+
+try:
+
+    init_db()
+
+
+except Exception as e:
+
+    print(
+        "Database init error:",
+        e
+    )
+
+
+
+
+# =====================================
+# 실행
 # =====================================
 
 if __name__=="__main__":
 
 
-    init_db()
-
-
     app.run(
+
         host="0.0.0.0",
+
         port=5000
+
     )
