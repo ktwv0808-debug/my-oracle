@@ -87,9 +87,8 @@ def init_db():
 def home():
 
     return render_template(
-        "index.html"
+        "donation.html"
     )
-
 
 
 # =====================================
