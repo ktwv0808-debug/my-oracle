@@ -15,13 +15,20 @@ def get_db():
 
     database_url = os.environ.get("DATABASE_URL")
 
-    if not database_url:
-        raise Exception(
-            "DATABASE_URL 환경변수가 없습니다."
+
+    if database_url:
+
+        return psycopg2.connect(
+            database_url
         )
 
-    return psycopg2.connect(database_url)
 
+    # 로컬 테스트용
+    # DATABASE_URL 없을 때는 오류 대신 메시지 출력
+
+    raise Exception(
+        "PostgreSQL DATABASE_URL 설정이 필요합니다."
+    )
 
 
 # =====================================
