@@ -18,11 +18,9 @@ def get_db():
     )
 
     if not database_url:
-
         raise Exception(
             "DATABASE_URL missing"
         )
-
 
     return psycopg2.connect(
         database_url
@@ -31,7 +29,7 @@ def get_db():
 
 
 # =====================================
-# 테이블 생성
+# DB 테이블 생성
 # =====================================
 
 def init_db():
@@ -41,8 +39,9 @@ def init_db():
     cur = conn.cursor()
 
 
+    # ETH 가격
+
     cur.execute("""
-    
     CREATE TABLE IF NOT EXISTS eth_price(
 
         id SERIAL PRIMARY KEY,
@@ -51,14 +50,14 @@ def init_db():
 
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-    );
-
+    )
     """)
 
 
 
+    # 거래 기록
+
     cur.execute("""
-    
     CREATE TABLE IF NOT EXISTS trading_records(
 
         id SERIAL PRIMARY KEY,
@@ -69,8 +68,27 @@ def init_db():
 
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-    );
+    )
+    """)
 
+
+
+    # Donation 기록
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS donation_records(
+
+        id SERIAL PRIMARY KEY,
+
+        quarter TEXT,
+
+        net_profit NUMERIC(18,6),
+
+        donation NUMERIC(18,6),
+
+        proof TEXT
+
+    )
     """)
 
 
@@ -86,33 +104,29 @@ def init_db():
 
 
 # =====================================
-# 테스트 데이터 입력
+# 테스트 데이터 생성
 # =====================================
 
 def insert_test_data():
 
-    conn = get_db()
+    conn=get_db()
 
-    cur = conn.cursor()
+    cur=conn.cursor()
 
 
+
+    # ETH
 
     cur.execute("""
-        SELECT COUNT(*)
-        FROM eth_price
+    SELECT COUNT(*)
+    FROM eth_price
     """)
 
 
-
-    count = cur.fetchone()[0]
-
-
-
-    if count == 0:
+    if cur.fetchone()[0] == 0:
 
 
         cur.execute("""
-        
         INSERT INTO eth_price(price)
 
         VALUES
@@ -127,8 +141,19 @@ def insert_test_data():
 
 
 
+
+    # Trading
+
+    cur.execute("""
+    SELECT COUNT(*)
+    FROM trading_records
+    """)
+
+
+    if cur.fetchone()[0] == 0:
+
+
         cur.execute("""
-        
         INSERT INTO trading_records
         (signal,price)
 
@@ -144,8 +169,33 @@ def insert_test_data():
 
 
 
-        conn.commit()
 
+    # Donation
+
+    cur.execute("""
+    SELECT COUNT(*)
+    FROM donation_records
+    """)
+
+
+    if cur.fetchone()[0] == 0:
+
+
+        cur.execute("""
+        INSERT INTO donation_records
+        (quarter,net_profit,donation,proof)
+
+        VALUES
+
+        ('Q1 2026',0,0,'Preparing'),
+
+        ('Q2 2026',0,0,'Preparing')
+
+        """)
+
+
+
+    conn.commit()
 
 
     cur.close()
@@ -162,9 +212,46 @@ def insert_test_data():
 @app.route("/")
 def home():
 
-    return render_template(
-        "donation.html"
+
+    conn=get_db()
+
+
+    cur=conn.cursor(
+
+        cursor_factory=RealDictCursor
+
     )
+
+
+    cur.execute("""
+    SELECT *
+
+    FROM donation_records
+
+    ORDER BY id
+
+    """)
+
+
+
+    donations=cur.fetchall()
+
+
+
+    cur.close()
+
+    conn.close()
+
+
+
+    return render_template(
+
+        "donation.html",
+
+        donations=donations
+
+    )
+
 
 
 
@@ -181,23 +268,26 @@ def trading():
 
 
 
+
 # =====================================
-# ETH 가격
+# ETH Price
 # =====================================
 
 @app.route("/price")
 def price():
 
-    conn = get_db()
+
+    conn=get_db()
 
 
-    cur = conn.cursor(
+    cur=conn.cursor(
+
         cursor_factory=RealDictCursor
+
     )
 
 
     cur.execute("""
-    
     SELECT *
 
     FROM eth_price
@@ -209,8 +299,7 @@ def price():
     """)
 
 
-
-    data = cur.fetchone()
+    data=cur.fetchone()
 
 
 
@@ -230,8 +319,9 @@ def price():
 
 
 
+
 # =====================================
-# ETH 저장
+# Save ETH Price
 # =====================================
 
 @app.route(
@@ -243,7 +333,6 @@ def save_price():
 
 
     message=""
-
 
 
     if request.method=="POST":
@@ -262,7 +351,6 @@ def save_price():
 
 
         cur.execute("""
-        
         INSERT INTO eth_price(price)
 
         VALUES(%s)
@@ -299,8 +387,9 @@ def save_price():
 
 
 
+
 # =====================================
-# 가격 기록
+# Price History
 # =====================================
 
 @app.route("/history")
@@ -318,17 +407,13 @@ def history():
 
 
     cur.execute("""
-    
     SELECT *
 
     FROM eth_price
 
     ORDER BY id DESC
 
-    LIMIT 100
-
     """)
-
 
 
     prices=cur.fetchall()
@@ -351,8 +436,9 @@ def history():
 
 
 
+
 # =====================================
-# 자동 거래 신호
+# Auto Trading Signal
 # =====================================
 
 @app.route("/trade-check")
@@ -370,7 +456,6 @@ def trade_check():
 
 
     cur.execute("""
-    
     SELECT price
 
     FROM eth_price
@@ -380,7 +465,6 @@ def trade_check():
     LIMIT 2
 
     """)
-
 
 
     rows=cur.fetchall()
@@ -406,10 +490,10 @@ def trade_check():
         )
 
 
+
         if current > before:
 
             signal="BUY SIGNAL"
-
 
 
         elif current < before:
@@ -418,9 +502,7 @@ def trade_check():
 
 
 
-
     cur.execute("""
-    
     INSERT INTO trading_records
     (signal,price)
 
@@ -429,11 +511,8 @@ def trade_check():
     """,
 
     (
-
         signal,
-
         current
-
     ))
 
 
@@ -458,8 +537,9 @@ def trade_check():
 
 
 
+
 # =====================================
-# 거래 기록
+# Trading Records
 # =====================================
 
 @app.route("/trades")
@@ -476,19 +556,14 @@ def trades():
     )
 
 
-
     cur.execute("""
-    
     SELECT *
 
     FROM trading_records
 
     ORDER BY id DESC
 
-    LIMIT 100
-
     """)
-
 
 
     records=cur.fetchall()
@@ -511,8 +586,9 @@ def trades():
 
 
 
+
 # =====================================
-# 백서
+# Whitepaper
 # =====================================
 
 @app.route("/whitepaper")
@@ -524,8 +600,9 @@ def whitepaper():
 
 
 
+
 # =====================================
-# 시
+# Poem
 # =====================================
 
 @app.route("/poem")
@@ -534,6 +611,7 @@ def poem():
     return render_template(
         "poem.html"
     )
+
 
 
 
@@ -556,7 +634,6 @@ def api_price():
 
 
     cur.execute("""
-    
     SELECT price
 
     FROM eth_price
@@ -585,7 +662,7 @@ def api_price():
 
 
 # =====================================
-# Render 시작 시 DB 준비
+# Render 시작 시 실행
 # =====================================
 
 try:
@@ -598,20 +675,19 @@ try:
 except Exception as e:
 
     print(
-        "DB ERROR:",
+        "DATABASE ERROR:",
         e
     )
 
 
 
 
-# =====================================
-# 실행
-# =====================================
-
 if __name__=="__main__":
 
     app.run(
+
         host="0.0.0.0",
+
         port=5000
+
     )
