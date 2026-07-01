@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 
 # =====================================
-# Cloud PostgreSQL 연결
+# PostgreSQL Cloud 연결
 # =====================================
 
 def get_db():
@@ -31,7 +31,7 @@ def get_db():
 
 
 # =====================================
-# DB 테이블 생성
+# 테이블 생성
 # =====================================
 
 def init_db():
@@ -39,7 +39,6 @@ def init_db():
     conn = get_db()
 
     cur = conn.cursor()
-
 
 
     cur.execute("""
@@ -87,6 +86,76 @@ def init_db():
 
 
 # =====================================
+# 테스트 데이터 입력
+# =====================================
+
+def insert_test_data():
+
+    conn = get_db()
+
+    cur = conn.cursor()
+
+
+
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM eth_price
+    """)
+
+
+
+    count = cur.fetchone()[0]
+
+
+
+    if count == 0:
+
+
+        cur.execute("""
+        
+        INSERT INTO eth_price(price)
+
+        VALUES
+
+        (1578.325),
+
+        (1585.500),
+
+        (1602.750)
+
+        """)
+
+
+
+        cur.execute("""
+        
+        INSERT INTO trading_records
+        (signal,price)
+
+        VALUES
+
+        ('BUY SIGNAL',1578.325),
+
+        ('SELL SIGNAL',1585.500),
+
+        ('BUY SIGNAL',1602.750)
+
+        """)
+
+
+
+        conn.commit()
+
+
+
+    cur.close()
+
+    conn.close()
+
+
+
+
+# =====================================
 # 메인 홈페이지
 # =====================================
 
@@ -118,7 +187,6 @@ def trading():
 
 @app.route("/price")
 def price():
-
 
     conn = get_db()
 
@@ -163,7 +231,7 @@ def price():
 
 
 # =====================================
-# ETH 가격 저장
+# ETH 저장
 # =====================================
 
 @app.route(
@@ -186,7 +254,6 @@ def save_price():
         )
 
 
-
         conn=get_db()
 
 
@@ -203,9 +270,7 @@ def save_price():
         """,
 
         (
-
             price,
-
         ))
 
 
@@ -304,7 +369,6 @@ def trade_check():
     )
 
 
-
     cur.execute("""
     
     SELECT price
@@ -325,14 +389,14 @@ def trade_check():
 
     signal="WAIT"
 
-    price=0
+    current=0
 
 
 
     if len(rows)>=2:
 
 
-        now=float(
+        current=float(
             rows[0]["price"]
         )
 
@@ -342,18 +406,13 @@ def trade_check():
         )
 
 
-
-        price=now
-
-
-
-        if now > before:
+        if current > before:
 
             signal="BUY SIGNAL"
 
 
 
-        elif now < before:
+        elif current < before:
 
             signal="SELL SIGNAL"
 
@@ -373,7 +432,7 @@ def trade_check():
 
         signal,
 
-        price
+        current
 
     ))
 
@@ -415,6 +474,7 @@ def trades():
         cursor_factory=RealDictCursor
 
     )
+
 
 
     cur.execute("""
@@ -478,7 +538,7 @@ def poem():
 
 
 # =====================================
-# API ETH 가격
+# API
 # =====================================
 
 @app.route("/api/price")
@@ -525,18 +585,20 @@ def api_price():
 
 
 # =====================================
-# Render 배포용 DB 초기화
+# Render 시작 시 DB 준비
 # =====================================
 
 try:
 
     init_db()
 
+    insert_test_data()
+
 
 except Exception as e:
 
     print(
-        "Database init error:",
+        "DB ERROR:",
         e
     )
 
@@ -549,11 +611,7 @@ except Exception as e:
 
 if __name__=="__main__":
 
-
     app.run(
-
         host="0.0.0.0",
-
         port=5000
-
     )
