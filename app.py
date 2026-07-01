@@ -2,29 +2,23 @@ from flask import Flask, render_template, request, jsonify
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from datetime import datetime
 
 
 app = Flask(__name__)
 
 
 # =========================
-# PostgreSQL 연결
+# Cloud PostgreSQL 연결
 # =========================
 
 def get_db():
 
     database_url = os.environ.get("DATABASE_URL")
 
-    if database_url:
-
-        conn = psycopg2.connect(
-            database_url
+    if not database_url:
+        raise Exception(
+            "DATABASE_URL 환경변수가 없습니다."
         )
-
-   def get_db():
-
-    database_url = os.environ.get("DATABASE_URL")
 
     conn = psycopg2.connect(
         database_url
@@ -33,12 +27,9 @@ def get_db():
     return conn
 
 
-   
-
-
 
 # =========================
-# 테이블 생성
+# DB 초기화
 # =========================
 
 def init_db():
@@ -63,7 +54,6 @@ def init_db():
     """)
 
 
-
     cur.execute("""
     
     CREATE TABLE IF NOT EXISTS trading_records (
@@ -81,7 +71,6 @@ def init_db():
     """)
 
 
-
     conn.commit()
 
     cur.close()
@@ -90,14 +79,11 @@ def init_db():
 
 
 
-init_db()
-
-
-
 # =========================
 # 메인 자동매매 시스템
 # =========================
 
+@app.route("/")
 @app.route("/trading")
 def trading():
 
@@ -108,7 +94,7 @@ def trading():
 
 
 # =========================
-# ETH 가격 팝업
+# ETH Price
 # =========================
 
 @app.route("/price")
@@ -123,14 +109,13 @@ def price():
 
     cur.execute("""
 
-        SELECT price, created_at
+    SELECT *
 
-        FROM eth_price
+    FROM eth_price
 
-        ORDER BY id DESC
+    ORDER BY id DESC
 
-        LIMIT 1
-
+    LIMIT 1
 
     """)
 
@@ -138,11 +123,9 @@ def price():
     data = cur.fetchone()
 
 
-
     cur.close()
 
     conn.close()
-
 
 
     return render_template(
@@ -155,13 +138,19 @@ def price():
 
 
 
-
 # =========================
-# ETH 가격 저장
+# Save ETH Price
 # =========================
 
-@app.route("/save-price", methods=["GET","POST"])
+@app.route(
+    "/save-price",
+    methods=["GET","POST"]
+)
+
 def save_price():
+
+
+    message = None
 
 
     if request.method == "POST":
@@ -184,8 +173,8 @@ def save_price():
 
         VALUES(%s)
 
-
         """,
+
         (
             price,
         ))
@@ -195,6 +184,9 @@ def save_price():
         conn.commit()
 
 
+        message = "ETH Price Saved Successfully"
+
+
 
         cur.close()
 
@@ -202,20 +194,11 @@ def save_price():
 
 
 
-        return render_template(
-
-            "save_price.html",
-
-            message="ETH Price Saved Successfully"
-
-        )
-
-
-
-
     return render_template(
 
-        "save_price.html"
+        "save_price.html",
+
+        message=message
 
     )
 
@@ -224,17 +207,18 @@ def save_price():
 
 
 # =========================
-# 가격 기록
+# Price History
 # =========================
 
 @app.route("/history")
+
 def history():
 
 
-    conn = get_db()
+    conn=get_db()
 
 
-    cur = conn.cursor(
+    cur=conn.cursor(
 
         cursor_factory=RealDictCursor
 
@@ -249,13 +233,12 @@ def history():
 
     ORDER BY id DESC
 
-    LIMIT 50
-
+    LIMIT 100
 
     """)
 
 
-    prices = cur.fetchall()
+    prices=cur.fetchall()
 
 
 
@@ -278,17 +261,18 @@ def history():
 
 
 # =========================
-# 자동 거래 신호
+# Auto Trading Signal
 # =========================
 
 @app.route("/trade-check")
+
 def trade_check():
 
 
-    conn = get_db()
+    conn=get_db()
 
 
-    cur = conn.cursor(
+    cur=conn.cursor(
 
         cursor_factory=RealDictCursor
 
@@ -305,43 +289,42 @@ def trade_check():
 
     LIMIT 2
 
-
     """)
 
 
-    rows = cur.fetchall()
+    rows=cur.fetchall()
 
 
 
-    signal = "WAIT"
+    signal="WAIT"
 
-    price = 0
-
-
-
-    if len(rows) >= 2:
+    price=0
 
 
-        now = float(
+
+    if len(rows)==2:
+
+
+        current=float(
             rows[0]["price"]
         )
 
 
-        before = float(
+        previous=float(
             rows[1]["price"]
         )
 
 
-        price = now
+        price=current
 
 
 
-        if now > before:
+        if current > previous:
 
             signal="BUY SIGNAL"
 
 
-        elif now < before:
+        elif current < previous:
 
             signal="SELL SIGNAL"
 
@@ -349,16 +332,11 @@ def trade_check():
 
     cur.execute("""
 
-    INSERT INTO trading_records(
+    INSERT INTO trading_records
 
-        signal,
-
-        price
-
-    )
+    (signal,price)
 
     VALUES(%s,%s)
-
 
     """,
 
@@ -394,12 +372,12 @@ def trade_check():
 
 
 
-
 # =========================
-# 거래 기록
+# Trading Records
 # =========================
 
 @app.route("/trades")
+
 def trades():
 
 
@@ -421,8 +399,7 @@ def trades():
 
     ORDER BY id DESC
 
-    LIMIT 50
-
+    LIMIT 100
 
     """)
 
@@ -450,10 +427,11 @@ def trades():
 
 
 # =========================
-# API 테스트
+# API ETH 가격
 # =========================
 
 @app.route("/api/price")
+
 def api_price():
 
 
@@ -477,7 +455,6 @@ def api_price():
 
     LIMIT 1
 
-
     """)
 
 
@@ -496,8 +473,14 @@ def api_price():
 
 
 
+# =========================
+# 실행
+# =========================
 
 if __name__=="__main__":
+
+
+    init_db()
 
 
     app.run(
