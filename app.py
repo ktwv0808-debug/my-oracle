@@ -402,23 +402,23 @@ def save_price():
 @app.route("/history")
 def history():
 
-
     conn=get_db()
 
 
     cur=conn.cursor(
-
         cursor_factory=RealDictCursor
-
     )
 
 
     cur.execute("""
+    
     SELECT *
 
     FROM eth_price
 
     ORDER BY id DESC
+
+    LIMIT 100
 
     """)
 
