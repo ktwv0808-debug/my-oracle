@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+<html lang="en">
 
-<html>
 
 <head>
+
 
 <meta charset="UTF-8">
 
@@ -13,12 +14,13 @@
 <script src="/static/language.js"></script>
 
 
+
 <style>
 
 
 body{
 
-font-family:Arial;
+font-family:Arial, sans-serif;
 
 background:#f5f5f5;
 
@@ -30,9 +32,9 @@ text-align:center;
 
 .box{
 
-width:650px;
+width:750px;
 
-margin:50px auto;
+margin:40px auto;
 
 background:white;
 
@@ -41,6 +43,100 @@ padding:40px;
 border-radius:20px;
 
 box-shadow:0 0 20px #aaa;
+
+}
+
+
+
+.language{
+
+text-align:right;
+
+}
+
+
+
+select{
+
+padding:8px;
+
+}
+
+
+
+h1{
+
+text-align:center;
+
+}
+
+
+
+
+
+table{
+
+width:90%;
+
+margin:30px auto;
+
+border-collapse:collapse;
+
+}
+
+
+
+th{
+
+background:#0066cc;
+
+color:white;
+
+padding:12px;
+
+}
+
+
+
+td{
+
+padding:12px;
+
+border:1px solid #ccc;
+
+}
+
+
+
+
+button{
+
+
+display:block;
+
+margin:30px auto;
+
+
+padding:12px 50px;
+
+
+background:#333;
+
+
+color:white;
+
+
+border:none;
+
+
+border-radius:10px;
+
+
+cursor:pointer;
+
+
+font-size:16px;
+
 
 }
 
@@ -58,6 +154,15 @@ box-shadow:0 0 20px #aaa;
 <div class="box">
 
 
+
+
+
+<div class="language">
+
+
+Language :
+
+
 <select id="language"
 
 onchange="changeLanguage()">
@@ -71,6 +176,7 @@ English
 </option>
 
 
+
 <option value="ko">
 
 한국어
@@ -78,7 +184,13 @@ English
 </option>
 
 
+
 </select>
+
+
+</div>
+
+
 
 
 
@@ -90,21 +202,90 @@ data-en="Trading Records"
 
 data-ko="거래 기록">
 
+
 Trading Records
+
 
 </h1>
 
 
 
 
-{% for t in trades %}
 
 
-<p>
 
-{{t}}
+<table>
 
-</p>
+
+
+<tr>
+
+
+<th>ID</th>
+
+
+<th>Signal</th>
+
+
+<th>ETH Price</th>
+
+
+<th>Date</th>
+
+
+</tr>
+
+
+
+
+
+
+
+{% if records %}
+
+
+
+{% for r in records %}
+
+
+
+<tr>
+
+
+<td>
+
+{{r.id}}
+
+</td>
+
+
+
+<td>
+
+{{r.signal}}
+
+</td>
+
+
+
+<td>
+
+{{ "%.6f"|format(r.price) }} ETH
+
+</td>
+
+
+
+<td>
+
+{{r.created_at}}
+
+</td>
+
+
+
+</tr>
+
 
 
 {% endfor %}
@@ -112,21 +293,56 @@ Trading Records
 
 
 
+{% else %}
 
-<button onclick="closePopup()">
+
+
+<tr>
+
+
+<td colspan="4">
+
+No Data
+
+</td>
+
+
+</tr>
+
+
+
+{% endif %}
+
+
+
+
+
+</table>
+
+
+
+
+
+
+
+
+<button
+
+onclick="closePopup()"
+
+
+data-en="Close"
+
+data-ko="닫기">
+
+
 Close
+
+
 </button>
 
 
-<script>
 
-function closePopup(){
-
-    self.close();
-
-}
-
-</script>
 
 
 
