@@ -328,26 +328,20 @@ def price():
     "/save-price",
     methods=["GET","POST"]
 )
-
 def save_price():
 
-
     message=""
+
+    conn=get_db()
+
+    cur=conn.cursor(
+        cursor_factory=RealDictCursor
+    )
 
 
     if request.method=="POST":
 
-
-        price=request.form.get(
-            "price"
-        )
-
-
-        conn=get_db()
-
-
-        cur=conn.cursor()
-
+        price=request.form.get("price")
 
 
         cur.execute("""
@@ -356,24 +350,36 @@ def save_price():
         VALUES(%s)
 
         """,
-
         (
             price,
         ))
 
 
-
         conn.commit()
-
 
 
         message="ETH Price Saved Successfully"
 
 
 
-        cur.close()
+    cur.execute("""
+    SELECT *
 
-        conn.close()
+    FROM eth_price
+
+    ORDER BY id DESC
+
+    LIMIT 100
+
+    """)
+
+
+    prices=cur.fetchall()
+
+
+    cur.close()
+
+    conn.close()
 
 
 
@@ -381,10 +387,11 @@ def save_price():
 
         "save_price.html",
 
-        message=message
+        message=message,
+
+        prices=prices
 
     )
-
 
 
 
