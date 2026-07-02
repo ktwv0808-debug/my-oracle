@@ -451,18 +451,15 @@ def history():
 @app.route("/trade-check")
 def trade_check():
 
-
     conn=get_db()
 
-
     cur=conn.cursor(
-
         cursor_factory=RealDictCursor
-
     )
 
 
     cur.execute("""
+    
     SELECT price
 
     FROM eth_price
@@ -475,7 +472,6 @@ def trade_check():
 
 
     rows=cur.fetchall()
-
 
 
     signal="WAIT"
@@ -497,7 +493,6 @@ def trade_check():
         )
 
 
-
         if current > before:
 
             signal="BUY SIGNAL"
@@ -509,7 +504,9 @@ def trade_check():
 
 
 
+
     cur.execute("""
+    
     INSERT INTO trading_records
     (signal,price)
 
@@ -523,8 +520,24 @@ def trade_check():
     ))
 
 
-
     conn.commit()
+
+
+
+    cur.execute("""
+    
+    SELECT *
+
+    FROM trading_records
+
+    ORDER BY id DESC
+
+    LIMIT 100
+
+    """)
+
+
+    records=cur.fetchall()
 
 
 
@@ -538,11 +551,11 @@ def trade_check():
 
         "trade_check.html",
 
-        signal=signal
+        signal=signal,
+
+        records=records
 
     )
-
-
 
 
 # =====================================
