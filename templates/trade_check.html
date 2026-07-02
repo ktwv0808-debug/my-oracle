@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 
 <head>
 
+
 <meta charset="UTF-8">
+
 
 <title>Auto Trading Signal</title>
 
@@ -17,7 +19,7 @@
 
 body{
 
-font-family:Arial;
+font-family:Arial, sans-serif;
 
 background:#f5f5f5;
 
@@ -29,9 +31,9 @@ text-align:center;
 
 .box{
 
-width:600px;
+width:750px;
 
-margin:50px auto;
+margin:40px auto;
 
 background:white;
 
@@ -44,21 +46,99 @@ box-shadow:0 0 20px #aaa;
 }
 
 
+
+.language{
+
+text-align:right;
+
+}
+
+
+
+select{
+
+padding:8px;
+
+}
+
+
+
+h1{
+
+text-align:center;
+
+}
+
+
+
+.signal{
+
+
+font-size:28px;
+
+margin:30px;
+
+color:#0066cc;
+
+}
+
+
+
+
+table{
+
+width:90%;
+
+margin:30px auto;
+
+border-collapse:collapse;
+
+}
+
+
+
+th{
+
+background:#0066cc;
+
+color:white;
+
+padding:12px;
+
+}
+
+
+
+td{
+
+padding:12px;
+
+border:1px solid #ccc;
+
+}
+
+
+
 button{
 
-padding:12px 40px;
+display:block;
+
+margin:30px auto;
+
+padding:12px 50px;
 
 background:#333;
 
 color:white;
 
-border:0;
+border:none;
 
 border-radius:10px;
 
 cursor:pointer;
 
 }
+
 
 
 </style>
@@ -73,6 +153,12 @@ cursor:pointer;
 
 <div class="box">
 
+
+
+<div class="language">
+
+
+Language :
 
 
 <select id="language"
@@ -98,6 +184,11 @@ English
 </select>
 
 
+</div>
+
+
+
+
 
 
 <h1
@@ -106,41 +197,148 @@ data-en="Auto Trading Signal"
 
 data-ko="자동 거래 신호">
 
+
 Auto Trading Signal
+
 
 </h1>
 
 
 
-<h2
-
-data-en="BUY SIGNAL"
-
-data-ko="매수 신호">
-
-
-BUY SIGNAL
-
-
-</h2>
 
 
 
+<div class="signal">
 
-<button onclick="closePopup()">
+
+{{signal}}
+
+
+</div>
+
+
+
+
+
+
+
+<table>
+
+
+<tr>
+
+
+<th>ID</th>
+
+<th>Signal</th>
+
+<th>ETH Price</th>
+
+<th>Date</th>
+
+
+</tr>
+
+
+
+
+
+{% if records %}
+
+
+
+{% for r in records %}
+
+
+
+<tr>
+
+
+<td>
+
+{{r.id}}
+
+</td>
+
+
+
+<td>
+
+{{r.signal}}
+
+</td>
+
+
+
+<td>
+
+{{ "%.6f"|format(r.price) }} ETH
+
+</td>
+
+
+
+<td>
+
+{{r.created_at}}
+
+</td>
+
+
+
+</tr>
+
+
+
+
+{% endfor %}
+
+
+
+{% else %}
+
+
+<tr>
+
+<td colspan="4">
+
+No Data
+
+</td>
+
+</tr>
+
+
+{% endif %}
+
+
+
+
+</table>
+
+
+
+
+
+
+
+<button
+
+onclick="closePopup()"
+
+
+data-en="Close"
+
+data-ko="닫기">
+
+
 Close
+
+
 </button>
 
 
-<script>
 
-function closePopup(){
-
-    self.close();
-
-}
-
-</script>
 
 
 
