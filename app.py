@@ -577,13 +577,17 @@ def trades():
 
 
     cur.execute("""
+    
     SELECT *
 
     FROM trading_records
 
     ORDER BY id DESC
 
+    LIMIT 100
+
     """)
+
 
 
     records=cur.fetchall()
@@ -603,8 +607,6 @@ def trades():
         records=records
 
     )
-
-
 
 
 # =====================================
