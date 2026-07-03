@@ -7,7 +7,7 @@ import threading
 import time
 from datetime import datetime
 
-from apscheduler.schedulers.background import BackgroundSchedule
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 
