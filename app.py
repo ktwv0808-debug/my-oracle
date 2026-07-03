@@ -34,8 +34,7 @@ def get_db():
 # Binance API
 # =====================================
 
-BINANCE_API="https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT"
-
+BINANCE_API="https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT"
 # =====================================
 # Binance ETH Price
 # =====================================
@@ -45,22 +44,32 @@ def get_eth_price():
     try:
 
         r=requests.get(
+
             BINANCE_API,
+
             timeout=10
+
         )
 
         data=r.json()
 
-        return float(
-            data["price"]
-        )
+        return {
+
+            "price":float(data["lastPrice"]),
+
+            "high":float(data["highPrice"]),
+
+            "low":float(data["lowPrice"]),
+
+            "change":float(data["priceChangePercent"]),
+
+            "volume":float(data["volume"])
+
+        }
 
     except Exception as e:
 
-        print(
-            "BINANCE ERROR",
-            e
-        )
+        print(e)
 
         return None
 # =====================================
@@ -106,8 +115,11 @@ def auto_save_eth():
 
         try:
 
-            price=get_eth_price()
+           eth=get_eth_price()
 
+if eth:
+
+    price=eth["price"]
             if price is not None:
 
                 conn=get_db()
@@ -426,7 +438,7 @@ def price():
 
     )
 
-
+live=get_eth_price()
     cur.execute("""
     SELECT *
 
@@ -449,13 +461,15 @@ def price():
 
 
 
-    return render_template(
+  return render_template(
 
-        "price.html",
+    "price.html",
 
-        price=data
+    price=data,
 
-    )
+    live=live
+
+)
 
 
 
