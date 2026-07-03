@@ -2,7 +2,12 @@ from flask import Flask, render_template, request, jsonify
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import requests
+import threading
+import time
+from datetime import datetime
 
+from apscheduler.schedulers.background import BackgroundSchedule
 
 app = Flask(__name__)
 
@@ -25,9 +30,72 @@ def get_db():
     return psycopg2.connect(
         database_url
     )
+# =====================================
+# Binance API
+# =====================================
 
+BINANCE_API = "https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT"
 
+# =====================================
+# Binance ETH Price
+# =====================================
 
+def get_eth_price():
+
+    try:
+
+        r = requests.get(
+            BINANCE_API,
+            timeout=10
+        )
+
+        data = r.json()
+
+        return float(
+            data["price"]
+        )
+
+    except Exception as e:
+
+        print(
+            "BINANCE ERROR:",
+            e
+        )
+
+        return None
+# =====================================
+# DB 자동삭제
+# =====================================
+
+def keep_10000_rows(table):
+
+    conn = get_db()
+
+    cur = conn.cursor()
+
+    cur.execute(f"""
+
+    DELETE FROM {table}
+
+    WHERE id IN (
+
+        SELECT id
+
+        FROM {table}
+
+        ORDER BY id ASC
+
+        OFFSET 10000
+
+    )
+
+    """)
+
+    conn.commit()
+
+    cur.close()
+
+    conn.close(        
 # =====================================
 # DB 테이블 생성
 # =====================================
