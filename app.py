@@ -1,14 +1,14 @@
 from flask import Flask, render_template, request, jsonify
+
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
 import requests
 import threading
 import time
+
 from datetime import datetime
-
-from apscheduler.schedulers.background import BackgroundScheduler
-
 app = Flask(__name__)
 
 
@@ -34,7 +34,7 @@ def get_db():
 # Binance API
 # =====================================
 
-BINANCE_API = "https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT"
+BINANCE_API="https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT"
 
 # =====================================
 # Binance ETH Price
@@ -44,12 +44,12 @@ def get_eth_price():
 
     try:
 
-        r = requests.get(
+        r=requests.get(
             BINANCE_API,
             timeout=10
         )
 
-        data = r.json()
+        data=r.json()
 
         return float(
             data["price"]
@@ -58,32 +58,32 @@ def get_eth_price():
     except Exception as e:
 
         print(
-            "BINANCE ERROR:",
+            "BINANCE ERROR",
             e
         )
 
         return None
 # =====================================
-# DB 자동삭제
+# keep latest 10000 rows
 # =====================================
 
 def keep_10000_rows(table):
 
-    conn = get_db()
+    conn=get_db()
 
-    cur = conn.cursor()
+    cur=conn.cursor()
 
     cur.execute(f"""
 
     DELETE FROM {table}
 
-    WHERE id IN (
+    WHERE id IN(
 
         SELECT id
 
         FROM {table}
 
-        ORDER BY id ASC
+        ORDER BY id DESC
 
         OFFSET 10000
 
@@ -95,7 +95,72 @@ def keep_10000_rows(table):
 
     cur.close()
 
-    conn.close()        
+    conn.close()   
+# =====================================
+# Auto Save ETH
+# =====================================
+
+def auto_save_eth():
+
+    while True:
+
+        try:
+
+            price=get_eth_price()
+
+            if price is not None:
+
+                conn=get_db()
+
+                cur=conn.cursor()
+
+                cur.execute("""
+
+                INSERT INTO eth_price(price)
+
+                VALUES(%s)
+
+                """,
+
+                (
+
+                    price,
+
+                ))
+
+                conn.commit()
+
+                cur.close()
+
+                conn.close()
+
+                keep_10000_rows(
+
+                    "eth_price"
+
+                )
+
+                print(
+
+                    "ETH Saved",
+
+                    price
+
+                )
+
+        except Exception as e:
+
+            print(
+
+                e
+
+            )
+
+        time.sleep(
+
+            600
+
+        )    
 # =====================================
 # DB 테이블 생성
 # =====================================
@@ -270,7 +335,14 @@ def insert_test_data():
 
     conn.close()
 
+# =====================================
+# Background Thread
+# =====================================
 
+threading.Thread(
+    target=auto_save_eth,
+    daemon=True
+).start()
 
 
 # =====================================
