@@ -35,15 +35,11 @@ def get_db():
 # =====================================
 
 BINANCE_API="https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT"
-# =====================================
-# Binance ETH Price
-# =====================================
-
 def get_eth_price():
 
     try:
 
-        r=requests.get(
+        r = requests.get(
 
             BINANCE_API,
 
@@ -51,25 +47,31 @@ def get_eth_price():
 
         )
 
-        data=r.json()
+        data = r.json()
 
         return {
 
-            "price":float(data["lastPrice"]),
+            "price": float(data["lastPrice"]),
 
-            "high":float(data["highPrice"]),
+            "high": float(data["highPrice"]),
 
-            "low":float(data["lowPrice"]),
+            "low": float(data["lowPrice"]),
 
-            "change":float(data["priceChangePercent"]),
+            "change": float(data["priceChangePercent"]),
 
-            "volume":float(data["volume"])
+            "volume": float(data["volume"])
 
         }
 
     except Exception as e:
 
-        print(e)
+        print(
+
+            "BINANCE ERROR:",
+
+            e
+
+        )
 
         return None
 # =====================================
@@ -115,16 +117,15 @@ def auto_save_eth():
 
         try:
 
-           eth=get_eth_price()
+            live = get_eth_price()
 
-if eth:
+            if live is not None:
 
-    price=eth["price"]
-            if price is not None:
+                price = live["price"]
 
-                conn=get_db()
+                conn = get_db()
 
-                cur=conn.cursor()
+                cur = conn.cursor()
 
                 cur.execute("""
 
@@ -146,17 +147,11 @@ if eth:
 
                 conn.close()
 
-                keep_10000_rows(
-
-                    "eth_price"
-
-                )
+                keep_10000_rows("eth_price")
 
                 print(
 
-                    "ETH Saved",
-
-                    price
+                    f"[AUTO SAVE] {price} USD"
 
                 )
 
@@ -164,15 +159,13 @@ if eth:
 
             print(
 
+                "AUTO SAVE ERROR:",
+
                 e
 
             )
 
-        time.sleep(
-
-            600
-
-        )    
+        time.sleep(600)
 # =====================================
 # DB 테이블 생성
 # =====================================
@@ -428,18 +421,16 @@ def trading():
 @app.route("/price")
 def price():
 
+    conn = get_db()
 
-    conn=get_db()
-
-
-    cur=conn.cursor(
+    cur = conn.cursor(
 
         cursor_factory=RealDictCursor
 
     )
 
-live=get_eth_price()
     cur.execute("""
+
     SELECT *
 
     FROM eth_price
@@ -450,28 +441,23 @@ live=get_eth_price()
 
     """)
 
-
-    data=cur.fetchone()
-
-
+    db_price = cur.fetchone()
 
     cur.close()
 
     conn.close()
 
+    live = get_eth_price()
 
+    return render_template(
 
-  return render_template(
+        "price.html",
 
-    "price.html",
+        price=db_price,
 
-    price=data,
+        live=live
 
-    live=live
-
-)
-
-
+    )
 
 
 # =====================================
@@ -480,43 +466,54 @@ live=get_eth_price()
 
 @app.route(
     "/save-price",
-    methods=["GET","POST"]
+    methods=["GET", "POST"]
 )
 def save_price():
 
-    message=""
+    message = ""
 
-    conn=get_db()
+    conn = get_db()
 
-    cur=conn.cursor(
+    cur = conn.cursor(
+
         cursor_factory=RealDictCursor
+
     )
 
+    if request.method == "POST":
 
-    if request.method=="POST":
+        live = get_eth_price()
 
-        price=request.form.get("price")
+        if live:
 
+            price = live["price"]
 
-        cur.execute("""
-        INSERT INTO eth_price(price)
+            cur.execute("""
 
-        VALUES(%s)
+            INSERT INTO eth_price(price)
 
-        """,
-        (
-            price,
-        ))
+            VALUES(%s)
 
+            """,
 
-        conn.commit()
+            (
 
+                price,
 
-        message="ETH Price Saved Successfully"
+            ))
 
+            conn.commit()
 
+            keep_10000_rows(
+
+                "eth_price"
+
+            )
+
+            message = "ETH Price Saved Successfully"
 
     cur.execute("""
+
     SELECT *
 
     FROM eth_price
@@ -527,15 +524,11 @@ def save_price():
 
     """)
 
-
-    prices=cur.fetchall()
-
+    prices = cur.fetchall()
 
     cur.close()
 
     conn.close()
-
-
 
     return render_template(
 
@@ -546,7 +539,6 @@ def save_price():
         prices=prices
 
     )
-
 
 
 # =====================================
