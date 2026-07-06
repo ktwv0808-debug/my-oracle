@@ -516,13 +516,17 @@ def save_price():
 
     conn.close()
 
-    return render_template(
+    live = get_eth_price()
 
-        "save_price.html",
+return render_template(
 
-        message=message,
+    "save_price.html",
 
-        prices=prices
+    message=message,
+
+    prices=prices,
+
+    live=live
 
     )
 
