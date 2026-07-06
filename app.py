@@ -518,18 +518,17 @@ def save_price():
 
     live = get_eth_price()
 
-return render_template(
+  return render_template(
 
-    "save_price.html",
+        "save_price.html",
 
-    message=message,
+        message=message,
 
-    prices=prices,
+        prices=prices,
 
-    live=live
+        live=live
 
     )
-
 
 # =====================================
 # Price History
