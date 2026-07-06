@@ -34,18 +34,13 @@ def get_db():
 # Binance API
 # =====================================
 
-BINANCE_API="https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT"
 def get_eth_price():
 
     try:
 
-        r = requests.get(
+        url = "https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT"
 
-            BINANCE_API,
-
-            timeout=10
-
-        )
+        r = requests.get(url, timeout=10)
 
         data = r.json()
 
@@ -65,13 +60,7 @@ def get_eth_price():
 
     except Exception as e:
 
-        print(
-
-            "BINANCE ERROR:",
-
-            e
-
-        )
+        print("BINANCE ERROR:", e)
 
         return None
 # =====================================
