@@ -333,7 +333,37 @@ Close
 
 
 </div>
+<hr>
 
+<h2>ETH Price History</h2>
+
+<table border="1" width="100%">
+
+<tr>
+
+<th>ID</th>
+
+<th>ETH Price (USD)</th>
+
+<th>Date</th>
+
+</tr>
+
+{% for p in prices %}
+
+<tr>
+
+<td>{{ p.id }}</td>
+
+<td>{{ "%.2f"|format(p.price) }}</td>
+
+<td>{{ p.created_at }}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
 
 </body>
 
