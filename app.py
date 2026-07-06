@@ -88,7 +88,7 @@ def auto_save_eth():
 
     while True:
 
-        try:
+    try:
 
             price = get_eth_price()
 
@@ -116,12 +116,13 @@ def auto_save_eth():
 
                 print("ETH Saved:", price)
 
-        except Exception as e:
+     except Exception as e:
 
             print("AUTO SAVE ERROR:", e)
 
         time.sleep(600)
-        try:
+        
+    try:
 
     init_db()
 
@@ -132,7 +133,7 @@ def auto_save_eth():
         daemon=True
     ).start()
 
-except Exception as e:
+    except Exception as e:
 
     print("DATABASE ERROR:", e)
         
