@@ -25,10 +25,10 @@ def get_db():
 
 
 # =====================================================
-# Binance
+# COINGECKO
 # =====================================================
 
-BINANCE_URL = "https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT"
+COINGECKO_URL = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
 
 
 def get_eth_price():
@@ -36,26 +36,19 @@ def get_eth_price():
     try:
 
         r = requests.get(
-            BINANCE_URL,
+            COINGECKO_URL,
             timeout=10
         )
 
-        print("STATUS =", r.status_code)
-
-        print("TEXT =", r.text)
-
         data = r.json()
 
-        if "price" in data:
-            return float(data["price"])
-
-        print("JSON =", data)
-
-        return None
+        return float(
+            data["ethereum"]["usd"]
+        )
 
     except Exception as e:
 
-        print("BINANCE ERROR:", e)
+        print(e)
 
         return None
 
