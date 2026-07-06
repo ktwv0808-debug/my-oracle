@@ -139,7 +139,8 @@ def init_db():
 
     cur.close()
 
-    conn.close# =====================================================
+    conn.close()
+# =====================================================
 # Test Data
 # =====================================================
 
@@ -279,65 +280,7 @@ except Exception as e:
 
     print("DATABASE INIT ERROR :", e)
     
-# =====================================
-# DB 초기화
-# =====================================
 
-def init_db():
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    # ETH 가격
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS eth_price(
-
-            id SERIAL PRIMARY KEY,
-
-            price NUMERIC(18,6),
-
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
-        )
-    """)
-
-    # 거래 기록
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS trading_records(
-
-            id SERIAL PRIMARY KEY,
-
-            signal TEXT,
-
-            price NUMERIC(18,6),
-
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
-        )
-    """)
-
-    # Donation
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS donation_records(
-
-            id SERIAL PRIMARY KEY,
-
-            quarter TEXT,
-
-            net_profit NUMERIC(18,6),
-
-            donation NUMERIC(18,6),
-
-            proof TEXT
-
-        )
-    """)
-
-    conn.commit()
-
-    cur.close()
-
-    conn.close()  
 # =====================================
 # DB 초기화
 # =====================================
@@ -497,6 +440,34 @@ if __name__ == "__main__":
         port=5000,
         debug=True
     )
+# =====================================
+# 메인 홈페이지
+# =====================================
+
+@app.route("/")
+def home():
+
+    conn = get_db()
+
+    cur = conn.cursor(
+        cursor_factory=RealDictCursor
+    )
+
+    cur.execute("""
+        SELECT *
+        FROM donation_records
+        ORDER BY id
+    """)
+
+    donations = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "donation.html",
+        donations=donations
+    )    
 # =====================================
 # ETH Price
 # =====================================
