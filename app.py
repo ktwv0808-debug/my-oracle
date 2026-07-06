@@ -35,23 +35,22 @@ def get_eth_price():
 
     try:
 
-        r = requests.get(
-            COINGECKO_URL,
-            timeout=10
-        )
+        r = requests.get(COINGECKO_URL, timeout=10)
 
         data = r.json()
 
-        return float(
-            data["ethereum"]["usd"]
-        )
+        print(data)
 
-    except Exception as e:
-
-        print(e)
+        if "ethereum" in data:
+            return float(data["ethereum"]["usd"])
 
         return None
 
+    except Exception as e:
+
+        print("PRICE ERROR:", e)
+
+        return None
 
 # =====================================================
 # Keep latest 10000 rows
