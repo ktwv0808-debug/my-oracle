@@ -40,12 +40,16 @@ def get_eth_price():
             timeout=10
         )
 
+        print("STATUS =", r.status_code)
+
+        print("TEXT =", r.text)
+
         data = r.json()
 
         if "price" in data:
             return float(data["price"])
 
-        print(data)
+        print("JSON =", data)
 
         return None
 
