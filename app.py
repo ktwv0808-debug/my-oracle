@@ -1,104 +1,86 @@
 from flask import Flask, render_template, request, jsonify
-
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
-
 import requests
 import threading
 import time
+from decimal import Decimal
 
-from datetime import datetime
 app = Flask(__name__)
 
-
-# =====================================
-# PostgreSQL Cloud 연결
-# =====================================
+####################################################
+# PostgreSQL
+####################################################
 
 def get_db():
 
-    database_url = os.environ.get(
-        "DATABASE_URL"
-    )
+    database_url = os.environ.get("DATABASE_URL")
 
     if not database_url:
-        raise Exception(
-            "DATABASE_URL missing"
-        )
+        raise Exception("DATABASE_URL missing")
 
-    return psycopg2.connect(
-        database_url
-    )
-# =====================================
+    return psycopg2.connect(database_url)
+
+
+####################################################
 # Binance API
-# =====================================
+####################################################
+
+BINANCE_URL = "https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT"
+
 
 def get_eth_price():
 
     try:
 
-        url = "https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT"
-
-        r = requests.get(url, timeout=10)
+        r = requests.get(BINANCE_URL, timeout=10)
 
         data = r.json()
 
-        return {
+        if "price" not in data:
+            print(data)
+            return None
 
-            "price": float(data["lastPrice"]),
-
-            "high": float(data["highPrice"]),
-
-            "low": float(data["lowPrice"]),
-
-            "change": float(data["priceChangePercent"]),
-
-            "volume": float(data["volume"])
-
-        }
+        return float(data["price"])
 
     except Exception as e:
 
         print("BINANCE ERROR:", e)
 
         return None
-# =====================================
-# keep latest 10000 rows
-# =====================================
+
+
+####################################################
+# 최대 10000건 유지
+####################################################
 
 def keep_10000_rows(table):
 
-    conn=get_db()
+    conn = get_db()
 
-    cur=conn.cursor()
+    cur = conn.cursor()
 
     cur.execute(f"""
-
-    DELETE FROM {table}
-
-    WHERE id IN(
-
-        SELECT id
-
-        FROM {table}
-
-        ORDER BY id DESC
-
-        OFFSET 10000
-
-    )
-
+        DELETE FROM {table}
+        WHERE id IN(
+            SELECT id
+            FROM {table}
+            ORDER BY id ASC
+            OFFSET 10000
+        )
     """)
 
     conn.commit()
 
     cur.close()
 
-    conn.close()   
-# =====================================
-# Auto Save ETH
-# =====================================
+    conn.close()
+
+
+####################################################
+# 10분마다 자동 저장
+####################################################
 
 def auto_save_eth():
 
@@ -106,29 +88,18 @@ def auto_save_eth():
 
         try:
 
-            live = get_eth_price()
+            eth = get_eth_price()
 
-            if live is not None:
-
-                price = live["price"]
+            if eth is not None:
 
                 conn = get_db()
 
                 cur = conn.cursor()
 
                 cur.execute("""
-
-                INSERT INTO eth_price(price)
-
-                VALUES(%s)
-
-                """,
-
-                (
-
-                    price,
-
-                ))
+                    INSERT INTO eth_price(price)
+                    VALUES(%s)
+                """, (eth,))
 
                 conn.commit()
 
@@ -138,23 +109,23 @@ def auto_save_eth():
 
                 keep_10000_rows("eth_price")
 
-                print(
-
-                    f"[AUTO SAVE] {price} USD"
-
-                )
+                print("ETH Saved :", eth)
 
         except Exception as e:
 
-            print(
-
-                "AUTO SAVE ERROR:",
-
-                e
-
-            )
+            print("AUTO SAVE ERROR:", e)
 
         time.sleep(600)
+
+
+####################################################
+# 백그라운드 실행
+####################################################
+
+threading.Thread(
+    target=auto_save_eth,
+    daemon=True
+).start()
 # =====================================
 # DB 테이블 생성
 # =====================================
