@@ -683,16 +683,19 @@ def trade_check():
 
 
 
-    return render_template(
+    live = get_eth_price()
 
-        "trade_check.html",
+return render_template(
 
-        signal=signal,
+    "trade_check.html",
 
-        records=records
+    signal=signal,
 
-    )
+    records=records,
 
+    live=live
+
+)
 
 # =====================================
 # Trading Records
