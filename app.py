@@ -606,7 +606,7 @@ def trade_check():
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute("""
-        SELECT price
+        SELECT *
         FROM eth_price
         ORDER BY id DESC
         LIMIT 2
@@ -618,11 +618,18 @@ def trade_check():
 
     current = 0
 
+    previous = 0
+
+    change = 0
+
+
     if len(rows) >= 2:
 
         current = float(rows[0]["price"])
 
         previous = float(rows[1]["price"])
+
+        change = current - previous
 
         if current > previous:
             signal = "BUY SIGNAL"
@@ -630,31 +637,37 @@ def trade_check():
         elif current < previous:
             signal = "SELL SIGNAL"
 
+
     cur.execute("""
-        INSERT INTO trading_records(signal, price)
+        INSERT INTO trading_records(signal,price)
+
         VALUES(%s,%s)
-    """, (signal, current))
+    """,
+    (
+        signal,
+        current
+    ))
 
     conn.commit()
 
     keep_10000_rows("trading_records")
 
-    cur.execute("""
-        SELECT *
-        FROM trading_records
-        ORDER BY id DESC
-        LIMIT 100
-    """)
-
-    records = cur.fetchall()
-
     cur.close()
+
     conn.close()
 
     return render_template(
+
         "trade_check.html",
+
         signal=signal,
-        records=records
+
+        current=current,
+
+        previous=previous,
+
+        change=change
+
     )
 # =====================================
 # Trading Records
@@ -668,18 +681,27 @@ def trades():
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute("""
+
         SELECT *
+
         FROM trading_records
+
         ORDER BY id DESC
-        LIMIT 500
+
+        LIMIT 100
+
     """)
 
     records = cur.fetchall()
 
     cur.close()
+
     conn.close()
 
     return render_template(
+
         "trades.html",
+
         records=records
-    )    
+
+    )
