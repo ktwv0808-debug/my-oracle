@@ -467,7 +467,32 @@ def home():
     return render_template(
         "donation.html",
         donations=donations
-    )    
+    ) 
+# =====================================
+# Automatic Trading System
+# =====================================
+
+@app.route("/trading")
+def trading():
+    return render_template("trading.html")
+
+
+# =====================================
+# Whitepaper
+# =====================================
+
+@app.route("/whitepaper")
+def whitepaper():
+    return render_template("whitepaper.html")
+
+
+# =====================================
+# Toward Victory
+# =====================================
+
+@app.route("/poem")
+def poem():
+    return render_template("poem.html"   
 # =====================================
 # ETH Price
 # =====================================
