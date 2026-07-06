@@ -345,7 +345,69 @@ Close
 
 </div>
 
+<hr>
 
+<h2>Live Trading Signal</h2>
+
+<table border="1" width="100%">
+
+<tr>
+
+<th>Current Price</th>
+
+<th>24H Change</th>
+
+<th>Trading Signal</th>
+
+</tr>
+
+<tr>
+
+<td>{{ "%.2f"|format(live.price) }} USD</td>
+
+<td>{{ "%.2f"|format(live.change) }} %</td>
+
+<td>{{ signal }}</td>
+
+</tr>
+
+</table>
+
+<br>
+
+<h2>Trading History</h2>
+
+<table border="1" width="100%">
+
+<tr>
+
+<th>ID</th>
+
+<th>Signal</th>
+
+<th>Price</th>
+
+<th>Time</th>
+
+</tr>
+
+{% for r in records %}
+
+<tr>
+
+<td>{{ r.id }}</td>
+
+<td>{{ r.signal }}</td>
+
+<td>{{ "%.2f"|format(r.price) }}</td>
+
+<td>{{ r.created_at }}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
 </body>
 
 
