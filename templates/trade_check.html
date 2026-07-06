@@ -1,383 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
 
+<html>
 
 <head>
 
-
 <meta charset="UTF-8">
 
+<title>Trade Check</title>
 
-<title>Auto Trading Signal</title>
-
-
-<script src="/static/language.js"></script>
-
-
-<style>
-
-
-body{
-
-font-family:Arial, sans-serif;
-
-background:#f5f5f5;
-
-text-align:center;
-
-}
-
-
-
-.box{
-
-width:1100px;
-
-max-width:95%;
-
-margin:40px auto;
-
-background:white;
-
-padding:40px;
-
-border-radius:20px;
-
-box-shadow:0 0 20px #aaa;
-
-}
-
-
-.language{
-
-text-align:right;
-
-}
-
-
-
-select{
-
-padding:8px;
-
-}
-
-
-
-h1{
-
-text-align:center;
-
-}
-
-
-
-.signal{
-
-
-font-size:28px;
-
-margin:30px;
-
-color:#0066cc;
-
-}
-
-
-
-
-table{
-
-width:90%;
-
-margin:30px auto;
-
-border-collapse:collapse;
-
-}
-
-
-
-th{
-
-background:#0066cc;
-
-color:white;
-
-padding:12px;
-
-}
-
-
-
-td{
-
-padding:12px;
-
-border:1px solid #ccc;
-
-}
-
-
-
-button{
-
-display:block;
-
-margin:30px auto;
-
-padding:12px 50px;
-
-background:#333;
-
-color:white;
-
-border:none;
-
-border-radius:10px;
-
-cursor:pointer;
-
-}
-
-
-
-</style>
-
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
 </head>
 
+<body class="bg-dark text-light">
 
+<div class="container mt-5">
 
-<body>
+<h2 class="text-warning">
 
+Trading Signal
 
-<div class="box">
+</h2>
 
+<div class="alert alert-success">
 
-
-<div class="language">
-
-
-Language :
-
-
-<select id="language"
-
-onchange="changeLanguage()">
-
-
-
-<option value="en">
-
-English
-
-</option>
-
-
-<option value="ko">
-
-한국어
-
-</option>
-
-
-</select>
-
+{{ signal }}
 
 </div>
 
+<table class="table table-dark table-striped">
 
-
-
-
-
-<h1
-
-data-en="Auto Trading Signal"
-
-data-ko="자동 거래 신호">
-
-
-Auto Trading Signal
-
-
-</h1>
-
-
-
-
-
-
-<div class="signal">
-
-
-{{signal}}
-
-
-</div>
-
-
-
-
-
-
-
-<table>
-
-
-<tr>
-
-
-<th>ID</th>
-
-<th>Signal</th>
-
-<th>ETH Price</th>
-
-<th>Date</th>
-
-
-</tr>
-
-
-
-
-
-{% if records %}
-
-
-
-{% for r in records %}
-
-
-
-<tr>
-
-
-<td>
-
-{{r.id}}
-
-</td>
-
-
-
-<td>
-
-{{r.signal}}
-
-</td>
-
-
-
-<td>
-
-{{ "%.6f"|format(r.price) }} ETH
-
-</td>
-
-
-
-<td>
-
-{{r.created_at}}
-
-</td>
-
-
-
-</tr>
-
-
-
-
-{% endfor %}
-
-
-
-{% else %}
-
-
-<tr>
-
-<td colspan="4">
-
-No Data
-
-</td>
-
-</tr>
-
-
-{% endif %}
-
-
-
-
-</table>
-
-
-
-
-
-
-
-<button
-
-onclick="closePopup()"
-
-
-data-en="Close"
-
-data-ko="닫기">
-
-
-Close
-
-
-</button>
-
-
-
-
-
-
-</div>
-
-<hr>
-
-<h2>Live Trading Signal</h2>
-
-<table border="1" width="100%">
-
-<tr>
-
-<th>Current Price</th>
-
-<th>24H Change</th>
-
-<th>Trading Signal</th>
-
-</tr>
-
-<tr>
-
-<td>{{ "%.2f"|format(live.price) }} USD</td>
-
-<td>{{ "%.2f"|format(live.change) }} %</td>
-
-<td>{{ signal }}</td>
-
-</tr>
-
-</table>
-
-<br>
-
-<h2>Trading History</h2>
-
-<table border="1" width="100%">
+<thead>
 
 <tr>
 
@@ -387,9 +40,13 @@ Close
 
 <th>Price</th>
 
-<th>Time</th>
+<th>Date</th>
 
 </tr>
+
+</thead>
+
+<tbody>
 
 {% for r in records %}
 
@@ -399,7 +56,7 @@ Close
 
 <td>{{ r.signal }}</td>
 
-<td>{{ "%.2f"|format(r.price) }}</td>
+<td>{{ r.price }}</td>
 
 <td>{{ r.created_at }}</td>
 
@@ -407,8 +64,12 @@ Close
 
 {% endfor %}
 
-</table>
-</body>
+</tbody>
 
+</table>
+
+</div>
+
+</body>
 
 </html>
