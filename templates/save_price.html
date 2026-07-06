@@ -425,7 +425,27 @@ Close
 
 </div>
 
+<th>Price</th>
 
+<th>Saved Time</th>
+
+</tr>
+
+{% for p in prices %}
+
+<tr>
+
+<td>{{ p.id }}</td>
+
+<td>{{ "%.2f"|format(p.price) }} USD</td>
+
+<td>{{ p.created_at }}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
 
 </body>
 
