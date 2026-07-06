@@ -377,7 +377,83 @@ Close
 </div>
 
 
+<hr>
 
+<h2>Live Binance Information</h2>
+
+<table border="1" width="100%">
+
+<tr>
+<th>Item</th>
+<th>Value</th>
+</tr>
+
+<tr>
+<td>Current ETH Price</td>
+<td>
+{% if live %}
+{{ "%.2f"|format(live.price) }} USD
+{% else %}
+Loading...
+{% endif %}
+</td>
+</tr>
+
+<tr>
+<td>24H Change</td>
+<td>
+{% if live %}
+{{ "%.2f"|format(live.change) }} %
+{% endif %}
+</td>
+</tr>
+
+<tr>
+<td>24H High</td>
+<td>
+{% if live %}
+{{ "%.2f"|format(live.high) }} USD
+{% endif %}
+</td>
+</tr>
+
+<tr>
+<td>24H Low</td>
+<td>
+{% if live %}
+{{ "%.2f"|format(live.low) }} USD
+{% endif %}
+</td>
+</tr>
+
+<tr>
+<td>24H Volume</td>
+<td>
+{% if live %}
+{{ "{:,.2f}".format(live.volume) }} ETH
+{% endif %}
+</td>
+</tr>
+
+<tr>
+<td>Database Price</td>
+<td>
+{% if price %}
+{{ "%.2f"|format(price.price) }} USD
+{% endif %}
+</td>
+</tr>
+
+<tr>
+<td>Last Saved</td>
+<td>
+{% if price %}
+{{ price.created_at }}
+{% endif %}
+</td>
+</tr>
+
+</table>
 </body>
 
 
