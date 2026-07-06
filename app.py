@@ -424,9 +424,7 @@ def price():
     conn = get_db()
 
     cur = conn.cursor(
-
         cursor_factory=RealDictCursor
-
     )
 
     cur.execute("""
@@ -458,7 +456,6 @@ def price():
         live=live
 
     )
-
 
 # =====================================
 # Save ETH Price
