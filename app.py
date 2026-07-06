@@ -492,7 +492,7 @@ def whitepaper():
 
 @app.route("/poem")
 def poem():
-    return render_template("poem.html"   
+    return render_template("poem.html")   
 # =====================================
 # ETH Price
 # =====================================
