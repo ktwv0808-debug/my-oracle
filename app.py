@@ -28,27 +28,21 @@ def get_db():
 # COINGECKO
 # =====================================================
 
-COINGECKO_URL = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
-
+COINCAP_URL = "https://api.coincap.io/v2/assets/ethereum"
 
 def get_eth_price():
 
     try:
 
-        r = requests.get(COINGECKO_URL, timeout=10)
+        r = requests.get(COINCAP_URL, timeout=10)
 
         data = r.json()
 
-        print(data)
-
-        if "ethereum" in data:
-            return float(data["ethereum"]["usd"])
-
-        return None
+        return float(data["data"]["priceUsd"])
 
     except Exception as e:
 
-        print("PRICE ERROR:", e)
+        print("CoinCap ERROR:", e)
 
         return None
 
