@@ -695,3 +695,38 @@ def trades():
         records=records
 
     )
+@app.route("/chart")
+def chart():
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT id,
+               price,
+               created_at
+        FROM eth_price
+        ORDER BY id ASC
+        LIMIT 100
+    """)
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    labels = [
+        r["created_at"].strftime("%H:%M:%S")
+        for r in rows
+    ]
+
+    prices = [
+        float(r["price"])
+        for r in rows
+    ]
+
+    return render_template(
+        "chart.html",
+        labels=labels,
+        prices=prices
+    )
