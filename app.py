@@ -255,29 +255,6 @@ def auto_save_eth():
         time.sleep(600)
 
 
-# =====================================================
-# Initialize
-# =====================================================
-
-try:
-
-    init_db()
-
-    insert_test_data()
-
-    threading.Thread(
-
-        target=auto_save_eth,
-
-        daemon=True
-
-    ).start()
-
-except Exception as e:
-
-    print("DATABASE INIT ERROR :", e)
-    
-
 # =====================================
 # DB 초기화
 # =====================================
@@ -409,7 +386,27 @@ def insert_test_data():
     cur.close()
     conn.close()
 
+# =====================================================
+# Initialize
+# =====================================================
 
+try:
+
+    init_db()
+
+    insert_test_data()
+
+    threading.Thread(
+
+        target=auto_save_eth,
+
+        daemon=True
+
+    ).start()
+
+except Exception as e:
+
+    print("DATABASE INIT ERROR :", e)
 
 # =====================================
 # Flask Start
