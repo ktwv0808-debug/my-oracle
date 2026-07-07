@@ -60,25 +60,22 @@ def get_eth_price():
 def keep_10000_rows(table):
 
     conn = get_db()
-
     cur = conn.cursor()
 
     cur.execute(f"""
         DELETE FROM {table}
-        WHERE id IN (
+        WHERE id NOT IN (
             SELECT id
             FROM {table}
-            ORDER BY id ASC
-            OFFSET 10000
+            ORDER BY id DESC
+            LIMIT 10000
         )
     """)
 
     conn.commit()
 
     cur.close()
-
     conn.close()
-
 
 # =====================================================
 # Database Create
