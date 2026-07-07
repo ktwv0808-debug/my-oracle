@@ -512,35 +512,33 @@ def save_price():
 
     message = ""
 
-   if request.method == "POST":
+    if request.method == "POST":
 
-    price = float(request.form.get("price"))
-
-    # 마지막 저장 가격 조회
-    cur.execute("""
-        SELECT price
-        FROM eth_price
-        ORDER BY id DESC
-        LIMIT 1
-    """)
-
-    last = cur.fetchone()
-
-    # 이전 가격과 다를 때만 저장
-    if last is None or float(last["price"]) != price:
+        price = request.form.get("price")
 
         cur.execute("""
-            INSERT INTO eth_price(price)
-            VALUES(%s)
-        """, (price,))
+            SELECT price
+            FROM eth_price
+            ORDER BY id DESC
+            LIMIT 1
+        """)
 
-        conn.commit()
+        last = cur.fetchone()
 
-        message = "Saved Successfully"
+        if last is None or float(last["price"]) != float(price):
 
-    else:
+            cur.execute("""
+                INSERT INTO eth_price(price)
+                VALUES(%s)
+            """, (price,))
 
-        message = "Same price. Not saved."
+            conn.commit()
+
+            message = "Saved Successfully"
+
+        else:
+
+            message = "Same price. Not Saved."
 
     cur.execute("""
         SELECT *
