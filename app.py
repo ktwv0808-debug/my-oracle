@@ -650,17 +650,37 @@ def trade_check():
     # RSI 계산
     rsi = calculate_rsi()
 
-    if rsi is None:
-        signal = "Not enough data"
+   if rsi is None:
 
-    elif rsi < 30:
-        signal = "BUY"
+    signal = "Not enough data"
 
-    elif rsi > 70:
-        signal = "SELL"
+elif rsi <= 20:
 
-    else:
-        signal = "HOLD"
+    signal = "🔥 STRONG BUY"
+
+elif rsi <= 30:
+
+    signal = "🟢 BUY"
+
+elif rsi < 45:
+
+    signal = "🟡 WEAK HOLD"
+
+elif rsi < 55:
+
+    signal = "⚪ HOLD"
+
+elif rsi < 70:
+
+    signal = "🟠 WEAK SELL"
+
+elif rsi < 80:
+
+    signal = "🔴 SELL"
+
+else:
+
+    signal = "🚨 STRONG SELL"
 
     # Trading Records 저장
     cur.execute("""
