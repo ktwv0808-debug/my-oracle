@@ -408,23 +408,7 @@ def insert_test_data():
 
     cur.close()
     conn.close()
-# =====================================
-# Render 시작 시 초기화
-# =====================================
 
-try:
-    init_db()
-    insert_test_data()
-
-    threading.Thread(
-        target=auto_save_eth,
-        daemon=True
-    ).start()
-
-    print("System Started")
-
-except Exception as e:
-    print("INIT ERROR:", e)
 
 
 # =====================================
