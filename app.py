@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import os
 import threading
 import time
+import pandas as pd
 from datetime import datetime
 
 import requests
@@ -52,7 +53,40 @@ def get_eth_price():
         print("KRAKEN ERROR:", e)
 
         return None
+def calculate_rsi(period=14):
 
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT price
+        FROM eth_price
+        ORDER BY id ASC
+    """)
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    if len(rows) < period + 1:
+        return None
+
+    prices = pd.Series([float(r["price"]) for r in rows])
+
+    delta = prices.diff()
+
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+
+    avg_gain = gain.rolling(period).mean()
+    avg_loss = loss.rolling(period).mean()
+
+    rs = avg_gain / avg_loss
+
+    rsi = 100 - (100 / (1 + rs))
+
+    return round(float(rsi.iloc[-1]), 2)
 # =====================================================
 # Keep latest 10000 rows
 # =====================================================
@@ -592,9 +626,9 @@ def history():
 def trade_check():
 
     conn = get_db()
-
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
+    # 최근 가격 조회
     cur.execute("""
         SELECT *
         FROM eth_price
@@ -604,60 +638,50 @@ def trade_check():
 
     rows = cur.fetchall()
 
-    signal = "WAIT"
-
     current = 0
-
     previous = 0
-
     change = 0
 
-
     if len(rows) >= 2:
-
         current = float(rows[0]["price"])
-
         previous = float(rows[1]["price"])
-
         change = current - previous
 
-        if current > previous:
-            signal = "BUY SIGNAL"
+    # RSI 계산
+    rsi = calculate_rsi()
 
-        elif current < previous:
-            signal = "SELL SIGNAL"
+    if rsi is None:
+        signal = "Not enough data"
 
+    elif rsi < 30:
+        signal = "BUY"
 
+    elif rsi > 70:
+        signal = "SELL"
+
+    else:
+        signal = "HOLD"
+
+    # Trading Records 저장
     cur.execute("""
-        INSERT INTO trading_records(signal,price)
-
+        INSERT INTO trading_records(signal, price)
         VALUES(%s,%s)
-    """,
-    (
-        signal,
-        current
-    ))
+    """, (signal, current))
 
     conn.commit()
 
     keep_10000_rows("trading_records")
 
     cur.close()
-
     conn.close()
 
     return render_template(
-
         "trade_check.html",
-
         signal=signal,
-
+        rsi=rsi,
         current=current,
-
         previous=previous,
-
         change=change
-
     )
 # =====================================
 # Trading Records
