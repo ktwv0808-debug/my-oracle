@@ -28,21 +28,28 @@ def get_db():
 # COINGECKO
 # =====================================================
 
-COINCAP_URL = "https://api.coincap.io/v2/assets/ethereum"
+KRAKEN_URL = "https://api.kraken.com/0/public/Ticker?pair=ETHUSD"
 
 def get_eth_price():
 
     try:
 
-        r = requests.get(COINCAP_URL, timeout=10)
+        r = requests.get(
+            KRAKEN_URL,
+            timeout=10
+        )
 
         data = r.json()
 
-        return float(data["data"]["priceUsd"])
+        price = float(
+            data["result"]["XETHZUSD"]["c"][0]
+        )
+
+        return price
 
     except Exception as e:
 
-        print("CoinCap ERROR:", e)
+        print("KRAKEN ERROR:", e)
 
         return None
 
