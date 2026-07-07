@@ -730,3 +730,34 @@ def chart():
         labels=labels,
         prices=prices
     )
+@app.route("/chart-data")
+def chart_data():
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT id, price, created_at
+        FROM eth_price
+        ORDER BY id DESC
+        LIMIT 100
+    """)
+
+    rows = cur.fetchall()
+
+    rows.reverse()
+
+    cur.close()
+    conn.close()
+
+    labels = []
+    prices = []
+
+    for r in rows:
+        labels.append(r["created_at"].strftime("%H:%M:%S"))
+        prices.append(float(r["price"]))
+
+    return jsonify({
+        "labels": labels,
+        "prices": prices
+    })
