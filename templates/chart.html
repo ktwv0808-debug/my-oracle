@@ -23,7 +23,10 @@ ETH Live Price Chart
 
 </h2>
 
-<canvas id="chart"></canvas>
+<canvas id="chart"></canvas
+<h3 id="signal"
+class="text-center mt-3">
+</h3>                     
 <br><br>
 <a href="/price" class="btn btn-primary">← Back</a>
 <a href="/history" class="btn btn-secondary">History</a>
@@ -81,7 +84,32 @@ chart.data.labels=data.labels;
 chart.data.datasets[0].data=data.prices;
 
 chart.update();
+document.getElementById("signal").innerHTML = "";
 
+if(data.signal=="BUY"){
+
+    document.getElementById("signal").innerHTML =
+    "🟢 BUY SIGNAL";
+
+    document.getElementById("signal").style.color="lime";
+
+}
+else if(data.signal=="SELL"){
+
+    document.getElementById("signal").innerHTML =
+    "🔴 SELL SIGNAL";
+
+    document.getElementById("signal").style.color="red";
+
+}
+else{
+
+    document.getElementById("signal").innerHTML =
+    "⚪ HOLD";
+
+    document.getElementById("signal").style.color="white";
+
+}
 });
 
 }
