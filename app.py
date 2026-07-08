@@ -747,22 +747,22 @@ def trade_check():
     # 신호가 바뀐 경우만 저장
     if last is None or last["signal"] != signal:
 
-    cur.execute("""
-    INSERT INTO trading_records
-    (signal, price, rsi, ma20, ma60)
-    VALUES (%s,%s,%s,%s,%s)
-    """,
-    (
+       cur.execute("""
+       INSERT INTO trading_records
+       (signal, price, rsi, ma20, ma60)
+       VALUES (%s,%s,%s,%s,%s)
+        """,
+      (
         signal,
         current,
         rsi,
         ma20,
         ma60
-    ))
+      ))
+   
+      conn.commit()
 
-    conn.commit()
-
-    keep_10000_rows("trading_records")
+      keep_10000_rows("trading_records")
     
     cur.close()
     conn.close()
