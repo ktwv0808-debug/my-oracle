@@ -709,7 +709,15 @@ def trade_check():
     rsi = calculate_rsi()
     ma20 = calculate_ma(20)
     ma60 = calculate_ma(60)
+    cur.execute("""
+    SELECT signal
+    FROM trading_records
+    ORDER BY id DESC
+    LIMIT 1
+    """)
 
+    last = cur.fetchone()
+    
     signal = "⚪ HOLD"
 
     if ma20 is None or ma60 is None or rsi is None:
@@ -736,24 +744,26 @@ def trade_check():
 
         signal = "⚪ HOLD"
 
-    # Trading Records 저장
+    # 신호가 바뀐 경우만 저장
+    if last is None or last["signal"] != signal:
+
     cur.execute("""
     INSERT INTO trading_records
     (signal, price, rsi, ma20, ma60)
-    VALUES (%s, %s, %s, %s, %s)
-""",
-(
-    signal,
-    current,
-    rsi,
-    ma20,
-    ma60
-))
+    VALUES (%s,%s,%s,%s,%s)
+    """,
+    (
+        signal,
+        current,
+        rsi,
+        ma20,
+        ma60
+    ))
 
     conn.commit()
 
     keep_10000_rows("trading_records")
-
+    
     cur.close()
     conn.close()
 
