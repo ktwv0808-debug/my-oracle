@@ -779,9 +779,9 @@ def chart_data():
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute("""
-        SELECT
-            price,
-            created_at
+        SELECT id,
+               price,
+               created_at
         FROM eth_price
         ORDER BY id ASC
         LIMIT 100
@@ -796,27 +796,85 @@ def chart_data():
     prices = []
 
     for r in rows:
-        labels.append(r["created_at"].strftime("%H:%M:%S"))
-        prices.append(float(r["price"]))
 
-    signal = "HOLD"
+        labels.append(
+            r["created_at"].strftime("%H:%M:%S")
+        )
+
+        prices.append(
+            float(r["price"])
+        )
+
+    # -----------------------------
+    # RSI 계산
+    # -----------------------------
+    rsi = calculate_rsi()
+
+    # -----------------------------
+    # 이동평균 계산
+    # -----------------------------
+    ma20 = None
+    ma60 = None
+
+    if len(prices) >= 20:
+        ma20 = sum(prices[-20:]) / 20
 
     if len(prices) >= 60:
-
-        ma20 = sum(prices[-20:]) / 20
         ma60 = sum(prices[-60:]) / 60
 
-        if ma20 > ma60:
-            signal = "BUY"
+    # -----------------------------
+    # 현재 신호
+    # -----------------------------
+    signal = "HOLD"
 
-        elif ma20 < ma60:
-            signal = "SELL"
+    if rsi is not None:
+
+        if ma20 is not None and ma60 is not None:
+
+            if rsi <= 30 and ma20 > ma60:
+                signal = "BUY"
+
+            elif rsi >= 70 and ma20 < ma60:
+                signal = "SELL"
+
+            else:
+                signal = "HOLD"
+
+    # -----------------------------
+    # BUY / SELL 표시용 데이터
+    # -----------------------------
+    buy_points = []
+    sell_points = []
+
+    for i in range(len(prices)):
+
+        buy_points.append(None)
+        sell_points.append(None)
+
+        if i == 0:
+            continue
+
+        if prices[i] > prices[i-1]:
+            buy_points[i] = prices[i]
+
+        elif prices[i] < prices[i-1]:
+            sell_points[i] = prices[i]
 
     return jsonify({
 
         "labels": labels,
 
         "prices": prices,
+
+        "buy": buy_points,
+
+        "sell": sell_points,
+
+        "rsi": rsi,
+
+        "ma20": ma20,
+
+        "ma60": ma60,
 
         "signal": signal
 
