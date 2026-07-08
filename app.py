@@ -535,6 +535,10 @@ def price():
 
     live_price = get_eth_price()
 
+    # 첫 호출 실패 방지
+    if live_price is None:
+        live_price = 0.0
+
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
