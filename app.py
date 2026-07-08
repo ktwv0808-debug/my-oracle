@@ -493,7 +493,7 @@ except Exception as e:
 # =====================================
 # Flask Start
 # =====================================
-def init_trading_table():
+
   
 if __name__ == "__main__":
     app.run(
