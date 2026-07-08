@@ -19,7 +19,15 @@
 <th>RSI</th>
 <td>{{ rsi }}</td>
 </tr>
+<tr>
+    <td>MA20</td>
+    <td>{{ "%.2f"|format(ma20) if ma20 else "-" }}</td>
+</tr>
 
+<tr>
+    <td>MA60</td>
+    <td>{{ "%.2f"|format(ma60) if ma60 else "-" }}</td>
+</tr>
 <tr>
 <th>Signal</th>
 
