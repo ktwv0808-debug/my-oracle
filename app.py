@@ -700,7 +700,7 @@ def trade_check():
 
     else:
 
-        signal = "⚪ HOLD""
+        signal = "⚪ HOLD"
 
     # Trading Records 저장
     cur.execute("""
