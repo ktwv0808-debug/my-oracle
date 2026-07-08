@@ -11,6 +11,8 @@ from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 
+update_database()
+
 # =====================================================
 # PostgreSQL
 # =====================================================
@@ -24,7 +26,32 @@ def get_db():
 
     return psycopg2.connect(database_url)
 
+def update_database():
 
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        ALTER TABLE trading_records
+        ADD COLUMN IF NOT EXISTS rsi NUMERIC;
+    """)
+
+    cur.execute("""
+        ALTER TABLE trading_records
+        ADD COLUMN IF NOT EXISTS ma20 NUMERIC;
+    """)
+
+    cur.execute("""
+        ALTER TABLE trading_records
+        ADD COLUMN IF NOT EXISTS ma60 NUMERIC;
+    """)
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+    print("Database Updated")
 # =====================================================
 # COINGECKO
 # =====================================================
@@ -466,7 +493,30 @@ except Exception as e:
 # =====================================
 # Flask Start
 # =====================================
+def init_trading_table():
 
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        ALTER TABLE trading_records
+        ADD COLUMN IF NOT EXISTS rsi NUMERIC;
+    """)
+
+    cur.execute("""
+        ALTER TABLE trading_records
+        ADD COLUMN IF NOT EXISTS ma20 NUMERIC;
+    """)
+
+    cur.execute("""
+        ALTER TABLE trading_records
+        ADD COLUMN IF NOT EXISTS ma60 NUMERIC;
+    """)
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
