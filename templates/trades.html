@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="en">
 
 <head>
+
+<meta charset="UTF-8">
 
 <title>Trading Records</title>
 
@@ -10,17 +11,33 @@
 
 </head>
 
-<body class="bg-dark text-white">
+<body class="bg-dark text-light">
 
-<div class="container mt-5">
+<div class="container mt-4">
 
-<h2 class="mb-4">
+<h2 class="text-warning">
 
 Trading Records
 
 </h2>
 
-<table class="table table-dark table-striped">
+<br>
+
+<a href="/trade-check" class="btn btn-warning">
+← Signal
+</a>
+
+<a href="/chart" class="btn btn-success">
+📈 Chart
+</a>
+
+<a href="/price" class="btn btn-primary">
+ETH Price
+</a>
+
+<br><br>
+
+<table class="table table-dark table-striped table-hover">
 
 <thead>
 
@@ -32,7 +49,13 @@ Trading Records
 
 <th>Price</th>
 
-<th>Time</th>
+<th>RSI</th>
+
+<th>MA20</th>
+
+<th>MA60</th>
+
+<th>Date</th>
 
 </tr>
 
@@ -48,7 +71,13 @@ Trading Records
 
 <td>{{ row.signal }}</td>
 
-<td>{{ row.price }}</td>
+<td>{{ "%.2f"|format(row.price) if row.price else "-" }}</td>
+
+<td>{{ "%.2f"|format(row.rsi) if row.rsi else "-" }}</td>
+
+<td>{{ "%.2f"|format(row.ma20) if row.ma20 else "-" }}</td>
+
+<td>{{ "%.2f"|format(row.ma60) if row.ma60 else "-" }}</td>
 
 <td>{{ row.created_at }}</td>
 
