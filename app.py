@@ -737,7 +737,7 @@ def trade_check():
         signal = "⚪ HOLD"
 
     # Trading Records 저장
-   cur.execute("""
+    cur.execute("""
     INSERT INTO trading_records
     (signal, price, rsi, ma20, ma60)
     VALUES (%s, %s, %s, %s, %s)
