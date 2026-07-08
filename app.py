@@ -87,6 +87,30 @@ def calculate_rsi(period=14):
     rsi = 100 - (100 / (1 + rs))
 
     return round(float(rsi.iloc[-1]), 2)
+def calculate_ma(period):
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT price
+        FROM eth_price
+        ORDER BY id DESC
+        LIMIT %s
+    """, (period,))
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    if len(rows) < period:
+        return None
+
+    prices = [float(r["price"]) for r in rows]
+
+    return sum(prices) / period
+    
 # =====================================================
 # Keep latest 10000 rows
 # =====================================================
@@ -649,38 +673,34 @@ def trade_check():
 
     # RSI 계산
     rsi = calculate_rsi()
+    ma20 = calculate_ma(20)
+    ma60 = calculate_ma(60)
 
-    if rsi is None:
+    signal = "⚪ HOLD"
+
+    if ma20 is None or ma60 is None or rsi is None:
 
         signal = "Not enough data"
 
-    elif rsi <= 20:
+    elif ma20 > ma60 and rsi < 30:
 
         signal = "🔥 STRONG BUY"
 
-    elif rsi <= 30:
+    elif ma20 > ma60:
 
         signal = "🟢 BUY"
 
-    elif rsi < 45:
+    elif ma20 < ma60 and rsi > 70:
 
-        signal = "🟡 WEAK HOLD"
+        signal = "🚨 STRONG SELL"
 
-    elif rsi < 55:
-
-        signal = "⚪ HOLD"
-
-    elif rsi < 70:
-
-        signal = "🟠 WEAK SELL"
-
-    elif rsi < 80:
+    elif ma20 < ma60:
 
         signal = "🔴 SELL"
 
     else:
 
-        signal = "🚨 STRONG SELL"
+        signal = "⚪ HOLD""
 
     # Trading Records 저장
     cur.execute("""
@@ -696,13 +716,18 @@ def trade_check():
     conn.close()
 
     return render_template(
-        "trade_check.html",
-        signal=signal,
-        rsi=rsi,
-        current=current,
-        previous=previous,
-        change=change
-    )
+
+    "trade_check.html",
+
+    rsi=rsi,
+
+    ma20=ma20,
+
+    ma60=ma60,
+
+    signal=signal
+
+)
 # =====================================
 # Trading Records
 # =====================================
