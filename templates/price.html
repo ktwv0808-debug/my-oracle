@@ -30,9 +30,15 @@ ETH Live Price
 
 <h2>
 
-{{ live_price }}
+{% if live_price %}
 
-USDT
+{{ "%.2f"|format(live_price) }} USDT
+
+{% else %}
+
+Loading...
+
+{% endif %}
 
 </h2>
 
