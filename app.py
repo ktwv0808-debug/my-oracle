@@ -52,6 +52,8 @@ def update_database():
     conn.close()
 
     print("Database Updated")
+
+update_database()
 # =====================================================
 # COINGECKO
 # =====================================================
