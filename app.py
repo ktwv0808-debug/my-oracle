@@ -37,16 +37,16 @@ def get_eth_price():
 
         r = requests.get(
             KRAKEN_URL,
-            timeout=10
+            timeout=3
         )
+
+        r.raise_for_status()
 
         data = r.json()
 
-        price = float(
+        return float(
             data["result"]["XETHZUSD"]["c"][0]
         )
-
-        return price
 
     except Exception as e:
 
