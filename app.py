@@ -779,15 +779,15 @@ def chart_data():
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute("""
-        SELECT id, price, created_at
+        SELECT
+            price,
+            created_at
         FROM eth_price
-        ORDER BY id DESC
+        ORDER BY id ASC
         LIMIT 100
     """)
 
     rows = cur.fetchall()
-
-    rows.reverse()
 
     cur.close()
     conn.close()
@@ -799,7 +799,25 @@ def chart_data():
         labels.append(r["created_at"].strftime("%H:%M:%S"))
         prices.append(float(r["price"]))
 
+    signal = "HOLD"
+
+    if len(prices) >= 60:
+
+        ma20 = sum(prices[-20:]) / 20
+        ma60 = sum(prices[-60:]) / 60
+
+        if ma20 > ma60:
+            signal = "BUY"
+
+        elif ma20 < ma60:
+            signal = "SELL"
+
     return jsonify({
+
         "labels": labels,
-        "prices": prices
+
+        "prices": prices,
+
+        "signal": signal
+
     })
