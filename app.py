@@ -760,9 +760,9 @@ def trade_check():
         ma60
       ))
    
-      conn.commit()
+    conn.commit()
 
-      keep_10000_rows("trading_records")
+    keep_10000_rows("trading_records")
     
     cur.close()
     conn.close()
