@@ -918,52 +918,36 @@ def chart_data():
         prices.append(
             float(r["price"])
         )
-@app.route("/portfolio")
-def portfolio():
 
-    p = get_portfolio()
-
-    return render_template(
-        "portfolio.html",
-        portfolio=p
-    )
     # -----------------------------
-    # RSI 계산
+    # RSI
     # -----------------------------
     rsi = calculate_rsi()
 
     # -----------------------------
-    # 이동평균 계산
+    # 이동평균
     # -----------------------------
-    ma20 = None
-    ma60 = None
-
-    if len(prices) >= 20:
-        ma20 = sum(prices[-20:]) / 20
-
-    if len(prices) >= 60:
-        ma60 = sum(prices[-60:]) / 60
+    ma20 = calculate_ma(20)
+    ma60 = calculate_ma(60)
 
     # -----------------------------
-    # 현재 신호
+    # 신호
     # -----------------------------
     signal = "HOLD"
 
-    if rsi is not None:
+    if rsi is not None and ma20 is not None and ma60 is not None:
 
-        if ma20 is not None and ma60 is not None:
+        if rsi <= 30 and ma20 > ma60:
+            signal = "BUY"
 
-            if rsi <= 30 and ma20 > ma60:
-                signal = "BUY"
+        elif rsi >= 70 and ma20 < ma60:
+            signal = "SELL"
 
-            elif rsi >= 70 and ma20 < ma60:
-                signal = "SELL"
-
-            else:
-                signal = "HOLD"
+        else:
+            signal = "HOLD"
 
     # -----------------------------
-    # BUY / SELL 표시용 데이터
+    # BUY / SELL 화살표 표시
     # -----------------------------
     buy_points = []
     sell_points = []
@@ -976,10 +960,10 @@ def portfolio():
         if i == 0:
             continue
 
-        if prices[i] > prices[i-1]:
+        if prices[i] > prices[i - 1]:
             buy_points[i] = prices[i]
 
-        elif prices[i] < prices[i-1]:
+        elif prices[i] < prices[i - 1]:
             sell_points[i] = prices[i]
 
     return jsonify({
