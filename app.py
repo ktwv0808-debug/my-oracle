@@ -882,6 +882,17 @@ def trades():
         records=records
 
     )
+    
+@app.route("/portfolio")
+    
+def portfolio():
+
+    portfolio = get_portfolio()
+
+    return render_template(
+        "portfolio.html",
+        portfolio=portfolio
+    )
 @app.route("/chart")
 def chart():
     return render_template("chart.html")
