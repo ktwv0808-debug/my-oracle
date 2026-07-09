@@ -25,7 +25,24 @@ def get_db():
         raise Exception("DATABASE_URL missing")
 
     return psycopg2.connect(database_url)
+    
+def get_portfolio():
 
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT *
+        FROM portfolio
+        LIMIT 1
+    """)
+
+    row = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    return row
 def update_database():
 
     conn = get_db()
@@ -45,7 +62,31 @@ def update_database():
         ALTER TABLE trading_records
         ADD COLUMN IF NOT EXISTS ma60 NUMERIC;
     """)
+    # ------------------------------------
+    # Portfolio Table
+    # ------------------------------------
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS portfolio (
 
+            id SERIAL PRIMARY KEY,
+
+            cash NUMERIC DEFAULT 100000,
+
+            eth NUMERIC DEFAULT 0,
+
+            avg_price NUMERIC DEFAULT 0
+
+        );
+    """)
+
+    # 최초 1회만 데이터 생성
+    cur.execute("""
+        INSERT INTO portfolio (cash, eth, avg_price)
+        SELECT 100000, 0, 0
+        WHERE NOT EXISTS (
+            SELECT 1 FROM portfolio
+        );
+    """)
     conn.commit()
 
     cur.close()
@@ -877,7 +918,15 @@ def chart_data():
         prices.append(
             float(r["price"])
         )
+@app.route("/portfolio")
+def portfolio():
 
+    p = get_portfolio()
+
+    return render_template(
+        "portfolio.html",
+        portfolio=p
+    )
     # -----------------------------
     # RSI 계산
     # -----------------------------
