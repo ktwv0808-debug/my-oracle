@@ -885,18 +885,71 @@ def trades():
     
 @app.route("/portfolio")
     
-def portfolio():
+def get_portfolio():
 
-    portfolio = get_portfolio()
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    return render_template(
-        "portfolio.html",
-        portfolio=portfolio
-    )
-@app.route("/chart")
-def chart():
-    return render_template("chart.html")
+    cur.execute("""
+        SELECT *
+        FROM portfolio
+        LIMIT 1
+    """)
 
+    p = cur.fetchone()
+
+    # 현재 ETH 가격
+    cur.execute("""
+        SELECT price
+        FROM eth_price
+        ORDER BY id DESC
+        LIMIT 1
+    """)
+
+    row = cur.fetchone()
+
+    current_price = 0
+
+    if row:
+        current_price = float(row["price"])
+
+    cash = float(p["cash"])
+    eth = float(p["eth"])
+    avg = float(p["avg_buy"])
+
+    asset_value = eth * current_price
+
+    total_assets = cash + asset_value
+
+    profit = asset_value - (eth * avg)
+
+    roi = 0
+
+    if eth > 0 and avg > 0:
+        roi = ((current_price - avg) / avg) * 100
+
+    cur.close()
+    conn.close()
+
+    return {
+
+        "cash": cash,
+
+        "eth": eth,
+
+        "avg_buy": avg,
+
+        "current_price": current_price,
+
+        "asset_value": asset_value,
+
+        "total_assets": total_assets,
+
+        "profit": profit,
+
+        "roi": roi
+
+    }
 @app.route("/chart-data")
 def chart_data():
 
