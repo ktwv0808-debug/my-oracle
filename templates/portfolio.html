@@ -33,7 +33,32 @@ Virtual Portfolio
 
 <tr>
 <td>📈 Average Buy</td>
-<td>{{ portfolio.avg_price }}</td>
+<td>{{ portfolio.avg_buy }}</td>
+</tr>
+
+<tr>
+<td>📊 Current Price</td>
+<td>{{ portfolio.current_price }}</td>
+</tr>
+
+<tr>
+<td>💰 Asset Value</td>
+<td>{{ portfolio.asset_value }}</td>
+</tr>
+
+<tr>
+<td>💎 Total Assets</td>
+<td>{{ portfolio.total_assets }}</td>
+</tr>
+
+<tr>
+<td>📈 Profit / Loss</td>
+<td>{{ portfolio.profit }}</td>
+</tr>
+
+<tr>
+<td>📉 ROI</td>
+<td>{{ "%.2f"|format(portfolio.roi) }} %</td>
 </tr>
 
 </table>
