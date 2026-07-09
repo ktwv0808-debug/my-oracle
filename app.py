@@ -139,7 +139,33 @@ def calculate_ma(period):
     prices = [float(r["price"]) for r in rows]
 
     return sum(prices) / period
-    
+
+def calculate_previous_ma(period):
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT price
+        FROM eth_price
+        ORDER BY id DESC
+        LIMIT %s
+    """, (period + 1,))
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    if len(rows) < period + 1:
+        return None
+
+    prices = [float(r["price"]) for r in rows]
+
+    # 가장 최근 가격을 제외한 이전 period개의 평균
+    previous_prices = prices[1:]
+
+    return sum(previous_prices) / period
 # =====================================================
 # Keep latest 10000 rows
 # =====================================================
@@ -709,6 +735,8 @@ def trade_check():
     rsi = calculate_rsi()
     ma20 = calculate_ma(20)
     ma60 = calculate_ma(60)
+    prev_ma20 = calculate_previous_ma(20)
+    prev_ma60 = calculate_previous_ma(60)
     cur.execute("""
     SELECT signal
     FROM trading_records
@@ -720,29 +748,33 @@ def trade_check():
     
     signal = "⚪ HOLD"
 
-    if ma20 is None or ma60 is None or rsi is None:
+    if None in (rsi, ma20, ma60, prev_ma20, prev_ma60):
 
-        signal = "Not enough data"
+       signal = "Not enough data"
 
-    elif ma20 > ma60 and rsi < 30:
+# 골든크로스 + RSI 과매도
+   elif prev_ma20 <= prev_ma60 and ma20 > ma60 and rsi < 30:
 
-        signal = "🔥 STRONG BUY"
+       signal = "🔥 STRONG BUY"
 
-    elif ma20 > ma60:
+# 골든크로스
+   elif prev_ma20 <= prev_ma60 and ma20 > ma60:
 
-        signal = "🟢 BUY"
+       signal = "🟢 BUY"
 
-    elif ma20 < ma60 and rsi > 70:
+# 데드크로스 + RSI 과매수
+   elif prev_ma20 >= prev_ma60 and ma20 < ma60 and rsi > 70:
 
-        signal = "🚨 STRONG SELL"
+       signal = "🚨 STRONG SELL"
 
-    elif ma20 < ma60:
+# 데드크로스
+   elif prev_ma20 >= prev_ma60 and ma20 < ma60:
+  
+       signal = "🔴 SELL"
 
-        signal = "🔴 SELL"
+   else:
 
-    else:
-
-        signal = "⚪ HOLD"
+       signal = "⚪ HOLD"
 
     # 신호가 바뀐 경우만 저장
     if last is None or last["signal"] != signal:
