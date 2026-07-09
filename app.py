@@ -712,9 +712,9 @@ def trade_check():
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    # 최근 가격 조회
+    # 최근 가격 2개 조회
     cur.execute("""
-        SELECT *
+        SELECT price
         FROM eth_price
         ORDER BY id DESC
         LIMIT 2
@@ -724,94 +724,87 @@ def trade_check():
 
     current = 0
     previous = 0
-    change = 0
 
     if len(rows) >= 2:
         current = float(rows[0]["price"])
         previous = float(rows[1]["price"])
-        change = current - previous
 
-    # RSI 계산
+    # RSI / 이동평균 계산
     rsi = calculate_rsi()
+
     ma20 = calculate_ma(20)
     ma60 = calculate_ma(60)
+
     prev_ma20 = calculate_previous_ma(20)
     prev_ma60 = calculate_previous_ma(60)
-    cur.execute("""
-    SELECT signal
-    FROM trading_records
-    ORDER BY id DESC
-    LIMIT 1
-    """)
 
-    last = cur.fetchone()
-    
+    # 기본 신호
     signal = "⚪ HOLD"
 
     if None in (rsi, ma20, ma60, prev_ma20, prev_ma60):
 
-       signal = "Not enough data"
+        signal = "Not enough data"
 
-# 골든크로스 + RSI 과매도
-   elif prev_ma20 <= prev_ma60 and ma20 > ma60 and rsi < 30:
+    # 골든크로스 + RSI
+    elif prev_ma20 <= prev_ma60 and ma20 > ma60:
 
-       signal = "🔥 STRONG BUY"
+        if rsi < 30:
+            signal = "🔥 STRONG BUY"
+        else:
+            signal = "🟢 BUY"
 
-# 골든크로스
-   elif prev_ma20 <= prev_ma60 and ma20 > ma60:
+    # 데드크로스 + RSI
+    elif prev_ma20 >= prev_ma60 and ma20 < ma60:
 
-       signal = "🟢 BUY"
+        if rsi > 70:
+            signal = "🚨 STRONG SELL"
+        else:
+            signal = "🔴 SELL"
 
-# 데드크로스 + RSI 과매수
-   elif prev_ma20 >= prev_ma60 and ma20 < ma60 and rsi > 70:
+    else:
 
-       signal = "🚨 STRONG SELL"
+        signal = "⚪ HOLD"
 
-# 데드크로스
-   elif prev_ma20 >= prev_ma60 and ma20 < ma60:
-  
-       signal = "🔴 SELL"
+    # 이전 저장 신호 확인
+    cur.execute("""
+        SELECT signal
+        FROM trading_records
+        ORDER BY id DESC
+        LIMIT 1
+    """)
 
-   else:
+    last = cur.fetchone()
 
-       signal = "⚪ HOLD"
-
-    # 신호가 바뀐 경우만 저장
+    # 같은 신호는 저장하지 않음
     if last is None or last["signal"] != signal:
 
-       cur.execute("""
-       INSERT INTO trading_records
-       (signal, price, rsi, ma20, ma60)
-       VALUES (%s,%s,%s,%s,%s)
+        cur.execute("""
+            INSERT INTO trading_records
+            (signal, price, rsi, ma20, ma60)
+            VALUES (%s,%s,%s,%s,%s)
         """,
-      (
-        signal,
-        current,
-        rsi,
-        ma20,
-        ma60
-      ))
-   
-    conn.commit()
+        (
+            signal,
+            current,
+            rsi,
+            ma20,
+            ma60
+        ))
+
+        conn.commit()
 
     keep_10000_rows("trading_records")
-    
+
     cur.close()
     conn.close()
 
     return render_template(
-
-    "trade_check.html",
-
-    rsi=rsi,
-
-    ma20=ma20,
-
-    ma60=ma60,
-
-    signal=signal
-
-)
+        "trade_check.html",
+        rsi=rsi,
+        ma20=ma20,
+        ma60=ma60,
+        signal=signal
+    )
 # =====================================
 # Trading Records
 # =====================================
