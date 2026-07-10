@@ -757,14 +757,13 @@ def save_price():
 
     message = ""
 
-    # -----------------------------
-    # POST
-    # -----------------------------
     if request.method == "POST":
 
         current_price = float(request.form.get("price"))
 
-        # 같은 가격 저장 방지
+        # -----------------------------
+        # 마지막 가격 확인
+        # -----------------------------
         cur.execute("""
             SELECT price
             FROM eth_price
@@ -777,11 +776,12 @@ def save_price():
         if last is None or float(last["price"]) != current_price:
 
             # -----------------------------
-            # 1. 가격 저장
+            # 가격 저장
             # -----------------------------
             cur.execute("""
-                INSERT INTO eth_price(price)
-                VALUES(%s)
+                INSERT INTO eth_price
+                (price)
+                VALUES (%s)
                 RETURNING id
             """, (current_price,))
 
@@ -790,11 +790,40 @@ def save_price():
             conn.commit()
 
             # -----------------------------
-            # 2. MA 계산
+            # 최근 60개 가격 읽기
             # -----------------------------
-            ma20 = calculate_ma(20)
-            ma60 = calculate_ma(60)
+            cur.execute("""
+                SELECT price
+                FROM eth_price
+                ORDER BY id DESC
+                LIMIT 60
+            """)
 
+            rows = cur.fetchall()
+
+            prices = [float(r["price"]) for r in rows]
+
+            prices.reverse()
+
+            # -----------------------------
+            # MA20
+            # -----------------------------
+            ma20 = None
+
+            if len(prices) >= 20:
+                ma20 = sum(prices[-20:]) / 20
+
+            # -----------------------------
+            # MA60
+            # -----------------------------
+            ma60 = None
+
+            if len(prices) >= 60:
+                ma60 = sum(prices[-60:]) / 60
+
+            # -----------------------------
+            # BUY / SELL
+            # -----------------------------
             signal = "HOLD"
 
             if ma20 is not None and ma60 is not None:
@@ -806,7 +835,7 @@ def save_price():
                     signal = "SELL"
 
             # -----------------------------
-            # 3. 같은 행 UPDATE
+            # 같은 행 UPDATE
             # -----------------------------
             cur.execute("""
                 UPDATE eth_price
@@ -815,8 +844,7 @@ def save_price():
                     ma60=%s,
                     signal=%s
                 WHERE id=%s
-            """,
-            (
+            """, (
                 ma20,
                 ma60,
                 signal,
@@ -829,7 +857,7 @@ def save_price():
 
         else:
 
-            message = "Same price. Not Saved."
+            message = "Same price"
 
     # -----------------------------
     # 최근 가격 조회
