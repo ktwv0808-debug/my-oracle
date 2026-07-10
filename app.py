@@ -1068,6 +1068,10 @@ def portfolio():
         "portfolio.html",
         portfolio=p
     )
+# =====================================
+# Chart Data
+# =====================================
+
 @app.route("/chart-data")
 def chart_data():
 
@@ -1091,58 +1095,82 @@ def chart_data():
     cur.close()
     conn.close()
 
-    labels=[]
-    prices=[]
-    ma20=[]
-    ma60=[]
-    buys=[]
-    sells=[]
+    labels = []
+
+    prices = []
+    ma20 = []
+    ma60 = []
+
+    buy = []
+    sell = []
+
+    golden = []
+    dead = []
+
+    prev20 = None
+    prev60 = None
 
     for r in rows:
 
-        labels.append(r["created_at"].strftime("%H:%M"))
+        labels.append(r["created_at"].strftime("%H:%M:%S"))
 
-        prices.append(float(r["price"]))
+        p = float(r["price"])
 
-        ma20.append(
-            float(r["ma20"])
-            if r["ma20"] is not None
-            else None
-        )
+        prices.append(p)
 
-        ma60.append(
-            float(r["ma60"])
-            if r["ma60"] is not None
-            else None
-        )
+        m20 = float(r["ma20"]) if r["ma20"] is not None else None
+        m60 = float(r["ma60"]) if r["ma60"] is not None else None
 
-        if r["signal"]=="🟢 BUY":
+        ma20.append(m20)
+        ma60.append(m60)
 
-            buys.append(float(r["price"]))
-            sells.append(None)
+        buy.append(None)
+        sell.append(None)
 
-        elif r["signal"]=="🔴 SELL":
+        golden.append(None)
+        dead.append(None)
 
-            buys.append(None)
-            sells.append(float(r["price"]))
+        # BUY 화살표
+        if r["signal"] == "BUY":
+            buy[-1] = p
 
-        else:
+        # SELL 화살표
+        if r["signal"] == "SELL":
+            sell[-1] = p
 
-            buys.append(None)
-            sells.append(None)
+        # 골든크로스
+        if (
+            prev20 is not None
+            and prev60 is not None
+            and m20 is not None
+            and m60 is not None
+        ):
+
+            if prev20 <= prev60 and m20 > m60:
+                golden[-1] = p
+
+            elif prev20 >= prev60 and m20 < m60:
+                dead[-1] = p
+
+        prev20 = m20
+        prev60 = m60
 
     return jsonify({
 
-        "labels":labels,
+        "labels": labels,
 
-        "price":prices,
+        "prices": prices,
 
-        "ma20":ma20,
+        "ma20": ma20,
 
-        "ma60":ma60,
+        "ma60": ma60,
 
-        "buy":buys,
+        "buy": buy,
 
-        "sell":sells
+        "sell": sell,
+
+        "golden": golden,
+
+        "dead": dead
 
     })
