@@ -1081,7 +1081,7 @@ def chart_data():
     """)
 
     rows = cur.fetchall()
-print(rows[-5:] if len(rows) >= 5 else rows)
+    print(rows[-5:] if len(rows) >= 5 else rows)
     cur.close()
     conn.close()
 
