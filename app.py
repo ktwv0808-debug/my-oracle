@@ -759,8 +759,21 @@ def save_price():
 
     if request.method == "POST":
 
-        price = request.form.get("price")
+       price = float(request.form.get("price"))
 
+       ma20 = calculate_ma(20)
+       ma60 = calculate_ma(60)
+
+       signal = "HOLD"
+
+    if ma20 is not None and ma60 is not None:
+
+        if ma20 > ma60:
+        signal = "BUY"
+
+        elif ma20 < ma60:
+        signal = "SELL"
+        
         cur.execute("""
             SELECT price
             FROM eth_price
