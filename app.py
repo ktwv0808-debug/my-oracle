@@ -935,7 +935,55 @@ def trades():
         records=records
 
     )
-    
+
+@app.route("/chart")
+def chart():
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT
+            created_at,
+            price,
+            ma20,
+            ma60
+        FROM eth_price
+        ORDER BY id ASC
+        LIMIT 300
+    """)
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    labels = []
+    prices = []
+    ma20 = []
+    ma60 = []
+
+    for r in rows:
+
+        labels.append(r["created_at"].strftime("%H:%M:%S"))
+        prices.append(float(r["price"]))
+
+        ma20.append(
+            float(r["ma20"]) if r["ma20"] is not None else None
+        )
+
+        ma60.append(
+            float(r["ma60"]) if r["ma60"] is not None else None
+        )
+
+    return render_template(
+        "chart.html",
+        labels=labels,
+        prices=prices,
+        ma20=ma20,
+        ma60=ma60
+    )
+
 @app.route("/portfolio")
 def portfolio():
 
