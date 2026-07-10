@@ -62,6 +62,27 @@ def update_database():
         ALTER TABLE trading_records
         ADD COLUMN IF NOT EXISTS ma60 NUMERIC;
     """)
+
+    # ----------------------------------------
+    # eth_price
+    # ----------------------------------------
+
+    cur.execute("""
+        ALTER TABLE eth_price
+        ADD COLUMN IF NOT EXISTS ma20 NUMERIC;
+    """)
+
+    cur.execute("""
+        ALTER TABLE eth_price
+        ADD COLUMN IF NOT EXISTS ma60 NUMERIC;
+    """)
+
+    cur.execute("""
+        ALTER TABLE eth_price
+        ADD COLUMN IF NOT EXISTS signal TEXT;
+    """)
+
+    
     # ------------------------------------
     # Portfolio Table
     # ------------------------------------
@@ -432,12 +453,27 @@ def auto_save_eth():
                 cur = conn.cursor()
 
                 cur.execute("""
-
-                    INSERT INTO eth_price(price)
-
-                    VALUES(%s)
-
-                """, (eth,))
+                INSERT INTO eth_price
+                (
+                    price,
+                    ma20,
+                    ma60,
+                    signal
+                 )
+                 VALUES
+                (
+                    %s,
+                    %s,
+                    %s,
+                    %s
+                )
+                """,
+               (
+                   price,
+                   ma20,
+                   ma60,
+                   signal
+               ))
 
                 conn.commit()
 
@@ -947,7 +983,8 @@ def chart():
             created_at,
             price,
             ma20,
-            ma60
+            ma60,
+            signal
         FROM eth_price
         ORDER BY id ASC
         LIMIT 300
@@ -958,30 +995,9 @@ def chart():
     cur.close()
     conn.close()
 
-    labels = []
-    prices = []
-    ma20 = []
-    ma60 = []
-
-    for r in rows:
-
-        labels.append(r["created_at"].strftime("%H:%M:%S"))
-        prices.append(float(r["price"]))
-
-        ma20.append(
-            float(r["ma20"]) if r["ma20"] is not None else None
-        )
-
-        ma60.append(
-            float(r["ma60"]) if r["ma60"] is not None else None
-        )
-
     return render_template(
         "chart.html",
-        labels=labels,
-        prices=prices,
-        ma20=ma20,
-        ma60=ma60
+        rows=rows
     )
 
 @app.route("/portfolio")
@@ -1000,12 +1016,15 @@ def chart_data():
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute("""
-        SELECT id,
-               price,
-               created_at
+        SELECT
+            created_at,
+            price,
+            ma20,
+            ma60,
+            signal
         FROM eth_price
         ORDER BY id ASC
-        LIMIT 100
+        LIMIT 300
     """)
 
     rows = cur.fetchall()
@@ -1013,82 +1032,58 @@ def chart_data():
     cur.close()
     conn.close()
 
-    labels = []
-    prices = []
+    labels=[]
+    prices=[]
+    ma20=[]
+    ma60=[]
+    buys=[]
+    sells=[]
 
     for r in rows:
 
-        labels.append(
-            r["created_at"].strftime("%H:%M:%S")
+        labels.append(r["created_at"].strftime("%H:%M"))
+
+        prices.append(float(r["price"]))
+
+        ma20.append(
+            float(r["ma20"])
+            if r["ma20"] is not None
+            else None
         )
 
-        prices.append(
-            float(r["price"])
+        ma60.append(
+            float(r["ma60"])
+            if r["ma60"] is not None
+            else None
         )
 
-    # -----------------------------
-    # RSI
-    # -----------------------------
-    rsi = calculate_rsi()
+        if r["signal"]=="🟢 BUY":
 
-    # -----------------------------
-    # 이동평균
-    # -----------------------------
-    ma20 = calculate_ma(20)
-    ma60 = calculate_ma(60)
+            buys.append(float(r["price"]))
+            sells.append(None)
 
-    # -----------------------------
-    # 신호
-    # -----------------------------
-    signal = "HOLD"
+        elif r["signal"]=="🔴 SELL":
 
-    if rsi is not None and ma20 is not None and ma60 is not None:
-
-        if rsi <= 30 and ma20 > ma60:
-            signal = "BUY"
-
-        elif rsi >= 70 and ma20 < ma60:
-            signal = "SELL"
+            buys.append(None)
+            sells.append(float(r["price"]))
 
         else:
-            signal = "HOLD"
 
-    # -----------------------------
-    # BUY / SELL 화살표 표시
-    # -----------------------------
-    buy_points = []
-    sell_points = []
-
-    for i in range(len(prices)):
-
-        buy_points.append(None)
-        sell_points.append(None)
-
-        if i == 0:
-            continue
-
-        if prices[i] > prices[i - 1]:
-            buy_points[i] = prices[i]
-
-        elif prices[i] < prices[i - 1]:
-            sell_points[i] = prices[i]
+            buys.append(None)
+            sells.append(None)
 
     return jsonify({
 
-        "labels": labels,
+        "labels":labels,
 
-        "prices": prices,
+        "price":prices,
 
-        "buy": buy_points,
+        "ma20":ma20,
 
-        "sell": sell_points,
+        "ma60":ma60,
 
-        "rsi": rsi,
+        "buy":buys,
 
-        "ma20": ma20,
-
-        "ma60": ma60,
-
-        "signal": signal
+        "sell":sells
 
     })
