@@ -759,21 +759,24 @@ def save_price():
 
     if request.method == "POST":
 
-       price = float(request.form.get("price"))
+        price = float(request.form.get("price"))
 
-       ma20 = calculate_ma(20)
-       ma60 = calculate_ma(60)
+        # 이동평균 계산
+        ma20 = calculate_ma(20)
+        ma60 = calculate_ma(60)
 
-       signal = "HOLD"
+        # 기본 신호
+        signal = "HOLD"
 
-    if ma20 is not None and ma60 is not None:
+        if ma20 is not None and ma60 is not None:
 
-        if ma20 > ma60:
-        signal = "BUY"
+            if ma20 > ma60:
+                signal = "BUY"
 
-        elif ma20 < ma60:
-        signal = "SELL"
-        
+            elif ma20 < ma60:
+                signal = "SELL"
+
+        # 마지막 가격 확인
         cur.execute("""
             SELECT price
             FROM eth_price
@@ -783,12 +786,19 @@ def save_price():
 
         last = cur.fetchone()
 
-        if last is None or float(last["price"]) != float(price):
+        if last is None or float(last["price"]) != price:
 
             cur.execute("""
-                INSERT INTO eth_price(price)
-                VALUES(%s)
-            """, (price,))
+                INSERT INTO eth_price
+                (price, ma20, ma60, signal)
+                VALUES (%s,%s,%s,%s)
+            """,
+            (
+                price,
+                ma20,
+                ma60,
+                signal
+            ))
 
             conn.commit()
 
