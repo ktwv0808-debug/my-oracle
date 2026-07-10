@@ -933,23 +933,16 @@ def get_portfolio():
 
     return {
 
-        "cash": cash,
+    "cash": cash,
+    "eth": eth,
+    "avg_buy": avg,      # ← 내부 컬럼은 avg_price지만 화면에는 avg_buy로 전달
+    "current_price": current_price,
+    "asset_value": asset_value,
+    "total_assets": total_assets,
+    "profit": profit,
+    "roi": roi
 
-        "eth": eth,
-
-        "avg_buy": avg,
-
-        "current_price": current_price,
-
-        "asset_value": asset_value,
-
-        "total_assets": total_assets,
-
-        "profit": profit,
-
-        "roi": roi
-
-    }
+}
 @app.route("/chart-data")
 def chart_data():
 
