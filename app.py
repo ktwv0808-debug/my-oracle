@@ -915,8 +915,7 @@ def get_portfolio():
 
     cash = float(p["cash"])
     eth = float(p["eth"])
-    avg = float(p["avg_buy"])
-
+    avg = float(p["avg_price"])
     asset_value = eth * current_price
 
     total_assets = cash + asset_value
@@ -934,12 +933,19 @@ def get_portfolio():
     return {
 
     "cash": cash,
+
     "eth": eth,
-    "avg_buy": avg,      # ← 내부 컬럼은 avg_price지만 화면에는 avg_buy로 전달
+
+    "avg_price": avg,
+
     "current_price": current_price,
+
     "asset_value": asset_value,
+
     "total_assets": total_assets,
+
     "profit": profit,
+
     "roi": roi
 
 }
