@@ -107,7 +107,7 @@ def get_eth_price():
 
         r = requests.get(
             KRAKEN_URL,
-            timeout=3
+            timeout=1
         )
 
         r.raise_for_status()
