@@ -1,225 +1,317 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 
 <head>
 
-<meta charset="utf-8">
+<meta charset="UTF-8">
 
-<title>ETH Live Chart</title>
-
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<title>ETH Chart</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<style>
+
+body{
+    background:#111;
+    color:white;
+    font-family:Arial;
+}
+
+.container{
+    width:95%;
+    margin:auto;
+}
+
+canvas{
+    background:#222;
+}
+
+</style>
+
 </head>
 
-<body class="bg-dark text-light">
+<body>
 
-<div class="container mt-4">
+<div class="container">
 
-<h2 class="text-warning text-center">
-
-ETH Live Price Chart
-
-</h2>
-
-<h3 id="signal" class="text-center mb-3">
-⚪ HOLD
-</h3>
+<h2>ETH Trading Chart</h2>
 
 <canvas id="chart" height="120"></canvas>
 
-<br><br>
-
-<a href="/price" class="btn btn-primary">
-← Back
-</a>
-
-<a href="/history" class="btn btn-secondary">
-History
-</a>
-
-<a href="/trade-check" class="btn btn-warning">
-Signal
-</a>
-
-<a href="/trades" class="btn btn-danger">
-Trades
-</a>
-<a href="/portfolio" class="btn btn-info">
-💰 Portfolio
-</a>
 </div>
 
 <script>
 
-const ctx = document.getElementById("chart");
+let chart=null;
 
-const chart = new Chart(ctx,{
+async function loadChart(){
 
-    type:"line",
+    const res=await fetch("/chart-data");
 
-    data:{
+    const data=await res.json();
 
-        labels:[],
+    if(chart!=null){
+        chart.destroy();
+    }
 
-        datasets:[
-
+    chart=new Chart(
+        document.getElementById("chart"),
         {
 
-            label:"ETH",
+        type:"line",
 
-            data:[],
+        data:{
 
-            borderColor:"yellow",
+            labels:data.labels,
 
-            backgroundColor:"transparent",
+            datasets:[
 
-            borderWidth:3,
+            //--------------------------------
+            // ETH PRICE
+            //--------------------------------
 
-            pointRadius:1,
+            {
 
-            tension:0.3,
+                label:"ETH",
 
-            fill:false
+                data:data.prices,
 
-        },
+                borderColor:"white",
 
-        {
+                backgroundColor:"white",
 
-            label:"BUY",
+                borderWidth:2,
 
-            data:[],
+                tension:0.2,
 
-            showLine:false,
+                pointRadius:0
 
-            pointRadius:8,
+            },
 
-            pointHoverRadius:8,
+            //--------------------------------
+            // MA20
+            //--------------------------------
 
-            pointStyle:"triangle",
+            {
 
-            rotation:0,
+                label:"MA20",
 
-            backgroundColor:"lime",
+                data:data.ma20,
 
-            borderColor:"lime"
+                borderColor:"deepskyblue",
 
-        },
+                backgroundColor:"deepskyblue",
 
-        {
+                borderWidth:2,
 
-            label:"SELL",
+                tension:0.2,
 
-            data:[],
+                pointRadius:0
 
-            showLine:false,
+            },
 
-            pointRadius:8,
+            //--------------------------------
+            // MA60
+            //--------------------------------
 
-            pointHoverRadius:8,
+            {
 
-            pointStyle:"triangle",
+                label:"MA60",
 
-            rotation:180,
+                data:data.ma60,
 
-            backgroundColor:"red",
+                borderColor:"red",
 
-            borderColor:"red"
+                backgroundColor:"red",
 
-        }
+                borderWidth:2,
 
-        ]
+                tension:0.2,
 
-    },
+                pointRadius:0
 
-    options:{
+            },
 
-        responsive:true,
+            //--------------------------------
+            // BUY
+            //--------------------------------
 
-        animation:false,
+            {
 
-        plugins:{
+                type:"scatter",
 
-            legend:{
+                label:"BUY",
 
-                labels:{
-                    color:"white"
-                }
+                data:data.buy.map((v,i)=>{
+
+                    if(v==null) return null;
+
+                    return{
+
+                        x:data.labels[i],
+
+                        y:v
+
+                    };
+
+                }),
+
+                pointRadius:8,
+
+                pointStyle:"triangle",
+
+                backgroundColor:"lime"
+
+            },
+
+            //--------------------------------
+            // SELL
+            //--------------------------------
+
+            {
+
+                type:"scatter",
+
+                label:"SELL",
+
+                data:data.sell.map((v,i)=>{
+
+                    if(v==null) return null;
+
+                    return{
+
+                        x:data.labels[i],
+
+                        y:v
+
+                    };
+
+                }),
+
+                pointRadius:8,
+
+                pointStyle:"triangle",
+
+                rotation:180,
+
+                backgroundColor:"red"
+
+            },
+
+            //--------------------------------
+            // GOLDEN CROSS
+            //--------------------------------
+
+            {
+
+                type:"scatter",
+
+                label:"Golden Cross",
+
+                data:data.golden.map((v,i)=>{
+
+                    if(v==null) return null;
+
+                    return{
+
+                        x:data.labels[i],
+
+                        y:v
+
+                    };
+
+                }),
+
+                pointRadius:12,
+
+                pointStyle:"star",
+
+                backgroundColor:"yellow"
+
+            },
+
+            //--------------------------------
+            // DEAD CROSS
+            //--------------------------------
+
+            {
+
+                type:"scatter",
+
+                label:"Dead Cross",
+
+                data:data.dead.map((v,i)=>{
+
+                    if(v==null) return null;
+
+                    return{
+
+                        x:data.labels[i],
+
+                        y:v
+
+                    };
+
+                }),
+
+                pointRadius:12,
+
+                pointStyle:"star",
+
+                backgroundColor:"purple"
+
             }
 
+            ]
+
         },
 
-        scales:{
+        options:{
 
-            x:{
+            responsive:true,
 
-                ticks:{
-                    color:"white"
+            interaction:{
+                intersect:false,
+                mode:"index"
+            },
+
+            plugins:{
+
+                legend:{
+                    labels:{
+                        color:"white"
+                    }
                 }
 
             },
 
-            y:{
+            scales:{
 
-                ticks:{
-                    color:"white"
+                x:{
+
+                    ticks:{
+                        color:"white"
+                    },
+
+                    grid:{
+                        color:"#444"
+                    }
+
+                },
+
+                y:{
+
+                    ticks:{
+                        color:"white"
+                    },
+
+                    grid:{
+                        color:"#444"
+                    }
+
                 }
 
             }
-
-        }
-
-    }
-
-});
-
-
-function loadChart(){
-
-    fetch("/chart-data")
-
-    .then(r=>r.json())
-
-    .then(data=>{
-
-        chart.data.labels = data.labels;
-
-        chart.data.datasets[0].data = data.prices;
-
-        chart.data.datasets[1].data = data.buy;
-
-        chart.data.datasets[2].data = data.sell;
-
-        chart.update();
-
-        if(data.signal=="BUY"){
-
-            document.getElementById("signal").innerHTML =
-            "🟢 BUY SIGNAL";
-
-            document.getElementById("signal").style.color =
-            "lime";
-
-        }
-
-        else if(data.signal=="SELL"){
-
-            document.getElementById("signal").innerHTML =
-            "🔴 SELL SIGNAL";
-
-            document.getElementById("signal").style.color =
-            "red";
-
-        }
-
-        else{
-
-            document.getElementById("signal").innerHTML =
-            "⚪ HOLD";
-
-            document.getElementById("signal").style.color =
-            "white";
 
         }
 
@@ -234,4 +326,5 @@ setInterval(loadChart,5000);
 </script>
 
 </body>
+
 </html>
