@@ -878,6 +878,22 @@ def save_price():
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
+    message = ""
+
+    if request.method == "POST":
+
+        price = request.form["price"]
+
+        cur.execute("""
+            INSERT INTO eth_price (price)
+            VALUES (%s)
+        """, (price,))
+
+        conn.commit()
+
+        message = "ETH Price Saved!"
+
+
     cur.execute("""
         SELECT *
         FROM eth_price
@@ -893,9 +909,9 @@ def save_price():
     return render_template(
         "save_price.html",
         prices=prices,
-        live_price=get_eth_price()
+        live_price=get_eth_price(),
+        message=message
     )
-
 
 # -----------------------------
 # Price History
