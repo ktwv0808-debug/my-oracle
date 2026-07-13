@@ -560,7 +560,36 @@ def generate_signal():
         "ma60": ma60
 
     }
+# ------------------------------------------------------------
+# Live ETH Price
+# ------------------------------------------------------------
 
+KRAKEN_URL = "https://api.kraken.com/0/public/Ticker?pair=ETHUSD"
+
+def get_eth_price():
+
+    try:
+
+        response = requests.get(
+            KRAKEN_URL,
+            timeout=5
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        price = float(
+            data["result"]["XETHZUSD"]["c"][0]
+        )
+
+        return price
+
+    except Exception as e:
+
+        print("KRAKEN ERROR :", e)
+
+        return None
 # ============================================================
 # PART 5 : Auto Save
 # ============================================================
@@ -893,7 +922,47 @@ def history():
         prices=prices
     )
 
+# ----------------------------------------------------------
+# Price Page
+# ----------------------------------------------------------
+@app.route("/price")
+def price():
 
+    live_price = get_eth_price()
+
+    conn = get_db()
+
+    cur = conn.cursor(
+        cursor_factory=RealDictCursor
+    )
+
+    cur.execute("""
+
+        SELECT *
+
+        FROM eth_price
+
+        ORDER BY id DESC
+
+        LIMIT 100
+
+    """)
+
+    prices = cur.fetchall()
+
+    cur.close()
+
+    conn.close()
+
+    return render_template(
+
+        "price.html",
+
+        live_price=live_price,
+
+        prices=prices
+
+    )
 # -----------------------------
 # Trade Check
 # -----------------------------
