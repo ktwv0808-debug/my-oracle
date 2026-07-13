@@ -868,10 +868,11 @@ def poem():
     return render_template("poem.html")
 
 
-# -----------------------------
-# Save Price
-# -----------------------------
-@app.route("/save-price")
+# =====================================
+# Save ETH Price
+# =====================================
+
+@app.route("/save-price", methods=["GET","POST"])
 def save_price():
 
     conn = get_db()
