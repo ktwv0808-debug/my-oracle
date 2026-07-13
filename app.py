@@ -1270,31 +1270,25 @@ def chart():
 # End of PART 7
 # =====================================================
 
-# =====================================================
-# PART 8
+# =====================================
 # Chart API
-# =====================================================
+# =====================================
 
 @app.route("/chart-data")
 def chart_data():
-
-    # ----------------------------------------
-    # Database Connect
-    # ----------------------------------------
 
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute("""
         SELECT
-            id,
             created_at,
             price,
             ma20,
-            ma60,
-            signal
+            ma60
         FROM eth_price
         ORDER BY id ASC
+        LIMIT 300
     """)
 
     rows = cur.fetchall()
@@ -1302,37 +1296,24 @@ def chart_data():
     cur.close()
     conn.close()
 
-    # ----------------------------------------
-    # Arrays
-    # ----------------------------------------
-
     labels = []
 
     prices = []
-
     ma20 = []
-
     ma60 = []
 
     buy = []
-
     sell = []
 
     golden = []
-
     dead = []
 
-    # ----------------------------------------
-    # Previous MA
-    # ----------------------------------------
-
     prev20 = None
-
     prev60 = None
 
-    # ----------------------------------------
-    # Build JSON
-    # ----------------------------------------
+    # ---------------------------------
+    # Chart Data
+    # ---------------------------------
 
     for r in rows:
 
@@ -1356,59 +1337,50 @@ def chart_data():
         ma20.append(m20)
         ma60.append(m60)
 
-        # ------------------------------------
-        # BUY / SELL
-        # ------------------------------------
+        buy.append(None)
+        sell.append(None)
 
-        if r["signal"] == "BUY":
-            buy.append(price)
-        else:
-            buy.append(None)
+        golden.append(None)
+        dead.append(None)
 
-        if r["signal"] == "SELL":
-            sell.append(price)
-        else:
-            sell.append(None)
-
-        # ------------------------------------
-        # Golden / Dead Cross
-        # ------------------------------------
+        # -----------------------------
+        # MA가 없는 구간은 계산 안함
+        # -----------------------------
 
         if (
-            prev20 is not None and
-            prev60 is not None and
-            m20 is not None and
-            m60 is not None
+            m20 is None or
+            m60 is None or
+            prev20 is None or
+            prev60 is None
         ):
 
-            if prev20 <= prev60 and m20 > m60:
+            prev20 = m20
+            prev60 = m60
 
-                golden.append(price)
+            continue
 
-            else:
+        # -----------------------------
+        # 골든크로스
+        # -----------------------------
 
-                golden.append(None)
+        if prev20 <= prev60 and m20 > m60:
 
-            if prev20 >= prev60 and m20 < m60:
+            golden[-1] = price
 
-                dead.append(price)
+            buy[-1] = price
 
-            else:
+        # -----------------------------
+        # 데드크로스
+        # -----------------------------
 
-                dead.append(None)
+        elif prev20 >= prev60 and m20 < m60:
 
-        else:
+            dead[-1] = price
 
-            golden.append(None)
-
-            dead.append(None)
+            sell[-1] = price
 
         prev20 = m20
         prev60 = m60
-
-    # ----------------------------------------
-    # JSON Return
-    # ----------------------------------------
 
     return jsonify({
 
@@ -1429,7 +1401,6 @@ def chart_data():
         "dead": dead
 
     })
-
 # =====================================================
 # END PART 8
 # =====================================================
