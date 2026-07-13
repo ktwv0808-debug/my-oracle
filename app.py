@@ -1029,35 +1029,22 @@ def chart():
 
     return render_template("chart.html")
 
-# ==========================================================
-# PART 8 : Chart API
-# ==========================================================
+# =====================================
+# PART 8 Chart API
+# =====================================
 
 @app.route("/chart-data")
 def chart_data():
 
     conn = get_db()
-
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute("""
-
         SELECT
-
             created_at,
-
-            price,
-
-            ma20,
-
-            ma60
-
+            price
         FROM eth_price
-
         ORDER BY id ASC
-
-        LIMIT 300
-
     """)
 
     rows = cur.fetchall()
@@ -1066,76 +1053,86 @@ def chart_data():
     conn.close()
 
     labels = []
-
     prices = []
 
     ma20 = []
-
     ma60 = []
 
     buy = []
-
     sell = []
 
     golden = []
-
     dead = []
 
-    prev20 = None
-    prev60 = None
+    prev_ma20 = None
+    prev_ma60 = None
 
-    for r in rows:
+    for i, row in enumerate(rows):
+
+        price = float(row["price"])
 
         labels.append(
-            r["created_at"].strftime("%H:%M:%S")
+            row["created_at"].strftime("%H:%M:%S")
         )
 
-        p = float(r["price"])
+        prices.append(price)
 
-        prices.append(p)
+        # ------------------------
+        # MA20
+        # ------------------------
 
-        m20 = None
-        m60 = None
+        if i >= 19:
+            current_ma20 = sum(prices[i-19:i+1]) / 20
+        else:
+            current_ma20 = None
 
-        if r["ma20"] is not None:
-            m20 = float(r["ma20"])
+        ma20.append(current_ma20)
 
-        if r["ma60"] is not None:
-            m60 = float(r["ma60"])
+        # ------------------------
+        # MA60
+        # ------------------------
 
-        ma20.append(m20)
-        ma60.append(m60)
+        if i >= 59:
+            current_ma60 = sum(prices[i-59:i+1]) / 60
+        else:
+            current_ma60 = None
+
+        ma60.append(current_ma60)
+
+        # ------------------------
+        # 기본값
+        # ------------------------
 
         buy.append(None)
         sell.append(None)
         golden.append(None)
         dead.append(None)
 
-        # ---------------------------------
-        # 골든 / 데드크로스 계산
-        # ---------------------------------
+        # ------------------------
+        # Cross Check
+        # ------------------------
 
         if (
-            prev20 is not None and
-            prev60 is not None and
-            m20 is not None and
-            m60 is not None
+            prev_ma20 is not None
+            and prev_ma60 is not None
+            and current_ma20 is not None
+            and current_ma60 is not None
         ):
 
-            # GOLDEN CROSS
-            if prev20 <= prev60 and m20 > m60:
+            # 골든크로스
+            if prev_ma20 <= prev_ma60 and current_ma20 > current_ma60:
 
-                golden[-1] = p
-                buy[-1] = p
+                golden[-1] = price
+                buy[-1] = price
 
-            # DEAD CROSS
-            elif prev20 >= prev60 and m20 < m60:
+            # 데드크로스
+            elif prev_ma20 >= prev_ma60 and current_ma20 < current_ma60:
 
-                dead[-1] = p
-                sell[-1] = p
+                dead[-1] = price
+                sell[-1] = price
 
-        prev20 = m20
-        prev60 = m60
+        prev_ma20 = current_ma20
+        prev_ma60 = current_ma60
 
     return jsonify({
 
