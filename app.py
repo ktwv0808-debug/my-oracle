@@ -713,13 +713,142 @@ def save_trade_record(price):
 # =====================================================
 
 # =====================================================
-# PART 5
-# Auto Save
+# PART 5  Auto Save ETH Price
 # =====================================================
 
-# -----------------------------------------------------
-# Auto Save ETH
-# -----------------------------------------------------
+def save_eth_price():
+
+    # -----------------------------
+    # 실시간 가격
+    # -----------------------------
+    price = get_eth_price()
+
+    if price is None:
+        return
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    # -----------------------------
+    # 마지막 가격 확인
+    # -----------------------------
+    cur.execute("""
+        SELECT id, price
+        FROM eth_price
+        ORDER BY id DESC
+        LIMIT 1
+    """)
+
+    last = cur.fetchone()
+
+    # 같은 가격이면 저장하지 않음
+    if last is not None:
+
+        if float(last["price"]) == float(price):
+
+            cur.close()
+            conn.close()
+            return
+
+    # -----------------------------
+    # 가격 저장
+    # -----------------------------
+    cur.execute("""
+        INSERT INTO eth_price(price)
+        VALUES(%s)
+        RETURNING id
+    """, (price,))
+
+    new_id = cur.fetchone()["id"]
+
+    conn.commit()
+
+    # -----------------------------
+    # 최근 60개 가격 읽기
+    # -----------------------------
+    cur.execute("""
+        SELECT price
+        FROM eth_price
+        ORDER BY id DESC
+        LIMIT 60
+    """)
+
+    rows = cur.fetchall()
+
+    prices = [float(r["price"]) for r in rows]
+
+    prices.reverse()
+
+    # -----------------------------
+    # MA20 계산
+    # -----------------------------
+    ma20 = None
+
+    if len(prices) >= 20:
+
+        ma20 = sum(prices[-20:]) / 20
+
+    # -----------------------------
+    # MA60 계산
+    # -----------------------------
+    ma60 = None
+
+    if len(prices) >= 60:
+
+        ma60 = sum(prices[-60:]) / 60
+
+    # -----------------------------
+    # BUY / SELL
+    # -----------------------------
+    signal = "HOLD"
+
+    if ma20 is not None and ma60 is not None:
+
+        if ma20 > ma60:
+
+            signal = "BUY"
+
+        elif ma20 < ma60:
+
+            signal = "SELL"
+
+    # -----------------------------
+    # 같은 행 UPDATE
+    # -----------------------------
+    cur.execute("""
+        UPDATE eth_price
+        SET
+            ma20=%s,
+            ma60=%s,
+            signal=%s
+        WHERE id=%s
+    """, (
+
+        ma20,
+        ma60,
+        signal,
+        new_id
+
+    ))
+
+    conn.commit()
+
+    # -----------------------------
+    # 최근 10000개 유지
+    # -----------------------------
+    keep_10000_rows("eth_price")
+
+    print(
+        f"[{datetime.now()}] Saved : {price:.2f}  MA20={ma20}  MA60={ma60}  {signal}"
+    )
+
+    cur.close()
+    conn.close()
+
+
+# =====================================================
+# PART 5  Auto Save Thread
+# =====================================================
 
 def auto_save_eth():
 
@@ -727,264 +856,13 @@ def auto_save_eth():
 
         try:
 
-            # ----------------------------------------
-            # 실시간 ETH 가격
-            # ----------------------------------------
-
-            price = get_eth_price()
-
-            if price is not None:
-
-                # ----------------------------------------
-                # 가격 저장
-                # ----------------------------------------
-
-                saved = save_eth_price(price)
-
-                # ----------------------------------------
-                # 거래기록 저장
-                # ----------------------------------------
-
-                if saved:
-
-                    save_trade_record(price)
-
-                    print(
-                        f"[{datetime.now()}] ETH Saved : {price}"
-                    )
+            save_eth_price()
 
         except Exception as e:
 
-            print(
-                "AUTO SAVE ERROR :",
-                e
-            )
-
-        # ----------------------------------------
-        # 10분마다 저장
-        # ----------------------------------------
+            print("AUTO SAVE ERROR :", e)
 
         time.sleep(600)
-
-
-# =====================================================
-# End of PART 5
-# =====================================================
-
-# =====================================================
-# PART 6
-# Portfolio
-# =====================================================
-
-# -----------------------------------------------------
-# Portfolio 조회
-# -----------------------------------------------------
-
-def get_portfolio():
-
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-
-    cur.execute("""
-        SELECT *
-        FROM portfolio
-        LIMIT 1
-    """)
-
-    p = cur.fetchone()
-
-    cur.close()
-    conn.close()
-
-    return p
-
-
-# -----------------------------------------------------
-# Portfolio 계산
-# -----------------------------------------------------
-
-def calculate_portfolio():
-
-    portfolio = get_portfolio()
-
-    cash = float(portfolio["cash"])
-    eth = float(portfolio["eth"])
-    avg_price = float(portfolio["avg_price"])
-
-    current_price = get_eth_price()
-
-    if current_price is None:
-        current_price = 0.0
-
-    asset_value = eth * current_price
-
-    total_assets = cash + asset_value
-
-    profit = asset_value - (eth * avg_price)
-
-    roi = 0
-
-    if eth > 0 and avg_price > 0:
-
-        roi = (
-            (current_price - avg_price)
-            / avg_price
-        ) * 100
-
-    return {
-
-        "cash": cash,
-
-        "eth": eth,
-
-        "avg_price": avg_price,
-
-        "current_price": current_price,
-
-        "asset_value": asset_value,
-
-        "total_assets": total_assets,
-
-        "profit": profit,
-
-        "roi": roi
-
-    }
-
-
-# -----------------------------------------------------
-# ETH 매수
-# -----------------------------------------------------
-
-def buy_eth(amount):
-
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-
-    cur.execute("""
-        SELECT *
-        FROM portfolio
-        LIMIT 1
-    """)
-
-    p = cur.fetchone()
-
-    current_price = get_eth_price()
-
-    if current_price is None:
-
-        cur.close()
-        conn.close()
-
-        return False
-
-    cash = float(p["cash"])
-    eth = float(p["eth"])
-    avg = float(p["avg_price"])
-
-    cost = amount * current_price
-
-    if cash < cost:
-
-        cur.close()
-        conn.close()
-
-        return False
-
-    new_eth = eth + amount
-
-    if new_eth == 0:
-        new_avg = 0
-    else:
-        new_avg = (
-            (eth * avg)
-            + (amount * current_price)
-        ) / new_eth
-
-    new_cash = cash - cost
-
-    cur.execute("""
-        UPDATE portfolio
-        SET
-            cash=%s,
-            eth=%s,
-            avg_price=%s
-    """, (
-        new_cash,
-        new_eth,
-        new_avg
-    ))
-
-    conn.commit()
-
-    cur.close()
-    conn.close()
-
-    return True
-
-
-# -----------------------------------------------------
-# ETH 매도
-# -----------------------------------------------------
-
-def sell_eth(amount):
-
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-
-    cur.execute("""
-        SELECT *
-        FROM portfolio
-        LIMIT 1
-    """)
-
-    p = cur.fetchone()
-
-    current_price = get_eth_price()
-
-    if current_price is None:
-
-        cur.close()
-        conn.close()
-
-        return False
-
-    cash = float(p["cash"])
-    eth = float(p["eth"])
-    avg = float(p["avg_price"])
-
-    if eth < amount:
-
-        cur.close()
-        conn.close()
-
-        return False
-
-    new_eth = eth - amount
-
-    new_cash = cash + (amount * current_price)
-
-    if new_eth == 0:
-        avg = 0
-
-    cur.execute("""
-        UPDATE portfolio
-        SET
-            cash=%s,
-            eth=%s,
-            avg_price=%s
-    """, (
-        new_cash,
-        new_eth,
-        avg
-    ))
-
-    conn.commit()
-
-    cur.close()
-    conn.close()
-
-    return True
 
 
 # =====================================================
@@ -1406,71 +1284,35 @@ def chart_data():
 # =====================================================
 
 # =====================================================
-# PART 9
-# Thread & Initialize
+# PART 9  Thread
 # =====================================================
 
-def start_background_thread():
+# =====================================================
+# PART 9  Thread
+# =====================================================
 
-    thread = threading.Thread(
-
-        target=auto_save_eth,
-
-        daemon=True
-
-    )
-
-    thread.start()
-
-    print("Background Thread Started")
-
-
-# ----------------------------------------
-# Initialize Project
-# ----------------------------------------
-
-try:
-
-    print("Initializing Database...")
-
-    init_db()
-
-    update_database()
-
-    insert_test_data()
-
-    print("Database Ready")
-
-except Exception as e:
-
-    print("Database Init Error :", e)
-
-
-# ----------------------------------------
-# Start Background Thread
-# ----------------------------------------
-
-try:
-
-    start_background_thread()
-
-except Exception as e:
-
-    print("Thread Error :", e)
-
+# 프로그램 시작 시 자동으로 ETH 가격 저장 시작
+threading.Thread(
+    target=auto_save_eth,
+    daemon=True
+).start()
 
 # =====================================================
 # END PART 9
 # =====================================================
 
-# ============================================================
+# =====================================================
 # PART 10  Flask Start
-# ============================================================
+# =====================================================
 
 if __name__ == "__main__":
 
     app.run(
+
         host="0.0.0.0",
+
         port=5000,
+
         debug=True
+
     )
