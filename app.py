@@ -1149,21 +1149,33 @@ def history():
     )
 
 
-# -----------------------------------------------------
-# Trading Signal
-# -----------------------------------------------------
+# =====================================================
+# Trade Check
+# =====================================================
 
 @app.route("/trade-check")
 def trade_check():
 
-    signal = generate_signal()
+    signal = calculate_signal()
+
+    rsi = calculate_rsi()
+
+    ma20 = calculate_ma(20)
+
+    ma60 = calculate_ma(60)
 
     return render_template(
+
         "trade_check.html",
-        signal=signal["signal"],
-        rsi=signal["rsi"],
-        ma20=signal["ma20"],
-        ma60=signal["ma60"]
+
+        signal=signal,
+
+        rsi=rsi,
+
+        ma20=ma20,
+
+        ma60=ma60
+
     )
 
 
