@@ -5,25 +5,34 @@
 
 <meta charset="UTF-8">
 
-<title>ETH Chart</title>
+<title>ETH Trading Chart</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 
 body{
+
     background:#111;
+
     color:white;
+
     font-family:Arial;
+
 }
 
 .container{
+
     width:95%;
+
     margin:auto;
+
 }
 
 canvas{
+
     background:#222;
+
 }
 
 </style>
@@ -42,272 +51,322 @@ canvas{
 
 <script>
 
-let chart=null;
+let chart = null;
 
 async function loadChart(){
 
-    const res=await fetch("/chart-data");
+    const res = await fetch("/chart-data");
 
-    const data=await res.json();
+    const data = await res.json();
 
-    if(chart!=null){
+    if(chart){
         chart.destroy();
     }
 
-    chart=new Chart(
+    chart = new Chart(
+
         document.getElementById("chart"),
+
         {
 
-        type:"line",
+            type:"line",
 
-        data:{
+            data:{
 
-            labels:data.labels,
+                labels:data.labels,
 
-            datasets:[
+                datasets:[
 
-            //--------------------------------
-            // ETH PRICE
-            //--------------------------------
+                //--------------------------------------------------
+                // ETH PRICE
+                //--------------------------------------------------
 
-            {
+                {
 
-                label:"ETH",
+                    label:"ETH",
 
-                data:data.prices,
+                    data:data.prices,
 
-                borderColor:"white",
+                    borderColor:"white",
 
-                backgroundColor:"white",
+                    backgroundColor:"white",
 
-                borderWidth:2,
+                    borderWidth:2,
 
-                tension:0.2,
+                    pointRadius:0,
 
-                pointRadius:0
+                    tension:0.2
 
-            },
+                },
 
-            //--------------------------------
-            // MA20
-            //--------------------------------
+                //--------------------------------------------------
+                // MA20
+                //--------------------------------------------------
 
-            {
+                {
 
-                label:"MA20",
+                    label:"MA20",
 
-                data:data.ma20,
+                    data:data.ma20,
 
-                borderColor:"deepskyblue",
+                    borderColor:"deepskyblue",
 
-                backgroundColor:"deepskyblue",
+                    backgroundColor:"deepskyblue",
 
-                borderWidth:2,
+                    borderWidth:2,
 
-                tension:0.2,
+                    pointRadius:0,
 
-                pointRadius:0
+                    tension:0.2
 
-            },
+                },
 
-            //--------------------------------
-            // MA60
-            //--------------------------------
+                //--------------------------------------------------
+                // MA60
+                //--------------------------------------------------
 
-            {
+                {
 
-                label:"MA60",
+                    label:"MA60",
 
-                data:data.ma60,
+                    data:data.ma60,
 
-                borderColor:"red",
+                    borderColor:"red",
 
-                backgroundColor:"red",
+                    backgroundColor:"red",
 
-                borderWidth:2,
+                    borderWidth:2,
 
-                tension:0.2,
+                    pointRadius:0,
 
-                pointRadius:0
+                    tension:0.2
 
-            },
+                },
 
-            //--------------------------------
-            // BUY
-            //--------------------------------
+                //--------------------------------------------------
+                // BUY
+                //--------------------------------------------------
 
-            {
+                {
 
-                type:"scatter",
+                    type:"scatter",
 
-                label:"BUY",
+                    label:"BUY",
 
-                data:data.buy.map((v,i)=>{
+                    data:data.buy
 
-                    if(v==null) return null;
+                        .map((v,i)=>{
 
-                    return{
+                            if(v==null) return null;
 
-                        x:data.labels[i],
+                            return {
 
-                        y:v
+                                x:data.labels[i],
 
-                    };
+                                y:v
 
-                }),
+                            };
 
-                pointRadius:8,
+                        })
 
-                pointStyle:"triangle",
+                        .filter(v=>v!=null),
 
-                backgroundColor:"lime"
+                    pointRadius:8,
 
-            },
+                    pointStyle:"triangle",
 
-            //--------------------------------
-            // SELL
-            //--------------------------------
+                    backgroundColor:"lime",
 
-            {
+                    borderColor:"lime",
 
-                type:"scatter",
+                    showLine:false
 
-                label:"SELL",
+                },
 
-                data:data.sell.map((v,i)=>{
+                //--------------------------------------------------
+                // SELL
+                //--------------------------------------------------
 
-                    if(v==null) return null;
+                {
 
-                    return{
+                    type:"scatter",
 
-                        x:data.labels[i],
+                    label:"SELL",
 
-                        y:v
+                    data:data.sell
 
-                    };
+                        .map((v,i)=>{
 
-                }),
+                            if(v==null) return null;
 
-                pointRadius:8,
+                            return {
 
-                pointStyle:"triangle",
+                                x:data.labels[i],
 
-                rotation:180,
+                                y:v
 
-                backgroundColor:"red"
+                            };
 
-            },
+                        })
 
-            //--------------------------------
-            // GOLDEN CROSS
-            //--------------------------------
+                        .filter(v=>v!=null),
 
-            {
+                    pointRadius:8,
 
-                type:"scatter",
+                    pointStyle:"triangle",
 
-                label:"Golden Cross",
+                    rotation:180,
 
-                data:data.golden.map((v,i)=>{
+                    backgroundColor:"red",
 
-                    if(v==null) return null;
+                    borderColor:"red",
 
-                    return{
+                    showLine:false
 
-                        x:data.labels[i],
+                },
 
-                        y:v
+                //--------------------------------------------------
+                // GOLDEN CROSS
+                //--------------------------------------------------
 
-                    };
+                {
 
-                }),
+                    type:"scatter",
 
-                pointRadius:12,
+                    label:"Golden Cross",
 
-                pointStyle:"star",
+                    data:data.golden
 
-                backgroundColor:"yellow"
+                        .map((v,i)=>{
 
-            },
+                            if(v==null) return null;
 
-            //--------------------------------
-            // DEAD CROSS
-            //--------------------------------
+                            return {
 
-            {
+                                x:data.labels[i],
 
-                type:"scatter",
+                                y:v
 
-                label:"Dead Cross",
+                            };
 
-                data:data.dead.map((v,i)=>{
+                        })
 
-                    if(v==null) return null;
+                        .filter(v=>v!=null),
 
-                    return{
+                    pointRadius:12,
 
-                        x:data.labels[i],
+                    pointStyle:"star",
 
-                        y:v
+                    backgroundColor:"yellow",
 
-                    };
+                    borderColor:"yellow",
 
-                }),
+                    showLine:false
 
-                pointRadius:12,
+                },
 
-                pointStyle:"star",
+                //--------------------------------------------------
+                // DEAD CROSS
+                //--------------------------------------------------
 
-                backgroundColor:"purple"
+                {
 
-            }
+                    type:"scatter",
 
-            ]
+                    label:"Dead Cross",
 
-        },
+                    data:data.dead
 
-        options:{ 
+                        .map((v,i)=>{
 
-          
-            responsive:true,
+                            if(v==null) return null;
 
-            interaction:{
-                intersect:false,
-                mode:"index"
-            },
+                            return {
 
-            plugins:{
+                                x:data.labels[i],
 
-                legend:{
-                    labels:{
-                        color:"white"
-                    }
+                                y:v
+
+                            };
+
+                        })
+
+                        .filter(v=>v!=null),
+
+                    pointRadius:12,
+
+                    pointStyle:"star",
+
+                    backgroundColor:"purple",
+
+                    borderColor:"purple",
+
+                    showLine:false
+
                 }
 
+                ]
+
             },
 
-            scales:{
+            options:{
 
-                x:{
+                responsive:true,
 
-                    ticks:{
-                        color:"white"
-                    },
+                interaction:{
 
-                    grid:{
-                        color:"#444"
+                    intersect:false,
+
+                    mode:"index"
+
+                },
+
+                plugins:{
+
+                    legend:{
+
+                        labels:{
+
+                            color:"white"
+
+                        }
+
                     }
 
                 },
 
-                y:{
+                scales:{
 
-                    ticks:{
-                        color:"white"
+                    x:{
+
+                        ticks:{
+
+                            color:"white"
+
+                        },
+
+                        grid:{
+
+                            color:"#444"
+
+                        }
+
                     },
 
-                    grid:{
-                        color:"#444"
+                    y:{
+
+                        ticks:{
+
+                            color:"white"
+
+                        },
+
+                        grid:{
+
+                            color:"#444"
+
+                        }
+
                     }
 
                 }
@@ -316,7 +375,7 @@ async function loadChart(){
 
         }
 
-    });
+    );
 
 }
 
