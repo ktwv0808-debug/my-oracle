@@ -100,56 +100,11 @@ except Exception as e:
 # Database Initialization
 # ============================================================
 
-# -----------------------------
-# Create Tables
-# -----------------------------
 def init_db():
 
     conn = get_db()
     cur = conn.cursor()
 
-    # =====================================================
-    # ETH Price Table
-    # =====================================================
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS eth_price(
-
-        id SERIAL PRIMARY KEY,
-
-        price DOUBLE PRECISION NOT NULL,
-
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
-    );
-    """)
-
-    # =====================================================
-    # Trading Records Table
-    # =====================================================
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS trading_records(
-
-        id SERIAL PRIMARY KEY,
-
-        signal VARCHAR(20),
-
-        price DOUBLE PRECISION,
-
-        rsi DOUBLE PRECISION,
-
-        ma20 DOUBLE PRECISION,
-
-        ma60 DOUBLE PRECISION,
-
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
-    );
-    """)
-
-    # =====================================================
-    # Portfolio Table
-    # 항상 한 행(ID=1)만 사용
-    # =====================================================
     cur.execute("""
     CREATE TABLE IF NOT EXISTS portfolio(
 
@@ -159,29 +114,11 @@ def init_db():
 
         eth DOUBLE PRECISION,
 
-        avg_buy DOUBLE PRECISION
+        avg_buy DOUBLE PRECISION DEFAULT 0
 
     );
     """)
-# =====================================================
-# Portfolio Upgrade
-# 기존 portfolio 테이블에 avg_buy 컬럼이 없으면 추가
-# =====================================================
 
-try:
-
-    cur.execute("""
-        ALTER TABLE portfolio
-        ADD COLUMN avg_buy DOUBLE PRECISION DEFAULT 0;
-    """)
-
-except Exception:
-
-    # 이미 컬럼이 존재하면 무시
-    conn.rollback()
-    # -----------------------------
-    # Portfolio Default Value
-    # -----------------------------
     cur.execute("""
     INSERT INTO portfolio(id,cash,eth,avg_buy)
 
@@ -196,12 +133,6 @@ except Exception:
 
     cur.close()
     conn.close()
-
-
-# -----------------------------
-# Initialize Database
-# -----------------------------
-init_db()
 
 # ============================================================
 # PART 4
