@@ -312,32 +312,7 @@ def generate_signal():
     }
 
 
-# ==========================================================
-# Trading Signal Page
-# ==========================================================
 
-@app.route("/trade-check")
-def trade_check():
-
-    result = generate_signal()
-
-    return render_template(
-
-        "trade_check.html",
-
-        signal=result["signal"],
-
-        golden=result["golden"],
-
-        dead=result["dead"],
-
-        rsi=result["rsi"],
-
-        ma20=result["ma20"],
-
-        ma60=result["ma60"]
-
-    )
 
 # ==========================================================
 # Part 5
@@ -627,13 +602,32 @@ def save_price():
     pass
 
 
-# ----------------------------------------------------------
-# Trading Signal
-# 실제 기능은 PART9
-# ----------------------------------------------------------
+# ==========================================================
+# Trading Signal Page
+# ==========================================================
+
 @app.route("/trade-check")
 def trade_check():
-    pass
+
+    result = generate_signal()
+
+    return render_template(
+
+        "trade_check.html",
+
+        signal=result["signal"],
+
+        golden=result["golden"],
+
+        dead=result["dead"],
+
+        rsi=result["rsi"],
+
+        ma20=result["ma20"],
+
+        ma60=result["ma60"]
+
+    )
 
 
 # ----------------------------------------------------------
