@@ -163,7 +163,22 @@ def init_db():
 
     );
     """)
+# =====================================================
+# Portfolio Upgrade
+# 기존 portfolio 테이블에 avg_buy 컬럼이 없으면 추가
+# =====================================================
 
+try:
+
+    cur.execute("""
+        ALTER TABLE portfolio
+        ADD COLUMN avg_buy DOUBLE PRECISION DEFAULT 0;
+    """)
+
+except Exception:
+
+    # 이미 컬럼이 존재하면 무시
+    conn.rollback()
     # -----------------------------
     # Portfolio Default Value
     # -----------------------------
