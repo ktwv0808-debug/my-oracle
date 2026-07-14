@@ -374,6 +374,7 @@ def get_portfolio():
     """)
 
     portfolio = cur.fetchone()
+    print(portfolio)
 
     cur.close()
     conn.close()
