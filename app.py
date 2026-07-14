@@ -511,6 +511,16 @@ def calculate_previous_ma(period):
 
 def generate_signal():
 
+    # ============================================
+    # 현재 ETH 가격
+    # ============================================
+
+    price = get_eth_price()
+
+    # ============================================
+    # 지표 계산
+    # ============================================
+
     rsi = calculate_rsi()
 
     ma20 = calculate_ma(20)
@@ -523,35 +533,45 @@ def generate_signal():
 
     signal = "HOLD"
 
-    if None in (rsi, ma20, ma60, prev20, prev60):
+    # ============================================
+    # 데이터 부족
+    # ============================================
+
+    if None in (price, rsi, ma20, ma60, prev20, prev60):
 
         signal = "HOLD"
 
     else:
 
+        # ============================================
         # 골든크로스
+        # ============================================
+
         if prev20 <= prev60 and ma20 > ma60:
 
-            if rsi < 30:
-                signal = "BUY"
-            else:
-                signal = "BUY"
+            signal = "BUY"
 
+        # ============================================
         # 데드크로스
+        # ============================================
+
         elif prev20 >= prev60 and ma20 < ma60:
 
-            if rsi > 70:
-                signal = "SELL"
-            else:
-                signal = "SELL"
+            signal = "SELL"
 
         else:
 
             signal = "HOLD"
 
+    # ============================================
+    # 결과 반환
+    # ============================================
+
     return {
 
         "signal": signal,
+
+        "price": price,
 
         "rsi": rsi,
 
