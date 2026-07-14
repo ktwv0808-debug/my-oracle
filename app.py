@@ -122,20 +122,6 @@ def live_price():
     })
 
 
-# -----------------------------
-# ETH 현재 가격 페이지
-# templates/price.html
-# -----------------------------
-@app.route("/price")
-def price():
-
-    return render_template(
-
-        "price.html",
-
-        live_price=get_eth_price()
-
-    )
 
 # ==========================================================
 # Part 3
