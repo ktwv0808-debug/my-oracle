@@ -705,10 +705,10 @@ def whitepaper():
 # ------------------------------------------------------------
 # Toward Victory
 # ------------------------------------------------------------
-@app.route("/toward-victory")
+@app.route("/poem")
 def toward_victory():
 
-    return render_template("toward_victory.html")
+    return render_template("poem.html")
 
 
 # ------------------------------------------------------------
@@ -736,7 +736,7 @@ def price():
 # ------------------------------------------------------------
 # Save ETH Price
 # ------------------------------------------------------------
-@app.route("/save-price", methods=["GET", "POST"])
+@app.route("/save_price", methods=["GET", "POST"])
 def save_price():
 
     conn = get_db()
@@ -836,7 +836,7 @@ def history():
 # ------------------------------------------------------------
 # Trade Check
 # ------------------------------------------------------------
-@app.route("/trade-check")
+@app.route("/trade_check")
 def trade_check():
 
     signal = generate_signal()
