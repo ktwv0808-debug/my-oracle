@@ -69,7 +69,27 @@ ETH Price
 
 <td>{{ row.id }}</td>
 
-<td>{{ row.signal }}</td>
+<td>
+
+{% if row.signal == "BUY" %}
+
+🟢 BUY
+
+{% elif row.signal == "SELL" %}
+
+🔴 SELL
+
+{% elif row.signal == "HOLD" %}
+
+⚪ HOLD
+
+{% else %}
+
+{{ row.signal }}
+
+{% endif %}
+
+</td>
 
 <td>{{ "%.2f"|format(row.price) if row.price else "-" }}</td>
 
