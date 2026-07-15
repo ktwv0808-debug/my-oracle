@@ -1037,9 +1037,14 @@ def save_price():
 
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
-# --------------------------------------------------------
-# 저장 버튼 클릭
-# --------------------------------------------------------
+    # --------------------------------------------------------
+    # Message
+    # --------------------------------------------------------
+
+    message = ""
+ # --------------------------------------------------------
+    # Save Button
+    # --------------------------------------------------------
 
     if request.method == "POST":
 
@@ -1054,6 +1059,9 @@ def save_price():
         """, (live_price,))
 
         conn.commit()
+
+        message = "ETH price saved successfully."
+
     cur.execute("""
         SELECT *
         FROM eth_price
