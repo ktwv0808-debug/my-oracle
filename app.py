@@ -435,6 +435,29 @@ def get_eth_price():
 
         return None
 # ------------------------------------------------------------
+# Latest Price (DB)
+# 팝업창 즉시 표시용
+# ------------------------------------------------------------
+def get_latest_price():
+
+    row = fetch_one("""
+
+        SELECT price
+
+        FROM eth_price
+
+        ORDER BY id DESC
+
+        LIMIT 1
+
+    """)
+
+    if row:
+
+        return float(row["price"])
+
+    return None
+# ------------------------------------------------------------
 # RSI Calculation
 # ------------------------------------------------------------
 
@@ -932,9 +955,11 @@ def poem():
 @app.route("/price")
 def price():
 
-    # 현재 ETH 가격 가져오기
-    live_price = get_eth_price()
+    # --------------------------------------------------------
+    # DB 최신 가격
+    # --------------------------------------------------------
 
+    live_price = get_latest_price()
 
     # 최근 가격 기록 가져오기
     conn = get_db()
@@ -978,7 +1003,11 @@ def price():
 @app.route("/price-api")
 def price_api():
 
-    live_price = get_eth_price()
+    # --------------------------------------------------------
+    # DB 최신 가격
+    # --------------------------------------------------------
+
+    live_price = get_latest_price()
 
 
     if live_price is None:
@@ -1022,11 +1051,14 @@ def save_price():
     conn.close()
 
     return render_template(
-        "save_price.html",
-        prices=prices,
-        live_price=get_eth_price()
-    )
 
+    "save_price.html",
+
+    prices=prices,
+
+    live_price=get_latest_price()
+
+)
 
 # -----------------------------
 # Price History
