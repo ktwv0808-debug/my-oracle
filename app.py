@@ -398,7 +398,32 @@ def insert_test_data():
 # ============================================================
 # PART 4 : Indicator
 # ============================================================
+# ============================================================
+# ETH Price (CoinGecko)
+# ============================================================
 
+def get_eth_price():
+
+    try:
+
+        url = "https://api.coingecko.com/api/v3/simple/price"
+
+        params = {
+            "ids": "ethereum",
+            "vs_currencies": "usd"
+        }
+
+        r = requests.get(url, params=params, timeout=10)
+
+        data = r.json()
+
+        return float(data["ethereum"]["usd"])
+
+    except Exception as e:
+
+        print("ETH PRICE ERROR :", e)
+
+        return None
 # ------------------------------------------------------------
 # RSI Calculation
 # ------------------------------------------------------------
@@ -529,22 +554,27 @@ def generate_signal():
 
     else:
 
-        # 골든크로스
-        if prev20 <= prev60 and ma20 > ma60:
+       # 골든크로스
+       if prev20 <= prev60 and ma20 > ma60:
 
-            if rsi < 30:
-                signal = "BUY"
-            else:
-                signal = "BUY"
+          if rsi is not None and rsi < 30:
 
-        # 데드크로스
-        elif prev20 >= prev60 and ma20 < ma60:
+             signal = "STRONG BUY"
 
-            if rsi > 70:
-                signal = "SELL"
-            else:
-                signal = "SELL"
+          else:
 
+             signal = "BUY"
+
+      # 데드크로스
+       elif prev20 >= prev60 and ma20 < ma60:
+
+          if rsi is not None and rsi > 70:
+
+             signal = "STRONG SELL"
+
+    else:
+
+        signal = "SELL"
         else:
 
             signal = "HOLD"
@@ -619,7 +649,38 @@ def auto_save_eth():
             signal_data = generate_signal()
 
             signal = signal_data["signal"]
+            # ------------------------------------------------
+            # Trading Record 저장
+            # ------------------------------------------------
 
+            cur.execute("""
+
+            INSERT INTO trading_records
+            (
+               signal,
+               price,
+               rsi,
+               ma20,
+               ma60
+            )
+
+            VALUES
+            (
+               %s,
+               %s,
+               %s,
+               %s
+            )
+
+            """,
+
+            (
+               signal,
+               price,
+               signal_data["rsi"],
+               ma20,
+               ma60
+            ))
             # ------------------------------------------------
             # 같은 행 UPDATE
             # ------------------------------------------------
@@ -657,7 +718,13 @@ def auto_save_eth():
             cur.close()
 
             conn.close()
+# ------------------------------------------------
+# 오래된 데이터 삭제
+# ------------------------------------------------
 
+keep_latest_rows("eth_price",10000)
+
+keep_latest_rows("trading_records",10000)
             print(
 
                 f"[AUTO] "
@@ -1087,19 +1154,34 @@ def chart_data():
         "dead": dead
 
     })
+# ============================================================
+# Database Initialize
+# ============================================================
 
+init_db()
+
+update_database()
+
+insert_default_portfolio()
+
+insert_test_data()
 # ==========================================================
 # PART 9 : Thread
 # ==========================================================
 
-# ---------------------------------------------
+# ============================================================
 # Start Auto Save Thread
-# ---------------------------------------------
+# ============================================================
 
-threading.Thread(
-    target=auto_save_eth,
-    daemon=True
-).start()
+if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not app.debug:
+
+    threading.Thread(
+
+        target=auto_save_eth,
+
+        daemon=True
+
+    ).start()
 
 # ==========================================================
 # PART 10 : app.run()
