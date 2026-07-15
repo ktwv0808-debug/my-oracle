@@ -1,215 +1,430 @@
-# ==========================================================
-# Part 1
-# Import / Flask / PostgreSQL / 기본설정
-# ==========================================================
+# ============================================================
+# PART 1 : Import
+# ============================================================
 
 from flask import (
     Flask,
     render_template,
     request,
-    redirect,
-    jsonify,
-    url_for
+    jsonify
 )
+
+import os
+import threading
+import time
+from datetime import datetime
+
+import requests
+import pandas as pd
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-import requests
 
-import pandas as pd
-import numpy as np
-
-from datetime import datetime
-
-import os
-
-
-
-# ==========================================================
+# ------------------------------------------------------------
 # Flask
-# ==========================================================
+# ------------------------------------------------------------
 
 app = Flask(__name__)
 
-app.secret_key = "worldvision"
+# ============================================================
+# PART 2 : PostgreSQL
+# ============================================================
 
-
-
-# ==========================================================
-# PostgreSQL
-# (Render Free PostgreSQL)
-# ==========================================================
-
-DATABASE_URL = os.environ.get("DATABASE_URL")
-
+# ------------------------------------------------------------
+# PostgreSQL Connection
+# ------------------------------------------------------------
 
 def get_db():
+    """
+    Render PostgreSQL 연결
+    """
 
-    conn = psycopg2.connect(
-        DATABASE_URL,
-        sslmode="require"
-    )
+    database_url = os.environ.get("DATABASE_URL")
 
-    return conn
+    if not database_url:
+        raise Exception("DATABASE_URL is not set.")
 
-
-
-print("✅ PostgreSQL Connected")
-
+    return psycopg2.connect(database_url)
 
 
-# ==========================================================
-# Binance API
-# ==========================================================
+# ------------------------------------------------------------
+# Execute SELECT (Multiple Rows)
+# ------------------------------------------------------------
 
-BINANCE_URL = "https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT"
-
-
-
-# ==========================================================
-# 기본 투자금
-# ==========================================================
-
-START_CASH = 100000
-
-
-
-# ==========================================================
-# 프로그램 시작
-# ==========================================================
-
-print("======================================")
-print(" World Vision Trading System")
-print(" Flask + PostgreSQL")
-print("======================================")
-
-# ==========================================================
-# Part 2
-# ETH Live Price
-# ==========================================================
-
-# -----------------------------
-# Binance에서 현재 ETH 가격 가져오기
-# -----------------------------
-def get_eth_price():
-
-    try:
-
-        response = requests.get(BINANCE_URL, timeout=10)
-
-        data = response.json()
-
-        return float(data["price"])
-
-    except Exception as e:
-
-        print("ETH Price Error :", e)
-
-        return 0
-
-
-# -----------------------------
-# ETH 현재 가격(JSON API)
-# -----------------------------
-@app.route("/live-price")
-def live_price():
-
-    return jsonify({
-
-        "price": get_eth_price()
-
-    })
-
-
-
-# ==========================================================
-# Part 3
-# Price History / RSI / Moving Average
-# ==========================================================
-
-# ----------------------------------------------------------
-# 최근 ETH 가격 가져오기(DataFrame)
-# ----------------------------------------------------------
-def get_price_dataframe(limit=200):
+def fetch_all(sql, params=None):
 
     conn = get_db()
 
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    cur.execute("""
-        SELECT
-            price,
-            created_at
-        FROM eth_price
-        ORDER BY id DESC
-        LIMIT %s
-    """, (limit,))
+    cur.execute(sql, params)
 
     rows = cur.fetchall()
 
     cur.close()
     conn.close()
 
-    if len(rows) == 0:
-
-        return pd.DataFrame(columns=["price", "created_at"])
-
-    df = pd.DataFrame(rows)
-
-    # 오래된 데이터 → 최신 데이터 순으로 정렬
-    df = df.iloc[::-1].reset_index(drop=True)
-
-    df["price"] = df["price"].astype(float)
-
-    return df
+    return rows
 
 
-# ----------------------------------------------------------
-# MA 계산
-# ----------------------------------------------------------
-def calculate_ma(period):
+# ------------------------------------------------------------
+# Execute SELECT (Single Row)
+# ------------------------------------------------------------
 
-    df = get_price_dataframe()
+def fetch_one(sql, params=None):
 
-    if len(df) < period:
+    conn = get_db()
 
-        return None
+    cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    ma = df["price"].rolling(period).mean()
+    cur.execute(sql, params)
 
-    return round(float(ma.iloc[-1]), 2)
+    row = cur.fetchone()
 
+    cur.close()
+    conn.close()
 
-# ----------------------------------------------------------
-# 이전 MA 계산
-# 골든크로스 / 데드크로스 확인용
-# ----------------------------------------------------------
-def calculate_previous_ma(period):
-
-    df = get_price_dataframe()
-
-    if len(df) < period + 1:
-
-        return None
-
-    ma = df["price"].rolling(period).mean()
-
-    return round(float(ma.iloc[-2]), 2)
+    return row
 
 
-# ----------------------------------------------------------
-# RSI 계산
-# ----------------------------------------------------------
+# ------------------------------------------------------------
+# Execute INSERT / UPDATE / DELETE
+# ------------------------------------------------------------
+
+def execute(sql, params=None):
+
+    conn = get_db()
+
+    cur = conn.cursor()
+
+    cur.execute(sql, params)
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+
+# ------------------------------------------------------------
+# Keep Latest Rows
+# ------------------------------------------------------------
+
+def keep_latest_rows(table_name, limit_count=10000):
+
+    conn = get_db()
+
+    cur = conn.cursor()
+
+    cur.execute(f"""
+        DELETE FROM {table_name}
+        WHERE id NOT IN
+        (
+            SELECT id
+            FROM {table_name}
+            ORDER BY id DESC
+            LIMIT %s
+        )
+    """, (limit_count,))
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+# ============================================================
+# PART 3 : Database
+# ============================================================
+
+# ------------------------------------------------------------
+# Database Initialize
+# ------------------------------------------------------------
+
+def init_db():
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    # --------------------------------------------------------
+    # ETH PRICE
+    # --------------------------------------------------------
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS eth_price(
+
+        id SERIAL PRIMARY KEY,
+
+        price NUMERIC(18,6),
+
+        ma20 NUMERIC,
+
+        ma60 NUMERIC,
+
+        signal TEXT,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """)
+
+    # --------------------------------------------------------
+    # TRADING RECORDS
+    # --------------------------------------------------------
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS trading_records(
+
+        id SERIAL PRIMARY KEY,
+
+        signal TEXT,
+
+        price NUMERIC(18,6),
+
+        rsi NUMERIC,
+
+        ma20 NUMERIC,
+
+        ma60 NUMERIC,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """)
+
+    # --------------------------------------------------------
+    # DONATION
+    # --------------------------------------------------------
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS donation_records(
+
+        id SERIAL PRIMARY KEY,
+
+        quarter TEXT,
+
+        net_profit NUMERIC,
+
+        donation NUMERIC,
+
+        proof TEXT
+
+    )
+    """)
+
+    # --------------------------------------------------------
+    # PORTFOLIO
+    # --------------------------------------------------------
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS portfolio(
+
+        id SERIAL PRIMARY KEY,
+
+        cash NUMERIC DEFAULT 100000,
+
+        eth NUMERIC DEFAULT 0,
+
+        avg_price NUMERIC DEFAULT 0
+
+    )
+    """)
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+
+# ------------------------------------------------------------
+# Update Old Database
+# ------------------------------------------------------------
+
+def update_database():
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    # ETH PRICE
+
+    cur.execute("""
+    ALTER TABLE eth_price
+    ADD COLUMN IF NOT EXISTS ma20 NUMERIC
+    """)
+
+    cur.execute("""
+    ALTER TABLE eth_price
+    ADD COLUMN IF NOT EXISTS ma60 NUMERIC
+    """)
+
+    cur.execute("""
+    ALTER TABLE eth_price
+    ADD COLUMN IF NOT EXISTS signal TEXT
+    """)
+
+    # TRADING RECORDS
+
+    cur.execute("""
+    ALTER TABLE trading_records
+    ADD COLUMN IF NOT EXISTS rsi NUMERIC
+    """)
+
+    cur.execute("""
+    ALTER TABLE trading_records
+    ADD COLUMN IF NOT EXISTS ma20 NUMERIC
+    """)
+
+    cur.execute("""
+    ALTER TABLE trading_records
+    ADD COLUMN IF NOT EXISTS ma60 NUMERIC
+    """)
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+    print("Database Updated")
+
+
+# ------------------------------------------------------------
+# Insert Default Portfolio
+# ------------------------------------------------------------
+
+def insert_default_portfolio():
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+
+        INSERT INTO portfolio
+        (cash,eth,avg_price)
+
+        SELECT
+            100000,
+            0,
+            0
+
+        WHERE NOT EXISTS
+        (
+            SELECT 1
+            FROM portfolio
+        )
+
+    """)
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+
+# ------------------------------------------------------------
+# Insert Test Data
+# ------------------------------------------------------------
+
+def insert_test_data():
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    # ETH PRICE
+
+    cur.execute("SELECT COUNT(*) FROM eth_price")
+
+    if cur.fetchone()[0] == 0:
+
+        cur.execute("""
+
+        INSERT INTO eth_price
+        (price)
+
+        VALUES
+
+        (1578.325),
+
+        (1585.500),
+
+        (1602.750)
+
+        """)
+
+    # TRADING RECORDS
+
+    cur.execute("SELECT COUNT(*) FROM trading_records")
+
+    if cur.fetchone()[0] == 0:
+
+        cur.execute("""
+
+        INSERT INTO trading_records
+        (signal,price)
+
+        VALUES
+
+        ('BUY',1578.325),
+
+        ('SELL',1585.500),
+
+        ('BUY',1602.750)
+
+        """)
+
+    # DONATION
+
+    cur.execute("SELECT COUNT(*) FROM donation_records")
+
+    if cur.fetchone()[0] == 0:
+
+        cur.execute("""
+
+        INSERT INTO donation_records
+
+        (quarter,net_profit,donation,proof)
+
+        VALUES
+
+        ('2026 Q1',0,0,'Preparing'),
+
+        ('2026 Q2',0,0,'Preparing')
+
+        """)
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+# ============================================================
+# PART 4 : Indicator
+# ============================================================
+
+# ------------------------------------------------------------
+# RSI Calculation
+# ------------------------------------------------------------
+
 def calculate_rsi(period=14):
 
-    df = get_price_dataframe()
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    if len(df) < period + 1:
+    cur.execute("""
+        SELECT price
+        FROM eth_price
+        ORDER BY id ASC
+    """)
 
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    if len(rows) < period + 1:
         return None
 
-    delta = df["price"].diff()
+    prices = pd.Series([float(r["price"]) for r in rows])
+
+    delta = prices.diff()
 
     gain = delta.clip(lower=0)
 
@@ -219,89 +434,124 @@ def calculate_rsi(period=14):
 
     avg_loss = loss.rolling(period).mean()
 
-    if avg_loss.iloc[-1] == 0:
-
-        return 100
-
-    rs = avg_gain.iloc[-1] / avg_loss.iloc[-1]
+    rs = avg_gain / avg_loss
 
     rsi = 100 - (100 / (1 + rs))
 
-    return round(float(rsi), 2)
+    return round(float(rsi.iloc[-1]), 2)
 
-# ==========================================================
-# Part 4
+
+# ------------------------------------------------------------
+# Moving Average
+# ------------------------------------------------------------
+
+def calculate_ma(period):
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT price
+        FROM eth_price
+        ORDER BY id DESC
+        LIMIT %s
+    """, (period,))
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    if len(rows) < period:
+        return None
+
+    prices = [float(r["price"]) for r in rows]
+
+    prices.reverse()
+
+    return round(sum(prices) / period, 2)
+
+
+# ------------------------------------------------------------
+# Previous Moving Average
+# ------------------------------------------------------------
+
+def calculate_previous_ma(period):
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT price
+        FROM eth_price
+        ORDER BY id DESC
+        LIMIT %s
+    """, (period + 1,))
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    if len(rows) < period + 1:
+        return None
+
+    prices = [float(r["price"]) for r in rows]
+
+    prices.reverse()
+
+    previous_prices = prices[:-1]
+
+    return round(sum(previous_prices) / period, 2)
+
+
+# ------------------------------------------------------------
 # Trading Signal
-# ==========================================================
+# ------------------------------------------------------------
 
 def generate_signal():
 
     rsi = calculate_rsi()
 
     ma20 = calculate_ma(20)
+
     ma60 = calculate_ma(60)
 
     prev20 = calculate_previous_ma(20)
+
     prev60 = calculate_previous_ma(60)
 
     signal = "HOLD"
 
-    golden = False
-    dead = False
-
-    # -----------------------------
-    # 데이터 부족
-    # -----------------------------
     if None in (rsi, ma20, ma60, prev20, prev60):
 
         signal = "HOLD"
 
     else:
 
-        # =====================================
-        # GOLDEN CROSS
-        # =====================================
+        # 골든크로스
         if prev20 <= prev60 and ma20 > ma60:
 
-            golden = True
-
-            if rsi <= 70:
+            if rsi < 30:
                 signal = "BUY"
             else:
-                signal = "HOLD"
+                signal = "BUY"
 
-        # =====================================
-        # DEAD CROSS
-        # =====================================
+        # 데드크로스
         elif prev20 >= prev60 and ma20 < ma60:
 
-            dead = True
-
-            if rsi >= 30:
+            if rsi > 70:
                 signal = "SELL"
             else:
-                signal = "HOLD"
+                signal = "SELL"
 
         else:
 
-            # RSI만 이용한 보조신호
-
-            if rsi <= 30:
-                signal = "BUY"
-
-            elif rsi >= 70:
-                signal = "SELL"
-
-            else:
-                signal = "HOLD"
+            signal = "HOLD"
 
     return {
 
         "signal": signal,
-
-        "golden": golden,
-
-        "dead": dead,
 
         "rsi": rsi,
 
@@ -311,524 +561,370 @@ def generate_signal():
 
     }
 
+# ============================================================
+# PART 5 : Auto Save
+# ============================================================
 
+def auto_save_eth():
 
+    while True:
+
+        try:
+
+            # ------------------------------------------------
+            # 현재 ETH 가격
+            # ------------------------------------------------
+
+            price = get_eth_price()
+
+            if price is None:
+
+                time.sleep(30)
+                continue
+
+            # ------------------------------------------------
+            # DB 저장 (가격만 먼저 저장)
+            # ------------------------------------------------
+
+            conn = get_db()
+
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+
+            cur.execute("""
+
+                INSERT INTO eth_price(price)
+
+                VALUES(%s)
+
+                RETURNING id
+
+            """,(price,))
+
+            new_id = cur.fetchone()["id"]
+
+            conn.commit()
+
+            # ------------------------------------------------
+            # 이동평균 계산
+            # ------------------------------------------------
+
+            ma20 = calculate_ma(20)
+
+            ma60 = calculate_ma(60)
+
+            # ------------------------------------------------
+            # 신호 계산
+            # ------------------------------------------------
+
+            signal_data = generate_signal()
+
+            signal = signal_data["signal"]
+
+            # ------------------------------------------------
+            # 같은 행 UPDATE
+            # ------------------------------------------------
+
+            cur.execute("""
+
+                UPDATE eth_price
+
+                SET
+
+                    ma20=%s,
+
+                    ma60=%s,
+
+                    signal=%s
+
+                WHERE id=%s
+
+            """,
+
+            (
+
+                ma20,
+
+                ma60,
+
+                signal,
+
+                new_id
+
+            ))
+
+            conn.commit()
+
+            cur.close()
+
+            conn.close()
+
+            print(
+
+                f"[AUTO] "
+
+                f"Price={price:.2f} "
+
+                f"MA20={ma20} "
+
+                f"MA60={ma60} "
+
+                f"Signal={signal}"
+
+            )
+
+        except Exception as e:
+
+            print("AUTO SAVE ERROR :", e)
+
+        # ------------------------------------------------
+        # 10분마다 저장
+        # ------------------------------------------------
+
+        time.sleep(600)
 
 # ==========================================================
-# Part 5
-# Portfolio
+# PART 6 : Portfolio
 # ==========================================================
 
-# ----------------------------------------------------------
-# Portfolio 읽기
-# ----------------------------------------------------------
-def get_portfolio():
+# --------------------------------------
+# Portfolio 조회
+# --------------------------------------
+def calculate_portfolio():
 
     conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
 
+    # Portfolio가 없으면 생성
+    cur.execute("""
+        SELECT *
+        FROM portfolio
+        LIMIT 1
+    """)
+
+    portfolio = cur.fetchone()
+
+    if portfolio is None:
+
+        cur.execute("""
+            INSERT INTO portfolio
+            (
+                cash,
+                eth,
+                avg_price
+            )
+            VALUES
+            (
+                100000,
+                0,
+                0
+            )
+        """)
+
+        conn.commit()
+
+        cur.execute("""
+            SELECT *
+            FROM portfolio
+            LIMIT 1
+        """)
+
+        portfolio = cur.fetchone()
+
+    # 현재 ETH 가격
+    cur.execute("""
+        SELECT price
+        FROM eth_price
+        ORDER BY id DESC
+        LIMIT 1
+    """)
+
+    row = cur.fetchone()
+
+    current_price = 0
+
+    if row:
+        current_price = float(row["price"])
+
+    cash = float(portfolio["cash"])
+    eth = float(portfolio["eth"])
+    avg_price = float(portfolio["avg_price"])
+
+    asset_value = eth * current_price
+    total_assets = cash + asset_value
+
+    if eth > 0:
+        profit = asset_value - (eth * avg_price)
+    else:
+        profit = 0
+
+    if eth > 0 and avg_price > 0:
+        roi = ((current_price - avg_price) / avg_price) * 100
+    else:
+        roi = 0
+
+    cur.close()
+    conn.close()
+
+    return {
+
+        "cash": round(cash, 2),
+
+        "eth": round(eth, 8),
+
+        "avg_price": round(avg_price, 2),
+
+        "current_price": round(current_price, 2),
+
+        "asset_value": round(asset_value, 2),
+
+        "total_assets": round(total_assets, 2),
+
+        "profit": round(profit, 2),
+
+        "roi": round(roi, 2)
+
+    }
+
+# ==========================================================
+# PART 7  Routes
+# ==========================================================
+
+# -----------------------------
+# Home
+# -----------------------------
+@app.route("/")
+def home():
+
+    conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute("""
         SELECT *
-        FROM portfolio
-        WHERE id=1
+        FROM donation_records
+        ORDER BY id DESC
     """)
 
-    portfolio = cur.fetchone()
-    print(portfolio)
+    donations = cur.fetchall()
 
     cur.close()
     conn.close()
-
-    return portfolio
-
-
-# ----------------------------------------------------------
-# Portfolio 저장
-# ----------------------------------------------------------
-def update_portfolio(cash, eth, avg_buy):
-
-    conn = get_db()
-
-    cur = conn.cursor()
-
-    cur.execute("""
-        UPDATE portfolio
-        SET
-
-            cash=%s,
-
-            eth=%s,
-
-            avg_buy=%s
-
-        WHERE id=1
-    """,(cash,eth,avg_buy))
-
-    conn.commit()
-
-    cur.close()
-    conn.close()
-
-
-# ----------------------------------------------------------
-# Portfolio 계산
-# ----------------------------------------------------------
-def calculate_portfolio():
-
-    portfolio = get_portfolio()
-
-    current_price = get_eth_price()
-
-    cash = float(portfolio["cash"])
-
-    eth = float(portfolio["eth"])
-
-    avg_buy = float(portfolio["avg_buy"])
-
-    asset_value = eth * current_price
-
-    total_assets = cash + asset_value
-
-    cost = eth * avg_buy
-
-    profit = asset_value - cost
-
-    roi = 0
-
-    if cost > 0:
-
-        roi = (profit / cost) * 100
-
-    return {
-
-        "cash": round(cash,2),
-
-        "eth": round(eth,8),
-
-        "avg_buy": round(avg_buy,2),
-
-        "current_price": round(current_price,2),
-
-        "asset_value": round(asset_value,2),
-
-        "total_assets": round(total_assets,2),
-
-        "profit": round(profit,2),
-
-        "roi": round(roi,2)
-
-    }
-
-
-# ----------------------------------------------------------
-# Portfolio Page
-# ----------------------------------------------------------
-@app.route("/portfolio")
-def portfolio():
-
-    p = calculate_portfolio()
 
     return render_template(
-
-        "portfolio.html",
-
-        portfolio=p
-
+        "donation.html",
+        donations=donations
     )
 
-# ==========================================================
-# Part 6
-# Auto Trading Engine
-# ==========================================================
 
-# ----------------------------------------------------------
-# Trading Record 저장
-# ----------------------------------------------------------
-def save_trade(signal, price, rsi, ma20, ma60):
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    cur.execute("""
-        INSERT INTO trading_records
-        (signal, price, rsi, ma20, ma60)
-
-        VALUES
-
-        (%s,%s,%s,%s,%s)
-    """,(signal,price,rsi,ma20,ma60))
-
-    conn.commit()
-
-    cur.close()
-    conn.close()
-
-
-# ----------------------------------------------------------
-# BUY
-# ----------------------------------------------------------
-def execute_buy(price):
-
-    p = get_portfolio()
-
-    cash = float(p["cash"])
-    eth = float(p["eth"])
-    avg_buy = float(p["avg_buy"])
-
-    # 전액 매수
-    if cash <= 0:
-        return
-
-    buy_eth = cash / price
-
-    total_cost = (eth * avg_buy) + cash
-
-    eth += buy_eth
-
-    avg_buy = total_cost / eth
-
-    cash = 0
-
-    update_portfolio(cash, eth, avg_buy)
-
-
-# ----------------------------------------------------------
-# SELL
-# ----------------------------------------------------------
-def execute_sell(price):
-
-    p = get_portfolio()
-
-    cash = float(p["cash"])
-    eth = float(p["eth"])
-    avg_buy = float(p["avg_buy"])
-
-    if eth <= 0:
-        return
-
-    cash += eth * price
-
-    eth = 0
-
-    avg_buy = 0
-
-    update_portfolio(cash, eth, avg_buy)
-
-
-# ----------------------------------------------------------
-# Auto Trading
-# ----------------------------------------------------------
-@app.route("/auto-trade")
-def auto_trade():
-
-    signal = generate_signal()
-
-    current_price = get_eth_price()
-
-    if signal["signal"] == "BUY":
-
-        execute_buy(current_price)
-
-    elif signal["signal"] == "SELL":
-
-        execute_sell(current_price)
-
-    save_trade(
-
-        signal["signal"],
-
-        current_price,
-
-        signal["rsi"],
-
-        signal["ma20"],
-
-        signal["ma60"]
-
-    )
-
-    return redirect("/portfolio")
-
-# ==========================================================
-# PART 7
-# HTML PAGE ROUTES
-# ==========================================================
-
-
-# ----------------------------------------------------------
-# Donation (Main Page)
-# URL : /
-# ----------------------------------------------------------
-@app.route("/")
-@app.route("/donation")
-def donation():
-    return render_template("donation.html")
-
-
-# ----------------------------------------------------------
-# Trading Dashboard
-# URL : /trading
-# ----------------------------------------------------------
+# -----------------------------
+# Trading Menu
+# -----------------------------
 @app.route("/trading")
 def trading():
     return render_template("trading.html")
 
 
-# ----------------------------------------------------------
-# Live Price Page
-# URL : /price
-# ----------------------------------------------------------
-@app.route("/price")
-def price():
-    return render_template("price.html")
-
-
-# ----------------------------------------------------------
-# Price History
-# URL : /history
-# ----------------------------------------------------------
-@app.route("/history")
-def history():
-    return render_template("history.html")
-
-
-# ----------------------------------------------------------
-# Save ETH Price
-# 실제 저장 기능은 PART9에서 구현
-# ----------------------------------------------------------
-@app.route("/save-price", methods=["GET", "POST"])
-def save_price():
-    pass
-
-
-# ==========================================================
-# Trading Signal Page
-# ==========================================================
-
-@app.route("/trade-check")
-def trade_check():
-
-    result = generate_signal()
-
-    return render_template(
-
-        "trade_check.html",
-
-        signal=result["signal"],
-
-        golden=result["golden"],
-
-        dead=result["dead"],
-
-        rsi=result["rsi"],
-
-        ma20=result["ma20"],
-
-        ma60=result["ma60"]
-
-    )
-
-
-# ----------------------------------------------------------
-# Trading Records
-# 실제 기능은 PART9
-# ----------------------------------------------------------
-@app.route("/trades")
-def trades():
-    pass
-
-
-# ----------------------------------------------------------
-# Portfolio
-# 실제 기능은 PART9
-# ----------------------------------------------------------
-@app.route("/portfolio")
-def portfolio():
-    pass
-
-
-# ----------------------------------------------------------
+# -----------------------------
 # Whitepaper
-# URL : /whitepaper
-# ----------------------------------------------------------
+# -----------------------------
 @app.route("/whitepaper")
 def whitepaper():
     return render_template("whitepaper.html")
 
 
-# ----------------------------------------------------------
+# -----------------------------
 # Poem
-# URL : /poem
-# ----------------------------------------------------------
+# -----------------------------
 @app.route("/poem")
 def poem():
     return render_template("poem.html")
 
 
-# ----------------------------------------------------------
-# Trading Chart
-# URL : /chart
-# ----------------------------------------------------------
-@app.route("/chart")
-def chart():
-    return render_template("chart.html")
-
-# ==========================================================
-# Part8
-# Trading Signal + Trading Record
-# ==========================================================
-
-def generate_signal():
-
-    rsi = calculate_rsi()
-    ma20 = calculate_ma(20)
-    ma60 = calculate_ma(60)
-
-    prev20 = calculate_previous_ma(20)
-    prev60 = calculate_previous_ma(60)
-
-    signal = "HOLD"
-
-    if None in (rsi, ma20, ma60, prev20, prev60):
-
-        signal = "HOLD"
-
-    else:
-
-        # -----------------------------
-        # Golden Cross
-        # -----------------------------
-        if prev20 <= prev60 and ma20 > ma60:
-
-            signal = "BUY"
-
-        # -----------------------------
-        # Dead Cross
-        # -----------------------------
-        elif prev20 >= prev60 and ma20 < ma60:
-
-            signal = "SELL"
-
-        else:
-
-            # RSI 추가조건
-
-            if rsi <= 30:
-                signal = "BUY"
-
-            elif rsi >= 70:
-                signal = "SELL"
-
-            else:
-                signal = "HOLD"
-
-    return {
-
-        "signal": signal,
-        "rsi": rsi,
-        "ma20": ma20,
-        "ma60": ma60
-
-    }
-
-
-# ==========================================================
-# Save Trading Record
-# ==========================================================
-
-def save_trade_record():
-
-    signal = generate_signal()
-
-    price = get_eth_price()
+# -----------------------------
+# Save Price
+# -----------------------------
+@app.route("/save-price")
+def save_price():
 
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute("""
+        SELECT *
+        FROM eth_price
+        ORDER BY id DESC
+        LIMIT 100
+    """)
 
-        INSERT INTO trading_records
-        (
-            signal,
-            price,
-            rsi,
-            ma20,
-            ma60
-        )
-
-        VALUES
-        (
-            %s,
-            %s,
-            %s,
-            %s,
-            %s
-        )
-
-    """,
-
-    (
-
-        signal["signal"],
-        price,
-        signal["rsi"],
-        signal["ma20"],
-        signal["ma60"]
-
-    ))
-
-    conn.commit()
+    prices = cur.fetchall()
 
     cur.close()
     conn.close()
 
+    return render_template(
+        "save_price.html",
+        prices=prices,
+        live_price=get_eth_price()
+    )
 
-# ==========================================================
-# Trade Check Page
-# ==========================================================
 
+# -----------------------------
+# Price History
+# -----------------------------
+@app.route("/history")
+def history():
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT *
+        FROM eth_price
+        ORDER BY id DESC
+        LIMIT 500
+    """)
+
+    prices = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "history.html",
+        prices=prices
+    )
+
+
+# -----------------------------
+# Trade Check
+# -----------------------------
 @app.route("/trade-check")
 def trade_check():
 
     signal = generate_signal()
 
     return render_template(
-
         "trade_check.html",
-
         signal=signal["signal"],
-
         rsi=signal["rsi"],
-
         ma20=signal["ma20"],
-
         ma60=signal["ma60"]
-
     )
 
 
-# ==========================================================
-# Trading Records Page
-# ==========================================================
-
+# -----------------------------
+# Trading Records
+# -----------------------------
 @app.route("/trades")
 def trades():
 
     conn = get_db()
-
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute("""
-
         SELECT *
-
         FROM trading_records
-
         ORDER BY id DESC
-
         LIMIT 200
-
     """)
 
     records = cur.fetchall()
@@ -837,285 +933,140 @@ def trades():
     conn.close()
 
     return render_template(
-
         "trades.html",
-
         records=records
-
     )
 
-# ==========================================================
-# Part9
-# Database Initialize
-# PostgreSQL (Render)
-# ==========================================================
 
-def init_db():
+# -----------------------------
+# Portfolio
+# -----------------------------
+@app.route("/portfolio")
+def portfolio():
 
-    conn = get_db()
+    portfolio = calculate_portfolio()
 
-    cur = conn.cursor()
-
-    # ======================================================
-    # ETH PRICE
-    # ======================================================
-
-    cur.execute("""
-
-    CREATE TABLE IF NOT EXISTS eth_price(
-
-        id SERIAL PRIMARY KEY,
-
-        price DOUBLE PRECISION NOT NULL,
-
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
-    );
-
-    """)
-
-    # ======================================================
-    # Trading Records
-    # ======================================================
-
-    cur.execute("""
-
-    CREATE TABLE IF NOT EXISTS trading_records(
-
-        id SERIAL PRIMARY KEY,
-
-        signal VARCHAR(20),
-
-        price DOUBLE PRECISION,
-
-        rsi DOUBLE PRECISION,
-
-        ma20 DOUBLE PRECISION,
-
-        ma60 DOUBLE PRECISION,
-
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
-    );
-
-    """)
-
-    # ======================================================
-    # Portfolio
-    # ======================================================
-
-    cur.execute("""
-
-    CREATE TABLE IF NOT EXISTS portfolio(
-
-        id INTEGER PRIMARY KEY,
-
-        cash DOUBLE PRECISION DEFAULT 100000,
-
-        eth DOUBLE PRECISION DEFAULT 0,
-
-        avg_buy DOUBLE PRECISION DEFAULT 0
-
-    );
-
-    """)
-
-    # ======================================================
-    # Portfolio 기본값
-    # ======================================================
-
-    cur.execute("""
-
-    INSERT INTO portfolio
-    (
-        id,
-        cash,
-        eth,
-        avg_buy
+    return render_template(
+        "portfolio.html",
+        portfolio=portfolio
     )
 
-    VALUES
-    (
-        1,
-        100000,
-        0,
-        0
-    )
 
-    ON CONFLICT(id)
+# -----------------------------
+# Chart
+# -----------------------------
+@app.route("/chart")
+def chart():
 
-    DO NOTHING;
-
-    """)
-
-    conn.commit()
-
-    cur.close()
-
-    conn.close()
-
+    return render_template("chart.html")
 
 # ==========================================================
-# Initialize Database
+# PART 8 : Chart API
 # ==========================================================
 
-init_db()
-
-# ==========================================================
-# Part10
-# Save Price / Portfolio / Chart Data / Run
-# ==========================================================
-
-
-# ----------------------------------------------------------
-# Save ETH Price
-# ----------------------------------------------------------
-@app.route("/save-price", methods=["GET", "POST"])
-def save_price():
+@app.route("/chart-data")
+def chart_data():
 
     conn = get_db()
 
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    message = ""
-
-    if request.method == "POST":
-
-        price = request.form["price"]
-
-        cur.execute("""
-
-            INSERT INTO eth_price(price)
-
-            VALUES(%s)
-
-        """,(price,))
-
-        conn.commit()
-
-        message = "ETH Price Saved!"
-
     cur.execute("""
 
-        SELECT *
+        SELECT
+
+            created_at,
+
+            price,
+
+            ma20,
+
+            ma60
 
         FROM eth_price
 
-        ORDER BY id DESC
+        ORDER BY id ASC
 
-        LIMIT 100
+        LIMIT 300
 
     """)
 
-    prices = cur.fetchall()
+    rows = cur.fetchall()
 
     cur.close()
-
     conn.close()
 
-    return render_template(
+    labels = []
 
-        "save_price.html",
+    prices = []
 
-        prices=prices,
+    ma20 = []
 
-        live_price=get_eth_price(),
+    ma60 = []
 
-        message=message
+    buy = []
 
-    )
+    sell = []
 
+    golden = []
 
-# ----------------------------------------------------------
-# Portfolio
-# ----------------------------------------------------------
-@app.route("/portfolio")
-def portfolio():
+    dead = []
 
-    p = calculate_portfolio()
+    prev20 = None
+    prev60 = None
 
-    return render_template(
+    for r in rows:
 
-        "portfolio.html",
+        labels.append(
+            r["created_at"].strftime("%H:%M:%S")
+        )
 
-        portfolio=p
+        p = float(r["price"])
 
-    )
+        prices.append(p)
 
+        m20 = None
+        m60 = None
 
-# ----------------------------------------------------------
-# Chart Data API
-# ----------------------------------------------------------
-@app.route("/chart-data")
-def chart_data():
+        if r["ma20"] is not None:
+            m20 = float(r["ma20"])
 
-    df = get_price_dataframe()
+        if r["ma60"] is not None:
+            m60 = float(r["ma60"])
 
-    prices = df["price"].tolist()
+        ma20.append(m20)
+        ma60.append(m60)
 
-    labels = [
+        buy.append(None)
+        sell.append(None)
+        golden.append(None)
+        dead.append(None)
 
-        str(x)
-
-        for x in df["created_at"]
-
-    ]
-
-    ma20 = df["price"].rolling(20).mean().tolist()
-
-    ma60 = df["price"].rolling(60).mean().tolist()
-
-    buy = [None] * len(df)
-
-    sell = [None] * len(df)
-
-    golden = [None] * len(df)
-
-    dead = [None] * len(df)
-
-    for i in range(60, len(df)):
-
-        p20 = ma20[i-1]
-
-        p60 = ma60[i-1]
-
-        c20 = ma20[i]
-
-        c60 = ma60[i]
+        # ---------------------------------
+        # 골든 / 데드크로스 계산
+        # ---------------------------------
 
         if (
-
-            p20 is None
-
-            or p60 is None
-
-            or c20 is None
-
-            or c60 is None
-
+            prev20 is not None and
+            prev60 is not None and
+            m20 is not None and
+            m60 is not None
         ):
 
-            continue
+            # GOLDEN CROSS
+            if prev20 <= prev60 and m20 > m60:
 
-        # -------------------------
-        # Golden Cross
-        # -------------------------
+                golden[-1] = p
+                buy[-1] = p
 
-        if p20 <= p60 and c20 > c60:
+            # DEAD CROSS
+            elif prev20 >= prev60 and m20 < m60:
 
-            golden[i] = prices[i]
+                dead[-1] = p
+                sell[-1] = p
 
-            buy[i] = prices[i]
-
-        # -------------------------
-        # Dead Cross
-        # -------------------------
-
-        elif p20 >= p60 and c20 < c60:
-
-            dead[i] = prices[i]
-
-            sell[i] = prices[i]
+        prev20 = m20
+        prev60 = m60
 
     return jsonify({
 
@@ -1137,21 +1088,23 @@ def chart_data():
 
     })
 
+# ==========================================================
+# PART 9 : Thread
+# ==========================================================
 
-# ----------------------------------------------------------
-# Auto Save Trade
-# ----------------------------------------------------------
-@app.route("/auto-save")
-def auto_save():
+# ---------------------------------------------
+# Start Auto Save Thread
+# ---------------------------------------------
 
-    save_trade_record()
+threading.Thread(
+    target=auto_save_eth,
+    daemon=True
+).start()
 
-    return "OK"
+# ==========================================================
+# PART 10 : app.run()
+# ==========================================================
 
-
-# ----------------------------------------------------------
-# Flask Run
-# ----------------------------------------------------------
 if __name__ == "__main__":
 
     app.run(
