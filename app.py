@@ -533,7 +533,6 @@ def calculate_previous_ma(period):
 # ------------------------------------------------------------
 # Trading Signal
 # ------------------------------------------------------------
-
 def generate_signal():
 
     rsi = calculate_rsi()
@@ -548,33 +547,44 @@ def generate_signal():
 
     signal = "HOLD"
 
+    # --------------------------------------------------------
+    # 데이터가 부족하면 HOLD
+    # --------------------------------------------------------
     if None in (rsi, ma20, ma60, prev20, prev60):
 
         signal = "HOLD"
 
     else:
 
-       # 골든크로스
-       if prev20 <= prev60 and ma20 > ma60:
+        # ----------------------------------------------------
+        # 골든크로스
+        # ----------------------------------------------------
+        if prev20 <= prev60 and ma20 > ma60:
 
-          if rsi is not None and rsi < 30:
+            if rsi is not None and rsi < 30:
 
-             signal = "STRONG BUY"
+                signal = "STRONG BUY"
 
-          else:
+            else:
 
-             signal = "BUY"
+                signal = "BUY"
 
-      # 데드크로스
-       elif prev20 >= prev60 and ma20 < ma60:
+        # ----------------------------------------------------
+        # 데드크로스
+        # ----------------------------------------------------
+        elif prev20 >= prev60 and ma20 < ma60:
 
-          if rsi is not None and rsi > 70:
+            if rsi is not None and rsi > 70:
 
-             signal = "STRONG SELL"
+                signal = "STRONG SELL"
 
-    else:
+            else:
 
-        signal = "SELL"
+                signal = "SELL"
+
+        # ----------------------------------------------------
+        # 크로스가 없으면 HOLD
+        # ----------------------------------------------------
         else:
 
             signal = "HOLD"
@@ -590,7 +600,6 @@ def generate_signal():
         "ma60": ma60
 
     }
-
 # ============================================================
 # PART 5 : Auto Save
 # ============================================================
