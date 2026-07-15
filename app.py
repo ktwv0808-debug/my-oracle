@@ -925,22 +925,53 @@ def whitepaper():
 def poem():
     return render_template("poem.html")
 
+# ------------------------------------------------------------
+# ETH Price Page
+# ETH Price 버튼 클릭 화면
+# ------------------------------------------------------------
 @app.route("/price")
 def price():
 
-    row = fetch_one("""
-        SELECT price
-        FROM eth_price
-        ORDER BY id DESC
-        LIMIT 1
-    """)
+    live_price = get_eth_price()
 
-    if row is None:
-        return jsonify({"success": False})
+
+    return render_template(
+
+        "price.html",
+
+        live_price=live_price
+
+    )
+
+
+
+# ------------------------------------------------------------
+# ETH Price API
+# JavaScript / 자동 갱신용
+# ------------------------------------------------------------
+@app.route("/price-api")
+def price_api():
+
+    live_price = get_eth_price()
+
+
+    if live_price is None:
+
+        return jsonify({
+
+            "success": False,
+
+            "price": None
+
+        })
+
 
     return jsonify({
+
         "success": True,
-        "price": float(row["price"])
+
+        "price": live_price
+
     })
 
 # -----------------------------
