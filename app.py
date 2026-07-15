@@ -415,7 +415,17 @@ def get_eth_price():
 
         r = requests.get(url, params=params, timeout=10)
 
+        # 응답 확인
+        print("STATUS :", r.status_code)
+
         data = r.json()
+
+        print("RESPONSE :", data)
+
+        # ethereum 키가 없으면 None 반환
+        if "ethereum" not in data:
+
+            return None
 
         return float(data["ethereum"]["usd"])
 
@@ -889,6 +899,7 @@ def home():
         "donation.html",
         donations=donations
     )
+
 
 
 # -----------------------------
