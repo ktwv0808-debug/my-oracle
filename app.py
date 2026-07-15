@@ -1032,12 +1032,28 @@ def price_api():
 # -----------------------------
 # Save Price
 # -----------------------------
-@app.route("/save-price")
+@app.route("/save-price", methods=["GET", "POST"])
 def save_price():
 
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
+# --------------------------------------------------------
+# 저장 버튼 클릭
+# --------------------------------------------------------
 
+    if request.method == "POST":
+
+        live_price = get_latest_price()
+
+        cur.execute("""
+
+            INSERT INTO eth_price(price)
+
+            VALUES(%s)
+
+        """, (live_price,))
+
+        conn.commit()
     cur.execute("""
         SELECT *
         FROM eth_price
@@ -1056,7 +1072,9 @@ def save_price():
 
     prices=prices,
 
-    live_price=get_latest_price()
+    live_price=get_latest_price(),
+
+    message="success"
 
 )
 
