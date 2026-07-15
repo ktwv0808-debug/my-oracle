@@ -914,6 +914,32 @@ def whitepaper():
 def poem():
     return render_template("poem.html")
 
+# ------------------------------------------------------------
+# Live ETH Price API
+# trading.html 에서 fetch("/price") 호출용
+# ------------------------------------------------------------
+@app.route("/price")
+def price():
+
+    live_price = get_eth_price()
+
+    if live_price is None:
+
+        return jsonify({
+
+            "success": False,
+
+            "price": None
+
+        })
+
+    return jsonify({
+
+        "success": True,
+
+        "price": live_price
+
+    })
 
 # -----------------------------
 # Save Price
