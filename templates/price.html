@@ -28,7 +28,7 @@ ETH Live Price
 
 <div class="card-body">
 
-<h2>
+<h2 id="eth-price">
 
 {% if live_price %}
 
@@ -42,6 +42,34 @@ Loading...
 
 </h2>
 
+
+<script>
+
+async function updateETHPrice(){
+
+    const response = await fetch("/price-api");
+
+    const data = await response.json();
+
+
+    if(data.success){
+
+        document.getElementById("eth-price").innerHTML =
+
+        data.price.toFixed(2) + " USDT";
+
+    }
+
+}
+
+
+updateETHPrice();
+
+
+setInterval(updateETHPrice,30000);
+
+
+</script>
 </div>
 
 </div>
