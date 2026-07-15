@@ -727,13 +727,7 @@ def auto_save_eth():
             cur.close()
 
             conn.close()
-# ------------------------------------------------
-# 오래된 데이터 삭제
-# ------------------------------------------------
 
-keep_latest_rows("eth_price",10000)
-
-keep_latest_rows("trading_records",10000)
             print(
 
                 f"[AUTO] "
@@ -747,6 +741,12 @@ keep_latest_rows("trading_records",10000)
                 f"Signal={signal}"
 
             )
+           # ------------------------------------------------
+           # 오래된 데이터 삭제
+           # ------------------------------------------------
+            keep_latest_rows("eth_price", 10000)
+            keep_latest_rows("trading_records", 10000)
+
 
         except Exception as e:
 
