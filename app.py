@@ -1082,7 +1082,9 @@ def save_price():
 
     live_price=get_latest_price(),
 
-    message="success"
+    message=message
+
+)
 
 )
 
