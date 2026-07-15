@@ -926,20 +926,46 @@ def poem():
     return render_template("poem.html")
 
 # ------------------------------------------------------------
-# ETH Price Page
-# ETH Price 버튼 클릭 화면
+# ETH Price Popup Page
+# price.html 출력용
 # ------------------------------------------------------------
 @app.route("/price")
 def price():
 
+    # 현재 ETH 가격 가져오기
     live_price = get_eth_price()
+
+
+    # 최근 가격 기록 가져오기
+    conn = get_db()
+
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+
+    cur.execute("""
+        SELECT *
+        FROM eth_price
+        ORDER BY id DESC
+        LIMIT 100
+    """)
+
+
+    prices = cur.fetchall()
+
+
+    cur.close()
+
+    conn.close()
+
 
 
     return render_template(
 
         "price.html",
 
-        live_price=live_price
+        live_price=live_price,
+
+        prices=prices
 
     )
 
