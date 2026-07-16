@@ -379,7 +379,14 @@ def update_database():
     ADD COLUMN IF NOT EXISTS wdm NUMERIC DEFAULT 0
     """)
 
-    
+    # --------------------------------------------------------
+    # Portfolio : WDM
+    # --------------------------------------------------------
+
+    cur.execute("""
+    ALTER TABLE portfolio
+    ADD COLUMN IF NOT EXISTS wdm NUMERIC DEFAULT 0
+    """)
     conn.commit()
 
     cur.close()
@@ -400,10 +407,16 @@ def insert_default_portfolio():
     cur.execute("""
 
         INSERT INTO portfolio
-        (cash,eth,avg_price)
+        (
+          cash,
+          eth,
+          wdm,
+          avg_price
+        )
 
         SELECT
             100000,
+            0,
             0,
             0
 
@@ -1180,11 +1193,21 @@ def calculate_portfolio():
 
     cash = float(portfolio["cash"])
     eth = float(portfolio["eth"])
+    wdm = float(portfolio["wdm"])
     avg_price = float(portfolio["avg_price"])
 
-    asset_value = eth * current_price
-    total_assets = cash + asset_value
+   asset_value = eth * current_price
 
+   wdm_value = wdm * wdm_price
+
+   total_assets = cash + asset_value + wdm_value
+    # --------------------------------------------------------
+    # WDM 현재가격
+    # --------------------------------------------------------
+
+    wdm_price = get_latest_wdm_price()
+
+    wdm_value = wdm * wdm_price
     if eth > 0:
         profit = asset_value - (eth * avg_price)
     else:
@@ -1202,7 +1225,11 @@ def calculate_portfolio():
 
         "cash": round(cash, 2),
 
-        "eth": round(eth, 8),
+        "wdm": round(wdm,2),
+
+        "wdm_price": round(wdm_price,8),
+
+        "wdm_value": round(wdm_value,2),
 
         "avg_price": round(avg_price, 2),
 
