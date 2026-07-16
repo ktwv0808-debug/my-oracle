@@ -759,15 +759,17 @@ def generate_signal():
 
     return {
 
-        "signal": signal,
+     "signal": signal,
 
-        "rsi": rsi,
+     "price": get_latest_price(),
 
-        "ma20": ma20,
+     "rsi": rsi,
 
-        "ma60": ma60
+     "ma20": ma20,
 
-    }
+     "ma60": ma60
+
+   }
 # ============================================================
 # PART 5 : Auto Save
 # ============================================================
@@ -1147,7 +1149,7 @@ def buy_eth(buy_percent=20):
                 eth=%s,
 
                 avg_price=%s
-
+            WHERE id=%s
         """,
 
         (
@@ -1362,7 +1364,7 @@ def sell_eth():
                 eth=%s,
 
                 avg_price=%s
-
+            WHERE id=%s
         """,
 
         (
