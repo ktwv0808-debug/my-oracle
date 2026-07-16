@@ -239,7 +239,38 @@ def init_db():
 
     )
     """)
+    # --------------------------------------------------------
+    # WDM PRICE
+    # --------------------------------------------------------
 
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS wdm_price(
+
+        id SERIAL PRIMARY KEY,
+
+        price NUMERIC(18,8),
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """)
+    # --------------------------------------------------------
+    # WDM INFORMATION
+    # --------------------------------------------------------
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS wdm_info(
+
+        id SERIAL PRIMARY KEY,
+
+        name TEXT,
+
+        symbol TEXT,
+
+        total_supply NUMERIC
+
+    )
+    """)
     # --------------------------------------------------------
     # WDM COIN
     # --------------------------------------------------------
@@ -543,6 +574,46 @@ def insert_test_data():
 
         """)
 
+ # --------------------------------------------------------
+    # WDM
+    # --------------------------------------------------------
+
+    cur.execute("SELECT COUNT(*) FROM wdm_info")
+
+    if cur.fetchone()[0] == 0:
+
+        cur.execute("""
+
+        INSERT INTO wdm_info
+        (
+            name,
+            symbol,
+            total_supply
+        )
+
+        VALUES
+        (
+            'W-donation',
+            'WDM',
+            50000000
+        )
+
+        """)
+    # --------------------------------------------------------
+    # WDM 최초 가격
+    # --------------------------------------------------------
+
+    cur.execute("SELECT COUNT(*) FROM wdm_price")
+
+    if cur.fetchone()[0] == 0:
+
+        cur.execute("""
+
+        INSERT INTO wdm_price(price)
+
+        VALUES(0.00100000)
+
+        """)   
     conn.commit()
 
     cur.close()
@@ -610,6 +681,30 @@ def get_latest_price():
         return float(row["price"])
 
     return None
+
+# ------------------------------------------------------------
+# Latest WDM Price
+# ------------------------------------------------------------
+
+def get_latest_wdm_price():
+
+    row = fetch_one("""
+
+        SELECT price
+
+        FROM wdm_price
+
+        ORDER BY id DESC
+
+        LIMIT 1
+
+    """)
+
+    if row:
+
+        return float(row["price"])
+
+    return 0.001
 # ------------------------------------------------------------
 # RSI Calculation
 # ------------------------------------------------------------
@@ -855,6 +950,23 @@ def generate_signal():
      "ma60": ma60
 
    }
+# ------------------------------------------------------------
+# WDM Price
+# ETH 가격을 기준으로 계산
+# ------------------------------------------------------------
+
+def calculate_wdm_price():
+
+    eth = get_latest_price()
+
+    if eth is None:
+
+        return 0.001
+
+    # ETH 가격의 1/2,000,000
+    price = eth / 2000000
+
+    return round(price, 8)   
 # ============================================================
 # PART 5 : Auto Save
 # ============================================================
@@ -897,6 +1009,25 @@ def auto_save_eth():
             new_id = cur.fetchone()["id"]
 
             conn.commit()
+            # ------------------------------------------------
+            # WDM 가격 저장
+            # ------------------------------------------------
+
+            wdm_price = calculate_wdm_price()
+
+            cur.execute("""
+
+                INSERT INTO wdm_price
+                (
+                    price
+                )
+
+                VALUES
+                (
+                    %s
+                )
+
+            """,(wdm_price,))
 
             # ------------------------------------------------
             # 이동평균 계산
