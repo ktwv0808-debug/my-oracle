@@ -1149,7 +1149,7 @@ def buy_eth(buy_percent=20):
                 eth=%s,
 
                 avg_price=%s
-            WHERE id=%s
+            WHERE id=1
         """,
 
         (
@@ -1364,7 +1364,7 @@ def sell_eth():
                 eth=%s,
 
                 avg_price=%s
-            WHERE id=%s
+            WHERE id=1
         """,
 
         (
