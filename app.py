@@ -1597,7 +1597,7 @@ def auto_trade(signal_data=None):
         print("AUTO BUY SUCCESS")
 
         return True
-        elif signal in ("SELL", "STRONG SELL"):
+    elif signal in ("SELL", "STRONG SELL"):
 
         # ----------------------------------------------------
         # Portfolio 매도
