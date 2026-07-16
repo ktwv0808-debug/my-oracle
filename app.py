@@ -233,11 +233,35 @@ def init_db():
 
         eth NUMERIC DEFAULT 0,
 
+        wdm NUMERIC DEFAULT 0,
+
         avg_price NUMERIC DEFAULT 0
 
     )
     """)
 
+    # --------------------------------------------------------
+    # WDM COIN
+    # --------------------------------------------------------
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS meme_coin(
+
+        id SERIAL PRIMARY KEY,
+
+        name TEXT,
+
+        symbol TEXT,
+
+        total_supply NUMERIC,
+
+        circulating_supply NUMERIC,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """)
+    
     conn.commit()
 
     cur.close()
@@ -314,6 +338,17 @@ def update_database():
     ALTER TABLE trading_records
     ADD COLUMN IF NOT EXISTS trade_type TEXT DEFAULT 'AUTO'
     """)
+
+    # --------------------------------------------------------
+    # Portfolio New Column
+    # --------------------------------------------------------
+
+    cur.execute("""
+    ALTER TABLE portfolio
+    ADD COLUMN IF NOT EXISTS wdm NUMERIC DEFAULT 0
+    """)
+
+    
     conn.commit()
 
     cur.close()
@@ -354,7 +389,57 @@ def insert_default_portfolio():
     cur.close()
     conn.close()
 
+# ------------------------------------------------------------
+# Insert Default WDM Coin
+# ------------------------------------------------------------
 
+def insert_default_meme():
+
+    conn = get_db()
+
+    cur = conn.cursor()
+
+    cur.execute("""
+
+        INSERT INTO meme_coin
+        (
+
+            name,
+
+            symbol,
+
+            total_supply,
+
+            circulating_supply
+
+        )
+
+        SELECT
+
+            'W-donation',
+
+            'WDM',
+
+            50000000,
+
+            50000000
+
+        WHERE NOT EXISTS
+        (
+
+            SELECT 1
+
+            FROM meme_coin
+
+        )
+
+    """)
+
+    conn.commit()
+
+    cur.close()
+
+    conn.close()
 # ------------------------------------------------------------
 # Insert Test Data
 # ------------------------------------------------------------
@@ -2190,6 +2275,8 @@ update_database()
 
 insert_default_portfolio()
 
+insert_default_meme()
+    
 insert_test_data()
 # ==========================================================
 # PART 9 : Thread
