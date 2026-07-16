@@ -180,6 +180,16 @@ def init_db():
 
         price NUMERIC(18,6),
 
+        quantity NUMERIC DEFAULT 0,
+
+        trade_amount NUMERIC DEFAULT 0,
+
+        profit NUMERIC DEFAULT 0,
+
+        roi NUMERIC DEFAULT 0,
+
+        trade_type TEXT DEFAULT 'AUTO',
+
         rsi NUMERIC,
 
         ma20 NUMERIC,
@@ -190,7 +200,6 @@ def init_db():
 
     )
     """)
-
     # --------------------------------------------------------
     # DONATION
     # --------------------------------------------------------
@@ -277,7 +286,34 @@ def update_database():
     ALTER TABLE trading_records
     ADD COLUMN IF NOT EXISTS ma60 NUMERIC
     """)
+    # --------------------------------------------------------
+    # Trading Records New Columns
+    # --------------------------------------------------------
 
+    cur.execute("""
+    ALTER TABLE trading_records
+    ADD COLUMN IF NOT EXISTS quantity NUMERIC DEFAULT 0
+    """)
+
+    cur.execute("""
+    ALTER TABLE trading_records
+    ADD COLUMN IF NOT EXISTS trade_amount NUMERIC DEFAULT 0
+    """)
+
+    cur.execute("""
+    ALTER TABLE trading_records
+    ADD COLUMN IF NOT EXISTS profit NUMERIC DEFAULT 0
+    """)
+
+    cur.execute("""
+    ALTER TABLE trading_records
+    ADD COLUMN IF NOT EXISTS roi NUMERIC DEFAULT 0
+    """)
+
+    cur.execute("""
+    ALTER TABLE trading_records
+    ADD COLUMN IF NOT EXISTS trade_type TEXT DEFAULT 'AUTO'
+    """)
     conn.commit()
 
     cur.close()
@@ -355,18 +391,50 @@ def insert_test_data():
 
     if cur.fetchone()[0] == 0:
 
-        cur.execute("""
+       cur.execute("""
 
         INSERT INTO trading_records
-        (signal,price)
+        (
+            signal,
+            price,
+            quantity,
+            trade_amount,
+            profit,
+            roi,
+            trade_type
+        )
 
         VALUES
 
-        ('BUY',1578.325),
+        (
+            'BUY',
+            1578.325,
+            2,
+            3156.65,
+            0,
+            0,
+            'AUTO'
+        ),
 
-        ('SELL',1585.500),
+        (
+            'SELL',
+            1585.500,
+            2,
+            3171.00,
+            14.35,
+            0.45,
+            'AUTO'
+        ),
 
-        ('BUY',1602.750)
+        (
+            'BUY',
+            1602.750,
+            1,
+            1602.75,
+            0,
+            0,
+            'MANUAL'
+        )
 
         """)
 
@@ -961,7 +1029,526 @@ def calculate_portfolio():
         "roi": round(roi, 2)
 
     }
+# ------------------------------------------------------------
+# BUY ETH
+# 자동매매용
+# 현금의 일정 비율로 ETH 매수
+# ------------------------------------------------------------
+def buy_eth(buy_percent=20):
 
+    conn = get_db()
+
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    # --------------------------------------------------------
+    # Portfolio 조회
+    # --------------------------------------------------------
+
+    cur.execute("""
+
+        SELECT *
+
+        FROM portfolio
+
+        LIMIT 1
+
+    """)
+
+    portfolio = cur.fetchone()
+
+    if portfolio is None:
+
+        cur.close()
+        conn.close()
+
+        return False
+
+    cash = float(portfolio["cash"])
+
+    eth = float(portfolio["eth"])
+
+    avg_price = float(portfolio["avg_price"])
+
+    # --------------------------------------------------------
+    # 이미 ETH를 보유 중이면 중복매수 금지
+    # --------------------------------------------------------
+
+    if eth > 0:
+
+        print("BUY SKIP : Already Holding ETH")
+
+        cur.close()
+        conn.close()
+
+        return False
+
+    # --------------------------------------------------------
+    # 현재 ETH 가격 조회
+    # --------------------------------------------------------
+
+    cur.execute("""
+
+        SELECT price
+
+        FROM eth_price
+
+        ORDER BY id DESC
+
+        LIMIT 1
+
+    """)
+
+    row = cur.fetchone()
+
+    if row is None:
+
+        cur.close()
+        conn.close()
+
+        return False
+
+    current_price = float(row["price"])
+
+    # --------------------------------------------------------
+    # 매수 금액 계산
+    # --------------------------------------------------------
+
+    trade_amount = cash * (buy_percent / 100)
+
+    if trade_amount <= 0:
+
+        cur.close()
+        conn.close()
+
+        return False
+
+    # --------------------------------------------------------
+    # 매수 수량 계산
+    # --------------------------------------------------------
+
+    quantity = trade_amount / current_price
+
+    # --------------------------------------------------------
+    # 새로운 Portfolio 계산
+    # --------------------------------------------------------
+
+    new_cash = cash - trade_amount
+
+    new_eth = eth + quantity
+
+    # 평균단가 계산
+    if eth == 0:
+
+        new_avg_price = current_price
+
+    else:
+
+        new_avg_price = (
+
+            (eth * avg_price) +
+
+            (quantity * current_price)
+
+        ) / new_eth
+
+    # --------------------------------------------------------
+    # Portfolio 업데이트
+    # --------------------------------------------------------
+
+    cur.execute("""
+
+        UPDATE portfolio
+
+        SET
+
+            cash=%s,
+
+            eth=%s,
+
+            avg_price=%s
+
+    """,
+
+    (
+
+        new_cash,
+
+        new_eth,
+
+        new_avg_price
+
+    ))
+
+    conn.commit()
+
+    cur.close()
+
+    conn.close()
+
+    print("--------------------------------")
+
+    print("AUTO BUY COMPLETE")
+
+    print(f"BUY PRICE      : {current_price:.2f}")
+
+    print(f"BUY AMOUNT     : {trade_amount:.2f}")
+
+    print(f"BUY QUANTITY   : {quantity:.8f}")
+
+    print(f"CASH LEFT      : {new_cash:.2f}")
+
+    print("--------------------------------")
+
+    return {
+    "price": current_price,
+    "quantity": quantity,
+    "trade_amount": trade_amount
+}
+# ------------------------------------------------------------
+# SELL ETH
+# 자동매매용
+# 보유 ETH 전량 매도
+# ------------------------------------------------------------
+def sell_eth():
+
+    conn = get_db()
+
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    # --------------------------------------------------------
+    # Portfolio 조회
+    # --------------------------------------------------------
+
+    cur.execute("""
+
+        SELECT *
+
+        FROM portfolio
+
+        LIMIT 1
+
+    """)
+
+    portfolio = cur.fetchone()
+
+    if portfolio is None:
+
+        cur.close()
+        conn.close()
+
+        return False
+
+    cash = float(portfolio["cash"])
+
+    eth = float(portfolio["eth"])
+
+    avg_price = float(portfolio["avg_price"])
+
+    # --------------------------------------------------------
+    # ETH가 없으면 매도 안함
+    # --------------------------------------------------------
+
+    if eth <= 0:
+
+        print("SELL SKIP : No ETH")
+
+        cur.close()
+        conn.close()
+
+        return False
+
+    # --------------------------------------------------------
+    # 현재 ETH 가격 조회
+    # --------------------------------------------------------
+
+    cur.execute("""
+
+        SELECT price
+
+        FROM eth_price
+
+        ORDER BY id DESC
+
+        LIMIT 1
+
+    """)
+
+    row = cur.fetchone()
+
+    if row is None:
+
+        cur.close()
+        conn.close()
+
+        return False
+
+    current_price = float(row["price"])
+
+    # --------------------------------------------------------
+    # 매도 금액
+    # --------------------------------------------------------
+
+    trade_amount = eth * current_price
+
+    # --------------------------------------------------------
+    # 실현손익 계산
+    # --------------------------------------------------------
+
+    profit = (current_price - avg_price) * eth
+
+    # --------------------------------------------------------
+    # ROI 계산
+    # --------------------------------------------------------
+
+    if avg_price > 0:
+
+        roi = ((current_price - avg_price) / avg_price) * 100
+
+    else:
+
+        roi = 0
+
+    # --------------------------------------------------------
+    # Portfolio 계산
+    # --------------------------------------------------------
+
+    new_cash = cash + trade_amount
+
+    new_eth = 0
+
+    new_avg_price = 0
+
+    # --------------------------------------------------------
+    # Portfolio 업데이트
+    # --------------------------------------------------------
+
+    cur.execute("""
+
+        UPDATE portfolio
+
+        SET
+
+            cash=%s,
+
+            eth=%s,
+
+            avg_price=%s
+
+    """,
+
+    (
+
+        new_cash,
+
+        new_eth,
+
+        new_avg_price
+
+    ))
+
+    conn.commit()
+
+    cur.close()
+
+    conn.close()
+
+    print("--------------------------------")
+
+    print("AUTO SELL COMPLETE")
+
+    print(f"SELL PRICE     : {current_price:.2f}")
+
+    print(f"SELL AMOUNT    : {trade_amount:.2f}")
+
+    print(f"PROFIT         : {profit:.2f}")
+
+    print(f"ROI            : {roi:.2f}%")
+
+    print("--------------------------------")
+
+    return {
+
+        "price": current_price,
+
+        "quantity": eth,
+
+        "trade_amount": trade_amount,
+
+        "profit": profit,
+
+        "roi": roi
+
+    }
+
+# ------------------------------------------------------------
+# AUTO TRADE ENGINE
+# generate_signal()을 이용한 자동매매
+# BUY  -> buy_eth()
+# SELL -> sell_eth()
+# HOLD -> 아무것도 하지 않음
+# 거래기록 저장
+# ------------------------------------------------------------
+def auto_trade(signal_data=None):
+
+    # --------------------------------------------------------
+    # signal_data가 없으면 새로 생성
+    # --------------------------------------------------------
+
+    if signal_data is None:
+
+        signal_data = generate_signal()
+
+    signal = signal_data["signal"]
+
+    price = signal_data["price"]
+
+    rsi = signal_data["rsi"]
+
+    ma20 = signal_data["ma20"]
+
+    ma60 = signal_data["ma60"]
+
+    # --------------------------------------------------------
+    # BUY
+    # --------------------------------------------------------
+
+    if signal in ("BUY", "STRONG BUY"):
+
+        success = buy_eth()
+
+        if success:
+
+            conn = get_db()
+
+            cur = conn.cursor()
+
+            quantity = (100000 * 0.20) / price
+
+            trade_amount = quantity * price
+
+            cur.execute("""
+
+                INSERT INTO trading_records
+                (
+                    signal,
+                    price,
+                    quantity,
+                    trade_amount,
+                    profit,
+                    roi,
+                    trade_type,
+                    rsi,
+                    ma20,
+                    ma60
+                )
+
+                VALUES
+                (
+                    %s,%s,%s,%s,%s,%s,%s,%s,%s,%s
+                )
+
+            """,
+
+            (
+
+                signal,
+                price,
+                quantity,
+                trade_amount,
+                0,
+                0,
+                "AUTO",
+                rsi,
+                ma20,
+                ma60
+
+            ))
+
+            conn.commit()
+
+            cur.close()
+
+            conn.close()
+
+            print("AUTO BUY SUCCESS")
+
+        else:
+
+            print("AUTO BUY SKIPPED")
+
+    # --------------------------------------------------------
+    # SELL
+    # --------------------------------------------------------
+
+    elif signal in ("SELL", "STRONG SELL"):
+
+        result = sell_eth()
+
+        if result:
+
+            conn = get_db()
+
+            cur = conn.cursor()
+
+            cur.execute("""
+
+                INSERT INTO trading_records
+                (
+                    signal,
+                    price,
+                    quantity,
+                    trade_amount,
+                    profit,
+                    roi,
+                    trade_type,
+                    rsi,
+                    ma20,
+                    ma60
+                )
+
+                VALUES
+                (
+                    %s,%s,%s,%s,%s,%s,%s,%s,%s,%s
+                )
+
+            """,
+
+            (
+
+                signal,
+                result["price"],
+                result["quantity"],
+                result["trade_amount"],
+                result["profit"],
+                result["roi"],
+                "AUTO",
+                rsi,
+                ma20,
+                ma60
+
+            ))
+
+            conn.commit()
+
+            cur.close()
+
+            conn.close()
+
+            print("AUTO SELL SUCCESS")
+
+        else:
+
+            print("AUTO SELL SKIPPED")
+
+    # --------------------------------------------------------
+    # HOLD
+    # --------------------------------------------------------
+
+    else:
+
+        print("AUTO TRADE : HOLD")
+
+    return True
 # ==========================================================
 # PART 7  Routes
 # ==========================================================
