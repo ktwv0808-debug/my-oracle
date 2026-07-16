@@ -562,65 +562,132 @@ def calculate_previous_ma(period):
 
     return round(sum(previous_prices) / period, 2)
 
+# ------------------------------------------------------------
+# Cross Signal
+# MA20 / MA60 실제 교차 계산
+# ------------------------------------------------------------
+def get_cross_signals():
 
+    conn = get_db()
+
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+
+        SELECT
+            id,
+            ma20,
+            ma60,
+            price
+        FROM eth_price
+        ORDER BY id ASC
+
+    """)
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    if len(rows) < 2:
+        return "HOLD"
+
+    prev = rows[-2]
+    curr = rows[-1]
+
+    if (
+        prev["ma20"] is None or
+        prev["ma60"] is None or
+        curr["ma20"] is None or
+        curr["ma60"] is None
+    ):
+        return "HOLD"
+
+    prev20 = float(prev["ma20"])
+    prev60 = float(prev["ma60"])
+
+    curr20 = float(curr["ma20"])
+    curr60 = float(curr["ma60"])
+
+    # ------------------------------
+    # Golden Cross
+    # ------------------------------
+    if prev20 <= prev60 and curr20 > curr60:
+        return "BUY"
+
+    # ------------------------------
+    # Dead Cross
+    # ------------------------------
+    if prev20 >= prev60 and curr20 < curr60:
+        return "SELL"
+
+    return "HOLD"
 # ------------------------------------------------------------
 # Trading Signal
 # ------------------------------------------------------------
 def generate_signal():
 
+    # --------------------------------------------------------
+    # RSI 계산
+    # --------------------------------------------------------
+
     rsi = calculate_rsi()
+
+    # --------------------------------------------------------
+    # 이동평균 계산
+    # --------------------------------------------------------
 
     ma20 = calculate_ma(20)
 
     ma60 = calculate_ma(60)
 
-    prev20 = calculate_previous_ma(20)
-
-    prev60 = calculate_previous_ma(60)
-
-    signal = "HOLD"
-
     # --------------------------------------------------------
     # 데이터가 부족하면 HOLD
     # --------------------------------------------------------
-    if None in (rsi, ma20, ma60, prev20, prev60):
 
-        signal = "HOLD"
+    if ma20 is None or ma60 is None:
 
-    else:
+        return {
 
-        # ----------------------------------------------------
-        # 골든크로스
-        # ----------------------------------------------------
-        if prev20 <= prev60 and ma20 > ma60:
+            "signal": "HOLD",
 
-            if rsi is not None and rsi < 30:
+            "rsi": rsi,
+
+            "ma20": ma20,
+
+            "ma60": ma60
+
+        }
+
+    # --------------------------------------------------------
+    # MA20 / MA60 교차 신호 계산
+    # --------------------------------------------------------
+
+    signal = get_cross_signals()
+
+    # --------------------------------------------------------
+    # RSI 보강 판단
+    # --------------------------------------------------------
+
+    if signal == "BUY":
+
+        if rsi is not None:
+
+            if rsi < 30:
 
                 signal = "STRONG BUY"
 
-            else:
+    elif signal == "SELL":
 
-                signal = "BUY"
+        if rsi is not None:
 
-        # ----------------------------------------------------
-        # 데드크로스
-        # ----------------------------------------------------
-        elif prev20 >= prev60 and ma20 < ma60:
-
-            if rsi is not None and rsi > 70:
+            if rsi > 70:
 
                 signal = "STRONG SELL"
 
-            else:
-
-                signal = "SELL"
-
-        # ----------------------------------------------------
-        # 크로스가 없으면 HOLD
-        # ----------------------------------------------------
-        else:
-
-            signal = "HOLD"
+    # --------------------------------------------------------
+    # 결과 반환
+    # --------------------------------------------------------
 
     return {
 
@@ -1188,6 +1255,10 @@ def chart():
 @app.route("/chart-data")
 def chart_data():
 
+    # --------------------------------------------------------
+    # DB 연결
+    # --------------------------------------------------------
+
     conn = get_db()
 
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -1197,11 +1268,8 @@ def chart_data():
         SELECT
 
             created_at,
-
             price,
-
             ma20,
-
             ma60
 
         FROM eth_price
@@ -1216,6 +1284,10 @@ def chart_data():
 
     cur.close()
     conn.close()
+
+    # --------------------------------------------------------
+    # Chart Data
+    # --------------------------------------------------------
 
     labels = []
 
@@ -1233,61 +1305,86 @@ def chart_data():
 
     dead = []
 
-    prev20 = None
-    prev60 = None
+    # --------------------------------------------------------
+    # 데이터 생성
+    # --------------------------------------------------------
 
-    for r in rows:
+    for i, row in enumerate(rows):
 
+        # 시간
         labels.append(
-            r["created_at"].strftime("%H:%M:%S")
+            row["created_at"].strftime("%H:%M:%S")
         )
 
-        p = float(r["price"])
+        # 가격
+        price = float(row["price"])
 
-        prices.append(p)
+        prices.append(price)
 
+        # 이동평균
         m20 = None
         m60 = None
 
-        if r["ma20"] is not None:
-            m20 = float(r["ma20"])
+        if row["ma20"] is not None:
+            m20 = float(row["ma20"])
 
-        if r["ma60"] is not None:
-            m60 = float(r["ma60"])
+        if row["ma60"] is not None:
+            m60 = float(row["ma60"])
 
         ma20.append(m20)
         ma60.append(m60)
 
+        # 기본값
         buy.append(None)
         sell.append(None)
         golden.append(None)
         dead.append(None)
 
-        # ---------------------------------
-        # 골든 / 데드크로스 계산
-        # ---------------------------------
+        # ----------------------------------------------------
+        # 첫 번째 데이터는 비교 불가
+        # ----------------------------------------------------
+
+        if i == 0:
+            continue
+
+        prev20 = ma20[i - 1]
+        prev60 = ma60[i - 1]
+
+        # ----------------------------------------------------
+        # 이동평균이 없으면 건너뜀
+        # ----------------------------------------------------
 
         if (
-            prev20 is not None and
-            prev60 is not None and
-            m20 is not None and
-            m60 is not None
+            prev20 is None or
+            prev60 is None or
+            m20 is None or
+            m60 is None
         ):
+            continue
 
-            # GOLDEN CROSS
-            if prev20 <= prev60 and m20 > m60:
+        # ----------------------------------------------------
+        # Golden Cross
+        # ----------------------------------------------------
 
-                golden[-1] = p
-                buy[-1] = p
+        if prev20 <= prev60 and m20 > m60:
 
-            # DEAD CROSS
-            elif prev20 >= prev60 and m20 < m60:
+            buy[i] = price
 
-                dead[-1] = p
-                sell[-1] = p
+            golden[i] = price
 
-        prev20 = m20
-        prev60 = m60
+        # ----------------------------------------------------
+        # Dead Cross
+        # ----------------------------------------------------
+
+        elif prev20 >= prev60 and m20 < m60:
+
+            sell[i] = price
+
+            dead[i] = price
+
+    # --------------------------------------------------------
+    # JSON 반환
+    # --------------------------------------------------------
 
     return jsonify({
 
