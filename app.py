@@ -305,7 +305,7 @@ def init_db():
 # Update Old Database
 # ------------------------------------------------------------
 
-def :
+def update_database():
 
     conn = get_db()
     cur = conn.cursor()
