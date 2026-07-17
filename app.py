@@ -1243,6 +1243,8 @@ def calculate_portfolio():
 
         "wdm": round(wdm,2),
 
+        "eth": round(eth, 8),
+
         "wdm_price": round(wdm_price,8),
 
         "wdm_value": round(wdm_value,2),
