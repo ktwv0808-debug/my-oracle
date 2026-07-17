@@ -296,6 +296,8 @@ def init_db():
     conn.commit()
 
     cur.close()
+    
+        
     conn.close()
 
 
@@ -303,7 +305,7 @@ def init_db():
 # Update Old Database
 # ------------------------------------------------------------
 
-def update_database():
+def :
 
     conn = get_db()
     cur = conn.cursor()
@@ -379,14 +381,7 @@ def update_database():
     ADD COLUMN IF NOT EXISTS wdm NUMERIC DEFAULT 0
     """)
 
-    # --------------------------------------------------------
-    # Portfolio : WDM
-    # --------------------------------------------------------
-
-    cur.execute("""
-    ALTER TABLE portfolio
-    ADD COLUMN IF NOT EXISTS wdm NUMERIC DEFAULT 0
-    """)
+    
     conn.commit()
 
     cur.close()
@@ -1191,23 +1186,44 @@ def calculate_portfolio():
     if row:
         current_price = float(row["price"])
 
+    # --------------------------------------------------------
+    # Portfolio 금액 계산
+    # --------------------------------------------------------
+
     cash = float(portfolio["cash"])
     eth = float(portfolio["eth"])
     wdm = float(portfolio["wdm"])
     avg_price = float(portfolio["avg_price"])
 
-   asset_value = eth * current_price
-
-   wdm_value = wdm * wdm_price
-
-   total_assets = cash + asset_value + wdm_value
     # --------------------------------------------------------
-    # WDM 현재가격
+    # ETH 자산 평가금액
+    # --------------------------------------------------------
+
+    asset_value = eth * current_price
+
+    # --------------------------------------------------------
+    # WDM 현재가격 조회
+    # 반드시 먼저 계산해야 함
     # --------------------------------------------------------
 
     wdm_price = get_latest_wdm_price()
 
+    # --------------------------------------------------------
+    # WDM 평가금액
+    # --------------------------------------------------------
+
     wdm_value = wdm * wdm_price
+
+    # --------------------------------------------------------
+    # 총 자산
+    # --------------------------------------------------------
+
+    total_assets = cash + asset_value + wdm_value
+    # --------------------------------------------------------
+    # WDM 현재가격
+    # --------------------------------------------------------
+
+    
     if eth > 0:
         profit = asset_value - (eth * avg_price)
     else:
@@ -2429,7 +2445,7 @@ def chart_data():
 
 init_db()
 
-update_database()
+
 
 insert_default_portfolio()
 
