@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>
+
+WDM Price Chart
+
+</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+
+    background:#111;
+
+    color:white;
+
+    font-family:Arial;
+
+    text-align:center;
+
+}
+
+.container{
+
+    width:95%;
+
+    margin:auto;
+
+}
+
+canvas{
+
+    background:white;
+
+    border-radius:15px;
+
+    padding:20px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>
+
+📈 WDM Price Chart
+
+</h2>
+
+<div class="container">
+
+<canvas id="chart"></canvas>
+
+</div>
+
+<script>
+
+const ctx=document.getElementById("chart");
+
+const chart=new Chart(
+
+ctx,
+
+{
+
+type:"line",
+
+data:{
+
+labels:[],
+
+datasets:[{
+
+label:"WDM",
+
+data:[],
+
+borderWidth:2,
+
+tension:0.3
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+animation:false
+
+}
+
+}
+
+);
+
+async function loadChart(){
+
+const response=
+
+await fetch("/wdm-chart-data");
+
+const data=
+
+await response.json();
+
+chart.data.labels=data.labels;
+
+chart.data.datasets[0].data=data.prices;
+
+chart.update();
+
+}
+
+loadChart();
+
+setInterval(loadChart,5000);
+
+</script>
+
+</body>
+
+</html>
