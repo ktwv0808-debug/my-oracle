@@ -67,7 +67,35 @@ def fetch_all(sql, params=None):
 
     return rows
 
+# ============================================================
+# Load WDM History
+# ============================================================
 
+def load_wdm_history():
+
+    return fetch_all(
+
+        """
+
+        SELECT
+
+            created_at,
+
+            price
+
+        FROM
+
+            wdm_price_history
+
+        ORDER BY
+
+            id ASC
+
+        LIMIT 100
+
+        """
+
+    )
 # ------------------------------------------------------------
 # Execute SELECT (Single Row)
 # ------------------------------------------------------------
@@ -255,6 +283,22 @@ def init_db():
     )
     """)
     # --------------------------------------------------------
+    # WDM PRICE HISTORY
+    # --------------------------------------------------------
+
+    cur.execute("""
+
+    CREATE TABLE IF NOT EXISTS wdm_price_history(
+
+        id SERIAL PRIMARY KEY,
+
+        price NUMERIC(18,8),
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """)
+    # --------------------------------------------------------
     # WDM INFORMATION
     # --------------------------------------------------------
 
@@ -380,7 +424,19 @@ def update_database():
     ALTER TABLE portfolio
     ADD COLUMN IF NOT EXISTS wdm NUMERIC DEFAULT 0
     """)
+    # --------------------------------------------------------
+    # WDM Price History
+    # --------------------------------------------------------
 
+    cur.execute("""
+
+    ALTER TABLE wdm_price_history
+
+    ADD COLUMN IF NOT EXISTS price
+
+    NUMERIC(18,8)
+
+    """)
     
     conn.commit()
 
@@ -626,7 +682,7 @@ def insert_test_data():
 
     cur.close()
     conn.close()
-
+    
 # ============================================================
 # PART 4 : Indicator
 # ============================================================
@@ -713,6 +769,88 @@ def get_latest_wdm_price():
         return float(row["price"])
 
     return 0.001
+    # ============================================================
+# Save ETH Price
+# ============================================================
+
+def save_eth_price(price):
+
+    execute(
+
+        """
+
+        INSERT INTO
+
+            eth_price
+
+            (
+
+                price
+
+            )
+
+        VALUES
+
+            (
+
+                %s
+
+            )
+
+        """,
+
+        (price,)
+
+    )
+
+    keep_latest_rows(
+
+        "eth_price",
+
+        10000
+
+    )
+# ============================================================
+# Save WDM Price
+# ============================================================
+
+def save_wdm_price(price):
+
+    execute(
+
+        """
+
+        INSERT INTO
+
+            wdm_price
+
+            (
+
+                price
+
+            )
+
+        VALUES
+
+            (
+
+                %s
+
+            )
+
+        """,
+
+        (price,)
+
+    )
+
+    keep_latest_rows(
+
+        "wdm_price",
+
+        10000
+
+    )   
 # ------------------------------------------------------------
 # RSI Calculation
 # ------------------------------------------------------------
@@ -2208,7 +2346,7 @@ def save_price():
     # --------------------------------------------------------
 
     message = ""
- # --------------------------------------------------------
+    # --------------------------------------------------------
     # Save Button
     # --------------------------------------------------------
 
