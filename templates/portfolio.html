@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
- 
+
 <head>
 
 <meta charset="utf-8">
@@ -30,29 +30,22 @@ Virtual Portfolio
 <td>🪙 ETH</td>
 <td>{{ portfolio.eth }}</td>
 </tr>
+
 <tr>
-
-    <th>🪙 WDM</th>
-
-    <td>{{ portfolio.wdm }}</td>
-
+<td>🪙 WDM</td>
+<td>{{ portfolio.wdm }}</td>
 </tr>
 
 <tr>
-
-    <th>💲 WDM Price</th>
-
-    <td>{{ portfolio.wdm_price }}</td>
-
+<td>💲 WDM Price</td>
+<td>{{ portfolio.wdm_price }}</td>
 </tr>
 
 <tr>
-
-    <th>💰 WDM Asset</th>
-
-    <td>{{ portfolio.wdm_value }}</td>
-
+<td>💰 WDM Asset</td>
+<td>{{ portfolio.wdm_value }}</td>
 </tr>
+
 <tr>
 <td>📈 Average Buy</td>
 <td>{{ portfolio.avg_price }}</td>
@@ -85,20 +78,19 @@ Virtual Portfolio
 
 </table>
 
+<!-- ETH Chart -->
 <a href="/chart" target="_blank">
-    <button>ETH-Chart</button>
+    <button class="btn btn-primary">
+        ETH Chart
+    </button>
 </a>
-<button
 
-data-en="WDM Chart"
-
-data-ko="WDM 차트"
-
-onclick="popup('/wdm-chart')">
-
-📈 WDM Chart
-
-</button>
+<!-- WDM Chart -->
+<a href="/wdm-chart" target="_blank">
+    <button class="btn btn-success">
+        📈 WDM Chart
+    </button>
+</a>
 
 </div>
 
