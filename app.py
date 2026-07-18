@@ -2530,6 +2530,73 @@ def chart_data():
         "dead": dead
 
     })
+
+# ============================================================
+# PART 8-1 : WDM Chart
+# ============================================================
+
+# ------------------------------------------------------------
+# WDM Chart Page
+# ------------------------------------------------------------
+
+@app.route("/wdm-chart")
+def wdm_chart():
+
+    return render_template("wdm_chart.html")
+
+
+# ------------------------------------------------------------
+# WDM Chart Data API
+# ------------------------------------------------------------
+
+@app.route("/wdm-chart-data")
+def wdm_chart_data():
+
+    cur = conn.cursor()
+
+    cur.execute("""
+
+        SELECT
+
+            created_at,
+
+            price
+
+        FROM
+
+            wdm_price_history
+
+        ORDER BY
+
+            id ASC
+
+        LIMIT 100
+
+    """)
+
+    rows = cur.fetchall()
+
+    cur.close()
+
+    return jsonify({
+
+        "labels":[
+
+            row[0].strftime("%H:%M:%S")
+
+            for row in rows
+
+        ],
+
+        "prices":[
+
+            float(row[1])
+
+            for row in rows
+
+        ]
+
+    })
 # ============================================================
 # Database Initialize
 # ============================================================
