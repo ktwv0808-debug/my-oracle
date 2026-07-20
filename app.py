@@ -1003,7 +1003,7 @@ def save_wdm_price():
         signal
 
     ))
-        conn.commit()
+     conn.commit()
 
         message = f"WDM Saved ({signal})"
 
