@@ -282,44 +282,24 @@ def init_db():
 
     )
     """)
-# =====================================================
-# WDM Price Table 컬럼 추가
-# =====================================================
-
-try:
-
+    # =====================================================
+    # WDM Price Table 컬럼 추가
+    # =====================================================
     cur.execute("""
-        ALTER TABLE wdm_price
-        ADD COLUMN ma20 DOUBLE PRECISION;
+    ALTER TABLE wdm_price
+    ADD COLUMN IF NOT EXISTS ma20 DOUBLE PRECISION;
     """)
 
-except Exception:
-
-    conn.rollback()
-
-
-try:
-
     cur.execute("""
-        ALTER TABLE wdm_price
-        ADD COLUMN ma60 DOUBLE PRECISION;
+    ALTER TABLE wdm_price
+    ADD COLUMN IF NOT EXISTS ma60 DOUBLE PRECISION;
     """)
 
-except Exception:
-
-    conn.rollback()
-
-
-try:
-
     cur.execute("""
-        ALTER TABLE wdm_price
-        ADD COLUMN signal VARCHAR(20);
+    ALTER TABLE wdm_price
+    ADD COLUMN IF NOT EXISTS signal VARCHAR(20);
     """)
-
-except Exception:
-
-    conn.rollback()
+   
     # --------------------------------------------------------
     # WDM PRICE HISTORY
     # --------------------------------------------------------
