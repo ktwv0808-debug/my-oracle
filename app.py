@@ -282,6 +282,45 @@ def init_db():
 
     )
     """)
+    # =====================================================
+# WDM Price Table 컬럼 보정
+# 기존 DB에 컬럼이 없으면 자동 생성
+# =====================================================
+
+    try:
+
+    cur.execute("""
+        ALTER TABLE wdm_price
+        ADD COLUMN ma20 DOUBLE PRECISION;
+    """)
+
+    except Exception:
+
+    conn.rollback()
+
+
+    try:
+
+    cur.execute("""
+        ALTER TABLE wdm_price
+        ADD COLUMN ma60 DOUBLE PRECISION;
+    """)
+
+    except Exception:
+
+    conn.rollback()
+
+
+    try:
+
+    cur.execute("""
+        ALTER TABLE wdm_price
+        ADD COLUMN signal VARCHAR(20);
+    """)
+
+    except Exception:
+
+    conn.rollback()
     # --------------------------------------------------------
     # WDM PRICE HISTORY
     # --------------------------------------------------------
