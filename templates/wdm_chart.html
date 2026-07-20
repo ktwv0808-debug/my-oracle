@@ -19,9 +19,7 @@ body{
 
     font-family:Arial;
 
-    margin:0;
-
-    padding:20px;
+    margin:20px;
 
 }
 
@@ -35,11 +33,11 @@ body{
 
 canvas{
 
-    background:#ffffff;
+    background:#fff;
 
     border-radius:10px;
 
-    padding:10px;
+    border:1px solid #aaa;
 
 }
 
@@ -49,13 +47,13 @@ canvas{
 
 <body>
 
-<div class="container">
-
 <h2 align="center">
 
 📈 WDM Trading Chart
 
 </h2>
+
+<div class="container">
 
 <canvas id="wdmChart"></canvas>
 
@@ -67,9 +65,9 @@ let chart=null;
 
 async function loadChart(){
 
-    const response=await fetch("/wdm-chart-data");
+    const res=await fetch("/wdm-chart-data");
 
-    const data=await response.json();
+    const data=await res.json();
 
     if(chart){
 
@@ -97,15 +95,15 @@ async function loadChart(){
 
                     data:data.prices,
 
-                    borderColor:"blue",
+                    borderColor:"#0066ff",
 
-                    backgroundColor:"blue",
+                    backgroundColor:"#0066ff",
 
                     borderWidth:2,
 
-                    tension:0.2,
+                    pointRadius:0,
 
-                    pointRadius:0
+                    tension:0.25
 
                 },
 
@@ -115,15 +113,15 @@ async function loadChart(){
 
                     data:data.ma20,
 
-                    borderColor:"orange",
+                    borderColor:"#ff9900",
 
-                    backgroundColor:"orange",
+                    backgroundColor:"#ff9900",
 
                     borderWidth:2,
 
-                    tension:0.2,
+                    pointRadius:0,
 
-                    pointRadius:0
+                    tension:0.25
 
                 },
 
@@ -133,119 +131,87 @@ async function loadChart(){
 
                     data:data.ma60,
 
-                    borderColor:"red",
+                    borderColor:"#ff0000",
 
-                    backgroundColor:"red",
+                    backgroundColor:"#ff0000",
 
                     borderWidth:2,
 
-                    tension:0.2,
+                    pointRadius:0,
 
-                    pointRadius:0
+                    tension:0.25
 
                 },
 
                 {
-
-                    type:"scatter",
 
                     label:"BUY",
 
-                    data:data.buy.map((v,i)=>{
+                    data:data.buy,
 
-                        if(v==null) return null;
-
-                        return{
-
-                            x:data.labels[i],
-
-                            y:v
-
-                        };
-
-                    }),
+                    showLine:false,
 
                     pointRadius:8,
 
-                    pointBackgroundColor:"lime"
+                    pointStyle:"triangle",
+
+                    borderColor:"green",
+
+                    backgroundColor:"lime"
 
                 },
 
                 {
-
-                    type:"scatter",
 
                     label:"SELL",
 
-                    data:data.sell.map((v,i)=>{
+                    data:data.sell,
 
-                        if(v==null) return null;
-
-                        return{
-
-                            x:data.labels[i],
-
-                            y:v
-
-                        };
-
-                    }),
+                    showLine:false,
 
                     pointRadius:8,
 
-                    pointBackgroundColor:"red"
+                    pointStyle:"rectRot",
+
+                    borderColor:"red",
+
+                    backgroundColor:"red"
 
                 },
 
                 {
 
-                    type:"scatter",
+                    label:"Golden",
 
-                    label:"Golden Cross",
+                    data:data.golden,
 
-                    data:data.golden.map((v,i)=>{
-
-                        if(v==null) return null;
-
-                        return{
-
-                            x:data.labels[i],
-
-                            y:v
-
-                        };
-
-                    }),
+                    showLine:false,
 
                     pointRadius:10,
 
-                    pointBackgroundColor:"gold"
+                    pointStyle:"star",
+
+                    borderColor:"gold",
+
+                    backgroundColor:"gold"
 
                 },
 
                 {
 
-                    type:"scatter",
+                    label:"Dead",
 
-                    label:"Dead Cross",
+                    data:data.dead,
 
-                    data:data.dead.map((v,i)=>{
-
-                        if(v==null) return null;
-
-                        return{
-
-                            x:data.labels[i],
-
-                            y:v
-
-                        };
-
-                    }),
+                    showLine:false,
 
                     pointRadius:10,
 
-                    pointBackgroundColor:"black"
+                    pointStyle:"crossRot",
+
+                    borderColor:"black",
+
+                    backgroundColor:"black"
 
                 }
 
@@ -258,6 +224,8 @@ async function loadChart(){
                 responsive:true,
 
                 animation:false,
+
+                maintainAspectRatio:false,
 
                 interaction:{
 
@@ -273,7 +241,13 @@ async function loadChart(){
 
                         labels:{
 
-                            color:"white"
+                            color:"white",
+
+                            font:{
+
+                                size:13
+
+                            }
 
                         }
 
@@ -285,9 +259,13 @@ async function loadChart(){
 
                     x:{
 
+                        display:true,
+
                         ticks:{
 
-                            color:"white"
+                            display:true,
+
+                            color:"#ffffff"
 
                         },
 
@@ -301,9 +279,13 @@ async function loadChart(){
 
                     y:{
 
+                        display:true,
+
                         ticks:{
 
-                            color:"white"
+                            display:true,
+
+                            color:"#ffffff"
 
                         },
 
