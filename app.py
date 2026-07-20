@@ -442,19 +442,7 @@ def update_database():
     ALTER TABLE portfolio
     ADD COLUMN IF NOT EXISTS wdm NUMERIC DEFAULT 0
     """)
-    # --------------------------------------------------------
-    # WDM Price History
-    # --------------------------------------------------------
-
-    cur.execute("""
-
-    ALTER TABLE wdm_price_history
-
-    ADD COLUMN IF NOT EXISTS price
-
-    NUMERIC(18,8)
-
-    """)
+   
     
     conn.commit()
 
@@ -984,7 +972,7 @@ def save_wdm_price():
 
         prices=prices,
 
-        live_price=get_wdm_price(),
+        live_price=get_latest_wdm_price(),
 
         message=message
 
@@ -1867,7 +1855,7 @@ def buy_eth(buy_percent=20):
                 eth=%s,
 
                 avg_price=%s
-            WHERE id=1
+           
         """,
 
         (
@@ -2082,7 +2070,7 @@ def sell_eth():
                 eth=%s,
 
                 avg_price=%s
-            WHERE id=1
+           
         """,
 
         (
@@ -2828,7 +2816,13 @@ def swap_api():
 @app.route("/execute-swap", methods=["POST"])
 def execute_swap():
 
-    pass
+    return jsonify({
+
+        "success":False,
+
+        "message":"Swap engine not implemented"
+
+    })
     
 # ==========================================================
 # PART 8 : Chart API
@@ -3194,16 +3188,11 @@ insert_test_data()
 # Start Auto Save Thread
 # ============================================================
 
-if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not app.debug:
-
+if __name__ != "__main__":
     threading.Thread(
-
         target=auto_save_eth,
-
         daemon=True
-
     ).start()
-
 # ==========================================================
 # PART 10 : app.run()
 # ==========================================================
