@@ -11,7 +11,7 @@
 
 <style>
 
-    body{
+body{
 
     background:#111;
 
@@ -19,13 +19,11 @@
 
     font-family:Arial;
 
-    margin:20px;
-
 }
 
 .container{
 
-    width:98%;
+    width:95%;
 
     margin:auto;
 
@@ -33,11 +31,7 @@
 
 canvas{
 
-    background:#fff;
-
-    border-radius:10px;
-
-    border:1px solid #aaa;
+    background:#222;
 
 }
 
@@ -47,15 +41,11 @@ canvas{
 
 <body>
 
-<h2 align="center">
-
-📈 WDM Trading Chart
-
-</h2>
-
 <div class="container">
 
-<canvas id="wdmChart"></canvas>
+<h2>WDM Trading Chart</h2>
+
+<canvas id="chart" height="120"></canvas>
 
 </div>
 
@@ -77,7 +67,7 @@ async function loadChart(){
 
     chart=new Chart(
 
-        document.getElementById("wdmChart"),
+        document.getElementById("chart"),
 
         {
 
@@ -95,15 +85,15 @@ async function loadChart(){
 
                     data:data.prices,
 
-                    borderColor:"#0066ff",
+                    borderColor:"white",
 
-                    backgroundColor:"#0066ff",
+                    backgroundColor:"white",
 
                     borderWidth:2,
 
                     pointRadius:0,
 
-                    tension:0.25
+                    tension:0.2
 
                 },
 
@@ -113,15 +103,15 @@ async function loadChart(){
 
                     data:data.ma20,
 
-                    borderColor:"#ff9900",
+                    borderColor:"deepskyblue",
 
-                    backgroundColor:"#ff9900",
+                    backgroundColor:"deepskyblue",
 
                     borderWidth:2,
 
                     pointRadius:0,
 
-                    tension:0.25
+                    tension:0.2
 
                 },
 
@@ -131,87 +121,161 @@ async function loadChart(){
 
                     data:data.ma60,
 
-                    borderColor:"#ff0000",
+                    borderColor:"red",
 
-                    backgroundColor:"#ff0000",
+                    backgroundColor:"red",
 
                     borderWidth:2,
 
                     pointRadius:0,
 
-                    tension:0.25
+                    tension:0.2
 
                 },
 
                 {
 
+                    type:"scatter",
+
                     label:"BUY",
 
-                    data:data.buy,
+                    data:data.buy
 
-                    showLine:false,
+                    .map((v,i)=>{
+
+                        if(v==null) return null;
+
+                        return{
+
+                            x:data.labels[i],
+
+                            y:v
+
+                        };
+
+                    })
+
+                    .filter(v=>v!=null),
 
                     pointRadius:8,
 
                     pointStyle:"triangle",
 
-                    borderColor:"green",
+                    backgroundColor:"lime",
 
-                    backgroundColor:"lime"
+                    borderColor:"lime",
+
+                    showLine:false
 
                 },
 
                 {
+
+                    type:"scatter",
 
                     label:"SELL",
 
-                    data:data.sell,
+                    data:data.sell
 
-                    showLine:false,
+                    .map((v,i)=>{
+
+                        if(v==null) return null;
+
+                        return{
+
+                            x:data.labels[i],
+
+                            y:v
+
+                        };
+
+                    })
+
+                    .filter(v=>v!=null),
 
                     pointRadius:8,
 
-                    pointStyle:"rectRot",
+                    pointStyle:"triangle",
+
+                    rotation:180,
+
+                    backgroundColor:"red",
 
                     borderColor:"red",
 
-                    backgroundColor:"red"
+                    showLine:false
 
                 },
 
                 {
 
-                    label:"Golden",
+                    type:"scatter",
 
-                    data:data.golden,
+                    label:"Golden Cross",
 
-                    showLine:false,
+                    data:data.golden
 
-                    pointRadius:10,
+                    .map((v,i)=>{
+
+                        if(v==null) return null;
+
+                        return{
+
+                            x:data.labels[i],
+
+                            y:v
+
+                        };
+
+                    })
+
+                    .filter(v=>v!=null),
+
+                    pointRadius:12,
 
                     pointStyle:"star",
 
-                    borderColor:"gold",
+                    backgroundColor:"yellow",
 
-                    backgroundColor:"gold"
+                    borderColor:"yellow",
+
+                    showLine:false
 
                 },
 
                 {
 
-                    label:"Dead",
+                    type:"scatter",
 
-                    data:data.dead,
+                    label:"Dead Cross",
 
-                    showLine:false,
+                    data:data.dead
 
-                    pointRadius:10,
+                    .map((v,i)=>{
 
-                    pointStyle:"crossRot",
+                        if(v==null) return null;
 
-                    borderColor:"black",
+                        return{
 
-                    backgroundColor:"black"
+                            x:data.labels[i],
+
+                            y:v
+
+                        };
+
+                    })
+
+                    .filter(v=>v!=null),
+
+                    pointRadius:12,
+
+                    pointStyle:"star",
+
+                    backgroundColor:"purple",
+
+                    borderColor:"purple",
+
+                    showLine:false
 
                 }
 
@@ -223,15 +287,13 @@ async function loadChart(){
 
                 responsive:true,
 
-                animation:false,
-
                 maintainAspectRatio:false,
 
                 interaction:{
 
-                    mode:"index",
+                    intersect:false,
 
-                    intersect:false
+                    mode:"index"
 
                 },
 
@@ -241,13 +303,7 @@ async function loadChart(){
 
                         labels:{
 
-                            color:"white",
-
-                            font:{
-
-                                size:13
-
-                            }
+                            color:"white"
 
                         }
 
@@ -259,13 +315,13 @@ async function loadChart(){
 
                     x:{
 
-                        display:true,
-
                         ticks:{
 
-                            display:true,
+                            color:"white",
 
-                            color:"#ffffff"
+                            autoSkip:true,
+
+                            maxTicksLimit:15
 
                         },
 
@@ -279,13 +335,13 @@ async function loadChart(){
 
                     y:{
 
-                        display:true,
+                        beginAtZero:false,
 
                         ticks:{
 
-                            display:true,
+                            color:"white",
 
-                            color:"#ffffff"
+                            maxTicksLimit:10
 
                         },
 
