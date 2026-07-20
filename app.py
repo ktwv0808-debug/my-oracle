@@ -2725,22 +2725,39 @@ def history():
     )
 
 
-# -----------------------------
-# Trade Check
-# -----------------------------
 @app.route("/trade-check")
 def trade_check():
 
-    signal = generate_signal()
+    try:
 
-    return render_template(
-        "trade_check.html",
-        signal=signal["signal"],
-        rsi=signal["rsi"],
-        ma20=signal["ma20"],
-        ma60=signal["ma60"]
-    )
+        signal = generate_signal()
 
+        print("TRADE CHECK RESULT")
+        print(signal)
+
+        return render_template(
+
+            "trade_check.html",
+
+            signal=signal.get("signal"),
+
+            rsi=signal.get("rsi"),
+
+            ma20=signal.get("ma20"),
+
+            ma60=signal.get("ma60")
+
+        )
+
+
+    except Exception as e:
+
+        traceback.print_exc()
+
+        return f"""
+        <h3>Trade Check Error</h3>
+        <pre>{e}</pre>
+        """
 
 # -----------------------------
 # Trading Records
