@@ -769,7 +769,7 @@ def get_latest_wdm_price():
         return float(row["price"])
 
     return 0.001
-    # ============================================================
+# ============================================================
 # Save ETH Price
 # ============================================================
 
@@ -810,89 +810,387 @@ def save_eth_price(price):
         10000
 
     )
-# ============================================================
-# Save WDM Price
-# ============================================================
-
-def save_wdm_price(price):
-
-    execute(
-
-        """
-
-        INSERT INTO
-
-            wdm_price
-
-            (
-
-                price
-
-            )
-
-        VALUES
-
-            (
-
-                %s
-
-            )
-
-        """,
-
-        (price,)
-
-    )
-
-    keep_latest_rows(
-
-        "wdm_price",
-
-        10000
-
-    )   
-# ------------------------------------------------------------
-# RSI Calculation
-# ------------------------------------------------------------
-
-def calculate_rsi(period=14):
+@app.route("/save-wdm-price", methods=["GET", "POST"])
+def save_wdm_price():
 
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
+    message = ""
+
+    # ------------------------------------------------------
+    # 저장 버튼 클릭
+    # ------------------------------------------------------
+    if request.method == "POST":
+
+        price = float(request.form["price"])
+
+        # ----------------------------------------------
+        # 가격 저장
+        # ----------------------------------------------
+        cur.execute("""
+            INSERT INTO wdm_price(price)
+            VALUES(%s)
+            RETURNING id
+        """, (price,))
+
+        new_id = cur.fetchone()["id"]
+
+        conn.commit()
+
+        # ----------------------------------------------
+        # MA20 계산
+        # ----------------------------------------------
+        cur.execute("""
+            SELECT price
+            FROM wdm_price
+            ORDER BY id DESC
+            LIMIT 20
+        """)
+
+        rows = cur.fetchall()
+
+        ma20 = None
+
+        if len(rows) == 20:
+
+            ma20 = sum(float(r["price"]) for r in rows) / 20
+
+        # ----------------------------------------------
+        # MA60 계산
+        # ----------------------------------------------
+        cur.execute("""
+            SELECT price
+            FROM wdm_price
+            ORDER BY id DESC
+            LIMIT 60
+        """)
+
+        rows = cur.fetchall()
+
+        ma60 = None
+
+        if len(rows) == 60:
+
+            ma60 = sum(float(r["price"]) for r in rows) / 60
+
+        # ----------------------------------------------
+        # 이전 MA 조회
+        # ----------------------------------------------
+        cur.execute("""
+            SELECT
+                ma20,
+                ma60
+            FROM wdm_price
+            WHERE id < %s
+            ORDER BY id DESC
+            LIMIT 1
+        """, (new_id,))
+
+        prev = cur.fetchone()
+
+        signal = "HOLD"
+
+        if prev:
+
+            prev20 = prev["ma20"]
+            prev60 = prev["ma60"]
+
+            if None not in (prev20, prev60, ma20, ma60):
+
+                # --------------------------
+                # Golden Cross
+                # --------------------------
+                if prev20 <= prev60 and ma20 > ma60:
+
+                    signal = "BUY"
+
+                # --------------------------
+                # Dead Cross
+                # --------------------------
+                elif prev20 >= prev60 and ma20 < ma60:
+
+                    signal = "SELL"
+
+        # ----------------------------------------------
+        # MA / Signal 업데이트
+        # ----------------------------------------------
+        cur.execute("""
+            UPDATE wdm_price
+            SET
+
+                ma20=%s,
+
+                ma60=%s,
+
+                signal=%s
+
+            WHERE id=%s
+        """, (
+
+            ma20,
+
+            ma60,
+
+            signal,
+
+            new_id
+
+        ))
+
+        conn.commit()
+
+        message = f"WDM Saved ({signal})"
+
+    # ------------------------------------------------------
+    # 최근 데이터 표시
+    # ------------------------------------------------------
+    cur.execute("""
+        SELECT *
+        FROM wdm_price
+        ORDER BY id DESC
+        LIMIT 100
+    """)
+
+    prices = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+
+        "save_wdm_price.html",
+
+        prices=prices,
+
+        live_price=get_wdm_price(),
+
+        message=message
+
+    )
+# ==========================================================
+# WDM Moving Average
+# MA 계산
+# 기존 calculate_wdm_ma() 함수 전체 교체
+# ==========================================================
+
+def calculate_wdm_ma(period):
+
+    conn = get_db()
+
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
     cur.execute("""
         SELECT price
-        FROM eth_price
-        ORDER BY id ASC
-    """)
+        FROM wdm_price
+        ORDER BY id DESC
+        LIMIT %s
+    """, (period,))
 
     rows = cur.fetchall()
 
     cur.close()
     conn.close()
 
-    if len(rows) < period + 1:
+    # ------------------------------------------
+    # 데이터 부족
+    # ------------------------------------------
+    if len(rows) < period:
+
         return None
 
-    prices = pd.Series([float(r["price"]) for r in rows])
+    prices = [float(r["price"]) for r in rows]
 
-    delta = prices.diff()
+    return round(sum(prices) / period, 8)
 
-    gain = delta.clip(lower=0)
 
-    loss = -delta.clip(upper=0)
+# ==========================================================
+# WDM Previous Moving Average
+# 이전 MA 계산
+# 기존 calculate_previous_wdm_ma() 함수 전체 교체
+# ==========================================================
 
-    avg_gain = gain.rolling(period).mean()
+def calculate_previous_wdm_ma(period):
 
-    avg_loss = loss.rolling(period).mean()
+    conn = get_db()
+
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT price
+        FROM wdm_price
+        ORDER BY id DESC
+        LIMIT %s
+    """, (period + 1,))
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    # ------------------------------------------
+    # 데이터 부족
+    # ------------------------------------------
+    if len(rows) < period + 1:
+
+        return None
+
+    # 최근 가격 제외
+    prices = [float(r["price"]) for r in rows[1:]]
+
+    return round(sum(prices) / period, 8)    
+# ==========================================================
+# WDM RSI
+# RSI 계산
+# calculate_previous_wdm_ma() 바로 아래 붙여넣기
+# ==========================================================
+
+def calculate_wdm_rsi(period=14):
+
+    conn = get_db()
+
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    # ------------------------------------------------------
+    # 최근 period+1개의 가격 조회
+    # ------------------------------------------------------
+    cur.execute("""
+        SELECT price
+        FROM wdm_price
+        ORDER BY id DESC
+        LIMIT %s
+    """, (period + 1,))
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    # ------------------------------------------------------
+    # 데이터 부족
+    # ------------------------------------------------------
+    if len(rows) < period + 1:
+
+        return None
+
+    # 오래된 가격 → 최신 가격 순으로 정렬
+    prices = [float(r["price"]) for r in reversed(rows)]
+
+    gains = []
+    losses = []
+
+    # ------------------------------------------------------
+    # 상승 / 하락 계산
+    # ------------------------------------------------------
+    for i in range(1, len(prices)):
+
+        diff = prices[i] - prices[i - 1]
+
+        if diff > 0:
+
+            gains.append(diff)
+            losses.append(0)
+
+        else:
+
+            gains.append(0)
+            losses.append(abs(diff))
+
+    avg_gain = sum(gains) / period
+    avg_loss = sum(losses) / period
+
+    # ------------------------------------------------------
+    # RSI 계산
+    # ------------------------------------------------------
+    if avg_loss == 0:
+
+        return 100
 
     rs = avg_gain / avg_loss
 
     rsi = 100 - (100 / (1 + rs))
 
-    return round(float(rsi.iloc[-1]), 2)
+    return round(rsi, 2)
 
+# ==========================================================
+# WDM Trading Signal
+# ETH generate_signal()과 동일한 구조
+# calculate_wdm_rsi() 아래 붙여넣기
+# ==========================================================
 
+def generate_wdm_signal():
+
+    # ------------------------------------------------------
+    # 지표 계산
+    # ------------------------------------------------------
+    rsi = calculate_wdm_rsi()
+
+    ma20 = calculate_wdm_ma(20)
+
+    ma60 = calculate_wdm_ma(60)
+
+    prev20 = calculate_previous_wdm_ma(20)
+
+    prev60 = calculate_previous_wdm_ma(60)
+
+    signal = "HOLD"
+
+    # ------------------------------------------------------
+    # 데이터 부족
+    # ------------------------------------------------------
+    if None in (rsi, ma20, ma60, prev20, prev60):
+
+        signal = "HOLD"
+
+    else:
+
+        # --------------------------------------------------
+        # GOLDEN CROSS
+        # --------------------------------------------------
+        if prev20 <= prev60 and ma20 > ma60:
+
+            if rsi < 30:
+
+                signal = "BUY"
+
+            else:
+
+                signal = "BUY"
+
+        # --------------------------------------------------
+        # DEAD CROSS
+        # --------------------------------------------------
+        elif prev20 >= prev60 and ma20 < ma60:
+
+            if rsi > 70:
+
+                signal = "SELL"
+
+            else:
+
+                signal = "SELL"
+
+        # --------------------------------------------------
+        # HOLD
+        # --------------------------------------------------
+        else:
+
+            signal = "HOLD"
+
+    # ------------------------------------------------------
+    # 결과 반환
+    # ------------------------------------------------------
+    return {
+
+        "signal": signal,
+
+        "rsi": rsi,
+
+        "ma20": ma20,
+
+        "ma60": ma60
+
+    }
 # ------------------------------------------------------------
 # Moving Average
 # ------------------------------------------------------------
@@ -2683,56 +2981,131 @@ def wdm_chart():
     return render_template("wdm_chart.html")
 
 
-# ------------------------------------------------------------
-# WDM Chart Data API
-# ------------------------------------------------------------
+# ==========================================================
+# WDM Chart Data
+# 기존 wdm_chart_data() 함수 전체 삭제 후 붙여넣기
+# ==========================================================
 
 @app.route("/wdm-chart-data")
 def wdm_chart_data():
 
-    cur = conn.cursor()
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
 
+    # ------------------------------------------------------
+    # 최근 200개 가격 조회
+    # ------------------------------------------------------
     cur.execute("""
-
         SELECT
-
-            created_at,
-
-            price
-
-        FROM
-
-            wdm_price_history
-
-        ORDER BY
-
-            id ASC
-
-        LIMIT 100
-
+            id,
+            price,
+            ma20,
+            ma60,
+            signal,
+            created_at
+        FROM wdm_price
+        ORDER BY id ASC
+        LIMIT 200
     """)
 
     rows = cur.fetchall()
 
     cur.close()
+    conn.close()
 
+    # ------------------------------------------------------
+    # 차트 데이터 생성
+    # ------------------------------------------------------
+    labels = []
+    prices = []
+    ma20 = []
+    ma60 = []
+
+    buy = []
+    sell = []
+
+    golden = []
+    dead = []
+
+    # ------------------------------------------------------
+    # 데이터 변환
+    # ------------------------------------------------------
+    for row in rows:
+
+        labels.append(row["created_at"].strftime("%H:%M"))
+
+        price = float(row["price"])
+
+        prices.append(price)
+
+        ma20.append(
+            float(row["ma20"])
+            if row["ma20"] is not None
+            else None
+        )
+
+        ma60.append(
+            float(row["ma60"])
+            if row["ma60"] is not None
+            else None
+        )
+
+        # BUY
+        if row["signal"] == "BUY":
+
+            buy.append(price)
+
+        else:
+
+            buy.append(None)
+
+        # SELL
+        if row["signal"] == "SELL":
+
+            sell.append(price)
+
+        else:
+
+            sell.append(None)
+
+        # GOLDEN CROSS
+        if row["signal"] == "BUY":
+
+            golden.append(price)
+
+        else:
+
+            golden.append(None)
+
+        # DEAD CROSS
+        if row["signal"] == "SELL":
+
+            dead.append(price)
+
+        else:
+
+            dead.append(None)
+
+    # ------------------------------------------------------
+    # JSON 반환
+    # ------------------------------------------------------
     return jsonify({
 
-        "labels":[
+        "labels": labels,
 
-            row[0].strftime("%H:%M:%S")
+        "prices": prices,
 
-            for row in rows
+        "ma20": ma20,
 
-        ],
+        "ma60": ma60,
 
-        "prices":[
+        "buy": buy,
 
-            float(row[1])
+        "sell": sell,
 
-            for row in rows
+        "golden": golden,
 
-        ]
+        "dead": dead
 
     })
 # ============================================================
