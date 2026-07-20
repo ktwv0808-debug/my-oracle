@@ -13,7 +13,7 @@ import os
 import threading
 import time
 from datetime import datetime
-
+import traceback
 import requests
 import pandas as pd
 
@@ -2989,125 +2989,169 @@ def wdm_chart():
 @app.route("/wdm-chart-data")
 def wdm_chart_data():
 
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+
+        # --------------------------------------------------
+        # PostgreSQL 연결
+        # --------------------------------------------------
+        conn = get_db()
+
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        # --------------------------------------------------
+        # 최근 200개 가격 조회
+        # --------------------------------------------------
+        cur.execute("""
+
+            SELECT
+
+                id,
+
+                price,
+
+                ma20,
+
+                ma60,
+
+                signal,
+
+                created_at
+
+            FROM wdm_price
+
+            ORDER BY id ASC
+
+            LIMIT 200
+
+        """)
+
+        rows = cur.fetchall()
+
+        cur.close()
+
+        conn.close()
+
+        # --------------------------------------------------
+        # Chart 데이터 생성
+        # --------------------------------------------------
+        labels = []
+
+        prices = []
+
+        ma20 = []
+
+        ma60 = []
+
+        buy = []
+
+        sell = []
+
+        golden = []
+
+        dead = []
+
+        # --------------------------------------------------
+        # 데이터 변환
+        # --------------------------------------------------
+        for row in rows:
+
+            # 시간
+            labels.append(str(row["created_at"]))
+
+            # 가격
+            prices.append(
+                float(row["price"])
+                if row["price"] is not None
+                else None
+            )
+
+            # MA20
+            ma20.append(
+                float(row["ma20"])
+                if row["ma20"] is not None
+                else None
+            )
+
+            # MA60
+            ma60.append(
+                float(row["ma60"])
+                if row["ma60"] is not None
+                else None
+            )
+
+            signal = row["signal"]
+
+            # BUY
+            if signal == "BUY":
+
+                buy.append(float(row["price"]))
+
+            else:
+
+                buy.append(None)
+
+            # SELL
+            if signal == "SELL":
+
+                sell.append(float(row["price"]))
+
+            else:
+
+                sell.append(None)
+
+            # GOLDEN
+            if signal == "BUY":
+
+                golden.append(float(row["price"]))
+
+            else:
+
+                golden.append(None)
+
+            # DEAD
+            if signal == "SELL":
+
+                dead.append(float(row["price"]))
+
+            else:
+
+                dead.append(None)
+
+        # --------------------------------------------------
+        # JSON 반환
+        # --------------------------------------------------
+        return jsonify({
+
+            "labels": labels,
+
+            "prices": prices,
+
+            "ma20": ma20,
+
+            "ma60": ma60,
+
+            "buy": buy,
+
+            "sell": sell,
+
+            "golden": golden,
+
+            "dead": dead
+
+        })
 
     # ------------------------------------------------------
-    # 최근 200개 가격 조회
+    # 오류 확인용
     # ------------------------------------------------------
-    cur.execute("""
-        SELECT
-            id,
-            price,
-            ma20,
-            ma60,
-            signal,
-            created_at
-        FROM wdm_price
-        ORDER BY id ASC
-        LIMIT 200
-    """)
+    except Exception as e:
 
-    rows = cur.fetchall()
+        traceback.print_exc()
 
-    cur.close()
-    conn.close()
+        return jsonify({
 
-    # ------------------------------------------------------
-    # 차트 데이터 생성
-    # ------------------------------------------------------
-    labels = []
-    prices = []
-    ma20 = []
-    ma60 = []
+            "error": str(e)
 
-    buy = []
-    sell = []
-
-    golden = []
-    dead = []
-
-    # ------------------------------------------------------
-    # 데이터 변환
-    # ------------------------------------------------------
-    for row in rows:
-
-        labels.append(row["created_at"].strftime("%H:%M"))
-
-        price = float(row["price"])
-
-        prices.append(price)
-
-        ma20.append(
-            float(row["ma20"])
-            if row["ma20"] is not None
-            else None
-        )
-
-        ma60.append(
-            float(row["ma60"])
-            if row["ma60"] is not None
-            else None
-        )
-
-        # BUY
-        if row["signal"] == "BUY":
-
-            buy.append(price)
-
-        else:
-
-            buy.append(None)
-
-        # SELL
-        if row["signal"] == "SELL":
-
-            sell.append(price)
-
-        else:
-
-            sell.append(None)
-
-        # GOLDEN CROSS
-        if row["signal"] == "BUY":
-
-            golden.append(price)
-
-        else:
-
-            golden.append(None)
-
-        # DEAD CROSS
-        if row["signal"] == "SELL":
-
-            dead.append(price)
-
-        else:
-
-            dead.append(None)
-
-    # ------------------------------------------------------
-    # JSON 반환
-    # ------------------------------------------------------
-    return jsonify({
-
-        "labels": labels,
-
-        "prices": prices,
-
-        "ma20": ma20,
-
-        "ma60": ma60,
-
-        "buy": buy,
-
-        "sell": sell,
-
-        "golden": golden,
-
-        "dead": dead
-
-    })
+        }),500
 # ============================================================
 # Database Initialize
 # ============================================================
