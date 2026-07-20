@@ -1,49 +1,29 @@
 <!DOCTYPE html>
-
 <html lang="ko">
 
 <head>
 
 <meta charset="UTF-8">
 
-<title>
-
-WDM Price Chart
-
-</title>
+<title>WDM Chart</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 
 body{
-
     background:#111;
-
     color:white;
-
     font-family:Arial;
-
-    text-align:center;
-
 }
 
 .container{
-
     width:95%;
-
     margin:auto;
-
 }
 
 canvas{
-
-    background:white;
-
-    border-radius:15px;
-
-    padding:20px;
-
+    background:#222;
 }
 
 </style>
@@ -52,75 +32,290 @@ canvas{
 
 <body>
 
-<h2>
-
-📈 WDM Price Chart
-
-</h2>
-
 <div class="container">
 
-<canvas id="chart"></canvas>
+<h2>WDM Trading Chart</h2>
+
+<canvas id="chart" height="120"></canvas>
 
 </div>
 
 <script>
 
-const ctx=document.getElementById("chart");
-
-const chart=new Chart(
-
-ctx,
-
-{
-
-type:"line",
-
-data:{
-
-labels:[],
-
-datasets:[{
-
-label:"WDM",
-
-data:[],
-
-borderWidth:2,
-
-tension:0.3
-
-}]
-
-},
-
-options:{
-
-responsive:true,
-
-animation:false
-
-}
-
-}
-
-);
+let chart = null;
 
 async function loadChart(){
 
-const response=
+    const res = await fetch("/wdm-chart-data");
 
-await fetch("/wdm-chart-data");
+    const data = await res.json();
 
-const data=
+    if(chart != null){
+        chart.destroy();
+    }
 
-await response.json();
+    chart = new Chart(
+        document.getElementById("chart"),
+        {
 
-chart.data.labels=data.labels;
+        type:"line",
 
-chart.data.datasets[0].data=data.prices;
+        data:{
 
-chart.update();
+            labels:data.labels,
+
+            datasets:[
+
+            //--------------------------------
+            // WDM PRICE
+            //--------------------------------
+
+            {
+
+                label:"WDM",
+
+                data:data.prices,
+
+                borderColor:"white",
+
+                backgroundColor:"white",
+
+                borderWidth:2,
+
+                tension:0.2,
+
+                pointRadius:0
+
+            },
+
+            //--------------------------------
+            // MA20
+            //--------------------------------
+
+            {
+
+                label:"MA20",
+
+                data:data.ma20,
+
+                borderColor:"deepskyblue",
+
+                backgroundColor:"deepskyblue",
+
+                borderWidth:2,
+
+                tension:0.2,
+
+                pointRadius:0
+
+            },
+
+            //--------------------------------
+            // MA60
+            //--------------------------------
+
+            {
+
+                label:"MA60",
+
+                data:data.ma60,
+
+                borderColor:"red",
+
+                backgroundColor:"red",
+
+                borderWidth:2,
+
+                tension:0.2,
+
+                pointRadius:0
+
+            },
+
+            //--------------------------------
+            // BUY
+            //--------------------------------
+
+            {
+
+                type:"scatter",
+
+                label:"BUY",
+
+                data:data.buy.map((v,i)=>{
+
+                    if(v==null) return null;
+
+                    return{
+
+                        x:data.labels[i],
+
+                        y:v
+
+                    };
+
+                }),
+
+                pointRadius:8,
+
+                pointStyle:"triangle",
+
+                backgroundColor:"lime"
+
+            },
+
+            //--------------------------------
+            // SELL
+            //--------------------------------
+
+            {
+
+                type:"scatter",
+
+                label:"SELL",
+
+                data:data.sell.map((v,i)=>{
+
+                    if(v==null) return null;
+
+                    return{
+
+                        x:data.labels[i],
+
+                        y:v
+
+                    };
+
+                }),
+
+                pointRadius:8,
+
+                pointStyle:"triangle",
+
+                rotation:180,
+
+                backgroundColor:"red"
+
+            },
+
+            //--------------------------------
+            // GOLDEN CROSS
+            //--------------------------------
+
+            {
+
+                type:"scatter",
+
+                label:"Golden Cross",
+
+                data:data.golden.map((v,i)=>{
+
+                    if(v==null) return null;
+
+                    return{
+
+                        x:data.labels[i],
+
+                        y:v
+
+                    };
+
+                }),
+
+                pointRadius:12,
+
+                pointStyle:"star",
+
+                backgroundColor:"yellow"
+
+            },
+
+            //--------------------------------
+            // DEAD CROSS
+            //--------------------------------
+
+            {
+
+                type:"scatter",
+
+                label:"Dead Cross",
+
+                data:data.dead.map((v,i)=>{
+
+                    if(v==null) return null;
+
+                    return{
+
+                        x:data.labels[i],
+
+                        y:v
+
+                    };
+
+                }),
+
+                pointRadius:12,
+
+                pointStyle:"star",
+
+                backgroundColor:"purple"
+
+            }
+
+            ]
+
+        },
+
+        options:{
+
+            responsive:true,
+
+            interaction:{
+                intersect:false,
+                mode:"index"
+            },
+
+            plugins:{
+
+                legend:{
+                    labels:{
+                        color:"white"
+                    }
+                }
+
+            },
+
+            scales:{
+
+                x:{
+
+                    ticks:{
+                        color:"white"
+                    },
+
+                    grid:{
+                        color:"#444"
+                    }
+
+                },
+
+                y:{
+
+                    ticks:{
+                        color:"white"
+                    },
+
+                    grid:{
+                        color:"#444"
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
 
 }
 
