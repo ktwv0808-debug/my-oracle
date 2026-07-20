@@ -967,45 +967,10 @@ def save_wdm_price():
     # MA60 계산
     ma60 = calculate_wdm_ma(60)
 
-    # 시그널 계산
-    signal_data = generate_wdm_signal()
+   
+    conn.commit()
 
-    # 시그널 가져오기
-    signal = signal_data["signal"]
-
-    # 마지막 저장된 행 업데이트
-    cur.execute("""
-
-        UPDATE wdm_price
-
-        SET
-
-            ma20=%s,
-
-            ma60=%s,
-
-            signal=%s
-
-        WHERE id=(
-
-            SELECT MAX(id)
-
-            FROM wdm_price
-
-        )
-
-    """, (
-
-        ma20,
-
-        ma60,
-
-        signal
-
-    ))
-     conn.commit()
-
-        message = f"WDM Saved ({signal})"
+    message = f"WDM Saved ({signal})"
 
     # ------------------------------------------------------
     # 최근 데이터 표시
