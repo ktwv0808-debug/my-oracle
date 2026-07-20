@@ -5,25 +5,42 @@
 
 <meta charset="UTF-8">
 
-<title>WDM Chart</title>
+<title>WDM Trading Chart</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 
 body{
+
     background:#111;
+
     color:white;
+
     font-family:Arial;
+
+    margin:0;
+
+    padding:20px;
+
 }
 
 .container{
-    width:95%;
+
+    width:98%;
+
     margin:auto;
+
 }
 
 canvas{
-    background:#222;
+
+    background:#ffffff;
+
+    border-radius:10px;
+
+    padding:10px;
+
 }
 
 </style>
@@ -34,279 +51,268 @@ canvas{
 
 <div class="container">
 
-<h2>WDM Trading Chart</h2>
+<h2 align="center">
 
-<canvas id="chart" height="120"></canvas>
+📈 WDM Trading Chart
+
+</h2>
+
+<canvas id="wdmChart"></canvas>
 
 </div>
 
 <script>
 
-let chart = null;
+let chart=null;
 
 async function loadChart(){
 
-    const res = await fetch("/wdm-chart-data");
+    const response=await fetch("/wdm-chart-data");
 
-    const data = await res.json();
+    const data=await response.json();
 
-    if(chart != null){
+    if(chart){
+
         chart.destroy();
+
     }
 
-    chart = new Chart(
-        document.getElementById("chart"),
+    chart=new Chart(
+
+        document.getElementById("wdmChart"),
+
         {
 
-        type:"line",
+            type:"line",
 
-        data:{
+            data:{
 
-            labels:data.labels,
+                labels:data.labels,
 
-            datasets:[
+                datasets:[
 
-            //--------------------------------
-            // WDM PRICE
-            //--------------------------------
+                {
 
-            {
+                    label:"WDM",
 
-                label:"WDM",
+                    data:data.prices,
 
-                data:data.prices,
+                    borderColor:"blue",
 
-                borderColor:"white",
+                    backgroundColor:"blue",
 
-                backgroundColor:"white",
+                    borderWidth:2,
 
-                borderWidth:2,
+                    tension:0.2,
 
-                tension:0.2,
+                    pointRadius:0
 
-                pointRadius:0
+                },
 
-            },
+                {
 
-            //--------------------------------
-            // MA20
-            //--------------------------------
+                    label:"MA20",
 
-            {
+                    data:data.ma20,
 
-                label:"MA20",
+                    borderColor:"orange",
 
-                data:data.ma20,
+                    backgroundColor:"orange",
 
-                borderColor:"deepskyblue",
+                    borderWidth:2,
 
-                backgroundColor:"deepskyblue",
+                    tension:0.2,
 
-                borderWidth:2,
+                    pointRadius:0
 
-                tension:0.2,
+                },
 
-                pointRadius:0
+                {
 
-            },
+                    label:"MA60",
 
-            //--------------------------------
-            // MA60
-            //--------------------------------
+                    data:data.ma60,
 
-            {
+                    borderColor:"red",
 
-                label:"MA60",
+                    backgroundColor:"red",
 
-                data:data.ma60,
+                    borderWidth:2,
 
-                borderColor:"red",
+                    tension:0.2,
 
-                backgroundColor:"red",
+                    pointRadius:0
 
-                borderWidth:2,
+                },
 
-                tension:0.2,
+                {
 
-                pointRadius:0
+                    type:"scatter",
 
-            },
+                    label:"BUY",
 
-            //--------------------------------
-            // BUY
-            //--------------------------------
+                    data:data.buy.map((v,i)=>{
 
-            {
+                        if(v==null) return null;
 
-                type:"scatter",
+                        return{
 
-                label:"BUY",
+                            x:data.labels[i],
 
-                data:data.buy.map((v,i)=>{
+                            y:v
 
-                    if(v==null) return null;
+                        };
 
-                    return{
+                    }),
 
-                        x:data.labels[i],
+                    pointRadius:8,
 
-                        y:v
+                    pointBackgroundColor:"lime"
 
-                    };
+                },
 
-                }),
+                {
 
-                pointRadius:8,
+                    type:"scatter",
 
-                pointStyle:"triangle",
+                    label:"SELL",
 
-                backgroundColor:"lime"
+                    data:data.sell.map((v,i)=>{
 
-            },
+                        if(v==null) return null;
 
-            //--------------------------------
-            // SELL
-            //--------------------------------
+                        return{
 
-            {
+                            x:data.labels[i],
 
-                type:"scatter",
+                            y:v
 
-                label:"SELL",
+                        };
 
-                data:data.sell.map((v,i)=>{
+                    }),
 
-                    if(v==null) return null;
+                    pointRadius:8,
 
-                    return{
+                    pointBackgroundColor:"red"
 
-                        x:data.labels[i],
+                },
 
-                        y:v
+                {
 
-                    };
+                    type:"scatter",
 
-                }),
+                    label:"Golden Cross",
 
-                pointRadius:8,
+                    data:data.golden.map((v,i)=>{
 
-                pointStyle:"triangle",
+                        if(v==null) return null;
 
-                rotation:180,
+                        return{
 
-                backgroundColor:"red"
+                            x:data.labels[i],
 
-            },
+                            y:v
 
-            //--------------------------------
-            // GOLDEN CROSS
-            //--------------------------------
+                        };
 
-            {
+                    }),
 
-                type:"scatter",
+                    pointRadius:10,
 
-                label:"Golden Cross",
+                    pointBackgroundColor:"gold"
 
-                data:data.golden.map((v,i)=>{
+                },
 
-                    if(v==null) return null;
+                {
 
-                    return{
+                    type:"scatter",
 
-                        x:data.labels[i],
+                    label:"Dead Cross",
 
-                        y:v
+                    data:data.dead.map((v,i)=>{
 
-                    };
+                        if(v==null) return null;
 
-                }),
+                        return{
 
-                pointRadius:12,
+                            x:data.labels[i],
 
-                pointStyle:"star",
+                            y:v
 
-                backgroundColor:"yellow"
+                        };
 
-            },
+                    }),
 
-            //--------------------------------
-            // DEAD CROSS
-            //--------------------------------
+                    pointRadius:10,
 
-            {
+                    pointBackgroundColor:"black"
 
-                type:"scatter",
-
-                label:"Dead Cross",
-
-                data:data.dead.map((v,i)=>{
-
-                    if(v==null) return null;
-
-                    return{
-
-                        x:data.labels[i],
-
-                        y:v
-
-                    };
-
-                }),
-
-                pointRadius:12,
-
-                pointStyle:"star",
-
-                backgroundColor:"purple"
-
-            }
-
-            ]
-
-        },
-
-        options:{
-
-            responsive:true,
-
-            interaction:{
-                intersect:false,
-                mode:"index"
-            },
-
-            plugins:{
-
-                legend:{
-                    labels:{
-                        color:"white"
-                    }
                 }
 
+                ]
+
             },
 
-            scales:{
+            options:{
 
-                x:{
+                responsive:true,
 
-                    ticks:{
-                        color:"white"
-                    },
+                animation:false,
 
-                    grid:{
-                        color:"#444"
+                interaction:{
+
+                    mode:"index",
+
+                    intersect:false
+
+                },
+
+                plugins:{
+
+                    legend:{
+
+                        labels:{
+
+                            color:"white"
+
+                        }
+
                     }
 
                 },
 
-                y:{
+                scales:{
 
-                    ticks:{
-                        color:"white"
+                    x:{
+
+                        ticks:{
+
+                            color:"white"
+
+                        },
+
+                        grid:{
+
+                            color:"#444"
+
+                        }
+
                     },
 
-                    grid:{
-                        color:"#444"
+                    y:{
+
+                        ticks:{
+
+                            color:"white"
+
+                        },
+
+                        grid:{
+
+                            color:"#444"
+
+                        }
+
                     }
 
                 }
@@ -315,7 +321,7 @@ async function loadChart(){
 
         }
 
-    });
+    );
 
 }
 
