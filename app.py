@@ -955,7 +955,54 @@ def save_wdm_price():
             new_id
 
         ))
+    # ==========================================================
+    # MA20 / MA60 / SIGNAL 저장
+    # 방금 저장한 WDM 가격에 이동평균과 시그널 업데이트
+    # 붙여넣는 위치 : conn.commit() 바로 위
+    # ==========================================================
 
+    # MA20 계산
+    ma20 = calculate_wdm_ma(20)
+
+    # MA60 계산
+    ma60 = calculate_wdm_ma(60)
+
+    # 시그널 계산
+    signal_data = generate_wdm_signal()
+
+    # 시그널 가져오기
+    signal = signal_data["signal"]
+
+    # 마지막 저장된 행 업데이트
+    cur.execute("""
+
+        UPDATE wdm_price
+
+        SET
+
+            ma20=%s,
+
+            ma60=%s,
+
+            signal=%s
+
+        WHERE id=(
+
+            SELECT MAX(id)
+
+            FROM wdm_price
+
+        )
+
+    """, (
+
+        ma20,
+
+        ma60,
+
+        signal
+
+    ))
         conn.commit()
 
         message = f"WDM Saved ({signal})"
