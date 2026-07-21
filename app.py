@@ -2923,6 +2923,16 @@ def admin_login():
     return render_template(
         "admin_login.html"
     )
+
+# ------------------------------------------------------------
+# Admin Logout
+# ------------------------------------------------------------
+@app.route("/admin/logout")
+def admin_logout():
+
+    session.clear()
+
+    return redirect("/admin/login")
 # ------------------------------------------------------------
 # Donation Management
 # 기부 보고서 관리자 페이지
