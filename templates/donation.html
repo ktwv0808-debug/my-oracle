@@ -633,75 +633,25 @@ Transaction Proof
 
 
 
-<tr>
+<tbody>
 
-
-<td>
-
-Q1 2026
-
-</td>
-
-
-<td>
-
-0 ETH
-
-</td>
-
-
-<td>
-
-0 ETH
-
-</td>
-
-
-<td>
-
-Preparing
-
-</td>
-
-
-</tr>
-
-
-
-
+{% for d in donations %}
 
 <tr>
 
+    <td>{{ d.quarter }}</td>
 
-<td>
+    <td>{{ d.net_profit }}</td>
 
-Q2 2026
+    <td>{{ d.donation }}</td>
 
-</td>
-
-
-<td>
-
-0 ETH
-
-</td>
-
-
-<td>
-
-0 ETH
-
-</td>
-
-
-<td>
-
-Preparing
-
-</td>
-
+    <td>{{ d.proof }}</td>
 
 </tr>
+
+{% endfor %}
+
+</tbody>
 
 
 
