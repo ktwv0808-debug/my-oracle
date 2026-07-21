@@ -6,7 +6,8 @@ from flask import (
     Flask,
     render_template,
     request,
-    jsonify
+    redirect,
+    session
 )
 
 import os
@@ -27,6 +28,10 @@ from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 
+# ------------------------------------------------------------
+# Session 암호키
+# ------------------------------------------------------------
+app.secret_key = "WDM_ADMIN_SECRET_KEY_2026"
 # ============================================================
 # PART 2 : PostgreSQL
 # ============================================================
@@ -2566,6 +2571,18 @@ def auto_trade(signal_data=None):
         print("UNKNOWN SIGNAL :", signal)
 
         return False
+
+# ------------------------------------------------------------
+# Admin Check
+# ------------------------------------------------------------
+
+def admin_required():
+
+    if not session.get("admin"):
+
+        return False
+
+    return True
 # ==========================================================
 # PART 7  Routes
 # ==========================================================
@@ -2866,7 +2883,45 @@ def portfolio():
 @app.route("/swap")
 def swap():
     return render_template("swap.html")
+# ------------------------------------------------------------
+# Admin Login
+# ------------------------------------------------------------
 
+@app.route("/admin/login", methods=["GET","POST"])
+def admin_login():
+
+    if request.method == "POST":
+
+        username = request.form["username"]
+
+        password = request.form["password"]
+
+
+        # 관리자 계정
+        if (
+            username == "admin"
+            and password == "1234"
+        ):
+
+            session["admin"] = True
+
+            return redirect(
+                "/admin/donation"
+            )
+
+
+        else:
+
+            return """
+            <h3>
+            Login Failed
+            </h3>
+            """
+
+
+    return render_template(
+        "admin_login.html"
+    )
 # ------------------------------------------------------------
 # Donation Management
 # 기부 보고서 관리자 페이지
@@ -2874,6 +2929,14 @@ def swap():
 
 @app.route("/admin/donation")
 def admin_donation():
+
+
+    if not admin_required():
+
+        return redirect(
+            "/admin/login"
+        )
+
 
     donations = fetch_all(
         """
@@ -2891,10 +2954,20 @@ def admin_donation():
 
 # ------------------------------------------------------------
 # Donation 추가
+# 관리자 로그인 필요
 # ------------------------------------------------------------
 
 @app.route("/admin/donation/add", methods=["POST"])
 def add_donation():
+
+
+    # 관리자 확인
+    if not admin_required():
+
+        return redirect(
+            "/admin/login"
+        )
+
 
     quarter = request.form["quarter"]
 
@@ -2905,7 +2978,9 @@ def add_donation():
     proof = request.form["proof"]
 
 
+
     execute(
+
         """
         INSERT INTO donation_records
         (
@@ -2914,26 +2989,44 @@ def add_donation():
             donation,
             proof
         )
+
         VALUES
         (%s,%s,%s,%s)
+
         """,
+
         (
             quarter,
             net_profit,
             donation,
             proof
         )
+
     )
 
 
-    return redirect("/admin/donation")
+    return redirect(
+        "/admin/donation"
+    )
+
+
 
 # ------------------------------------------------------------
 # Donation 수정
+# 관리자 로그인 필요
 # ------------------------------------------------------------
 
 @app.route("/admin/donation/edit/<int:id>", methods=["POST"])
 def edit_donation(id):
+
+
+    # 관리자 확인
+    if not admin_required():
+
+        return redirect(
+            "/admin/login"
+        )
+
 
 
     quarter = request.form["quarter"]
@@ -2945,49 +3038,85 @@ def edit_donation(id):
     proof = request.form["proof"]
 
 
+
     execute(
+
         """
         UPDATE donation_records
 
         SET
+
             quarter=%s,
+
             net_profit=%s,
+
             donation=%s,
+
             proof=%s
+
 
         WHERE id=%s
 
         """,
+
         (
+
             quarter,
+
             net_profit,
+
             donation,
+
             proof,
+
             id
+
         )
+
     )
 
 
-    return redirect("/admin/donation")
+    return redirect(
+        "/admin/donation"
+    )
+
+
 
 # ------------------------------------------------------------
 # Donation 삭제
+# 관리자 로그인 필요
 # ------------------------------------------------------------
 
 @app.route("/admin/donation/delete/<int:id>")
 def delete_donation(id):
 
 
+    # 관리자 확인
+    if not admin_required():
+
+        return redirect(
+            "/admin/login"
+        )
+
+
+
     execute(
+
         """
         DELETE FROM donation_records
+
         WHERE id=%s
+
         """,
+
         (id,)
+
     )
 
 
-    return redirect("/admin/donation")
+    return redirect(
+        "/admin/donation"
+    )
 # -----------------------------
 # Chart
 # -----------------------------
