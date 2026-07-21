@@ -649,7 +649,7 @@ def insert_test_data():
         ('2026 Q2',0,0,'Preparing')
 
         """)
-     keep_latest_rows("donation_records")
+    keep_latest_rows("donation_records")
     # --------------------------------------------------------
     # WDM
     # --------------------------------------------------------
