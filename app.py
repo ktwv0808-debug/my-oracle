@@ -3086,27 +3086,16 @@ def admin_donation():
 @app.route("/admin/donation/add", methods=["POST"])
 def add_donation():
 
-
-    # 관리자 확인
     if not admin_required():
 
-        return redirect(
-            "/admin/login"
-        )
-
+        return redirect("/admin/login")
 
     quarter = request.form["quarter"]
-
     net_profit = request.form["net_profit"]
-
     donation = request.form["donation"]
-
     proof = request.form["proof"]
 
-
-
     execute(
-
         """
         INSERT INTO donation_records
         (
@@ -3115,32 +3104,20 @@ def add_donation():
             donation,
             proof
         )
-
         VALUES
         (%s,%s,%s,%s)
-
         """,
-
         (
             quarter,
             net_profit,
             donation,
             proof
         )
-
-    )
-# ------------------------------------------------------------
-# 최대 10000개만 유지
-# ------------------------------------------------------------
-
-keep_latest_rows(
-    "donation_records"
-)
-
-    return redirect(
-        "/admin/donation"
     )
 
+    keep_latest_rows("donation_records")
+
+    return redirect("/admin/donation")
 
 
 # ------------------------------------------------------------
