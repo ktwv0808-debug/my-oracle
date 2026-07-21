@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Donation Management</title>
+
+<link 
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+rel="stylesheet">
+
+</head>
+
+
+<body class="container mt-5">
+
+
+<h2>
+Quarterly Donation Report 관리
+</h2>
+
+
+<hr>
+
+
+<!-- 입력 -->
+
+<h4>Donation 추가</h4>
+
+
+<form action="/admin/donation/add" method="POST">
+
+
+<input 
+class="form-control mb-2"
+name="quarter"
+placeholder="Q3 2026">
+
+
+<input 
+class="form-control mb-2"
+name="net_profit"
+placeholder="Net Profit ETH">
+
+
+<input 
+class="form-control mb-2"
+name="donation"
+placeholder="Donation ETH">
+
+
+<input 
+class="form-control mb-2"
+name="proof"
+placeholder="Transaction Proof">
+
+
+<button class="btn btn-primary">
+
+추가
+
+</button>
+
+
+</form>
+
+
+<hr>
+
+
+<table class="table table-bordered">
+
+
+<tr>
+
+<th>Quarter</th>
+
+<th>Net Profit</th>
+
+<th>Donation</th>
+
+<th>Proof</th>
+
+<th>관리</th>
+
+</tr>
+
+
+
+{% for d in donations %}
+
+
+<tr>
+
+
+<form action="/admin/donation/edit/{{d.id}}" method="POST">
+
+
+<td>
+
+<input 
+class="form-control"
+name="quarter"
+value="{{d.quarter}}">
+
+</td>
+
+
+
+<td>
+
+<input
+class="form-control"
+name="net_profit"
+value="{{d.net_profit}}">
+
+</td>
+
+
+
+<td>
+
+<input
+class="form-control"
+name="donation"
+value="{{d.donation}}">
+
+</td>
+
+
+
+<td>
+
+<input
+class="form-control"
+name="proof"
+value="{{d.proof}}">
+
+</td>
+
+
+
+<td>
+
+
+<button class="btn btn-success btn-sm">
+
+수정
+
+</button>
+
+
+</form>
+
+
+<a 
+href="/admin/donation/delete/{{d.id}}"
+class="btn btn-danger btn-sm">
+
+삭제
+
+</a>
+
+
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+</table>
+
+
+</body>
+
+</html>
