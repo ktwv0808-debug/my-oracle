@@ -360,7 +360,25 @@ def init_db():
 
     )
     """)
-    
+    cur.execute("""
+
+    CREATE TABLE IF NOT EXISTS community_links(
+
+        id SERIAL PRIMARY KEY,
+
+        telegram TEXT,
+
+        discord TEXT,
+
+        twitter TEXT,
+
+        youtube TEXT,
+
+        website TEXT
+
+    )
+
+    """)
     conn.commit()
 
     cur.close()
@@ -547,6 +565,62 @@ def insert_default_meme():
     cur.close()
 
     conn.close()
+
+# ------------------------------------------------------------
+# Insert Default Community
+# ------------------------------------------------------------
+
+def insert_default_community():
+
+    conn = get_db()
+
+    cur = conn.cursor()
+
+    cur.execute("""
+
+        INSERT INTO community_links
+        (
+
+            telegram,
+
+            discord,
+
+            twitter,
+
+            youtube,
+
+            website
+
+        )
+
+        SELECT
+
+            '',
+
+            '',
+
+            '',
+
+            '',
+
+            ''
+
+        WHERE NOT EXISTS
+        (
+
+            SELECT 1
+
+            FROM community_links
+
+        )
+
+    """)
+
+    conn.commit()
+
+    cur.close()
+
+    conn.close()
 # ------------------------------------------------------------
 # Insert Test Data
 # ------------------------------------------------------------
@@ -649,7 +723,7 @@ def insert_test_data():
         ('2026 Q2',0,0,'Preparing')
 
         """)
-    keep_latest_rows("donation_records")
+  
     # --------------------------------------------------------
     # WDM
     # --------------------------------------------------------
@@ -3055,7 +3129,13 @@ def add_donation():
         )
 
     )
+# ------------------------------------------------------------
+# 최대 10000개만 유지
+# ------------------------------------------------------------
 
+keep_latest_rows(
+    "donation_records"
+)
 
     return redirect(
         "/admin/donation"
@@ -3554,7 +3634,7 @@ def wdm_chart_data():
 
 init_db()
 
-
+insert_default_community()
 
 insert_default_portfolio()
 
