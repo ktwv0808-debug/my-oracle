@@ -3403,6 +3403,31 @@ def save_community():
     return redirect(
         "/admin/community"
     )
+
+# ------------------------------------------------------------
+# Community
+# ------------------------------------------------------------
+
+@app.route("/community")
+def community():
+
+    community = fetch_one(
+        """
+        SELECT *
+
+        FROM community_links
+
+        LIMIT 1
+        """
+    )
+
+    return render_template(
+
+        "community.html",
+
+        community=community
+
+    )
 # -----------------------------
 # Chart
 # -----------------------------
