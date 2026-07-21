@@ -2866,6 +2866,128 @@ def portfolio():
 @app.route("/swap")
 def swap():
     return render_template("swap.html")
+
+# ------------------------------------------------------------
+# Donation Management
+# 기부 보고서 관리자 페이지
+# ------------------------------------------------------------
+
+@app.route("/admin/donation")
+def admin_donation():
+
+    donations = fetch_all(
+        """
+        SELECT *
+        FROM donation_records
+        ORDER BY id DESC
+        """
+    )
+
+
+    return render_template(
+        "admin_donation.html",
+        donations=donations
+    )
+
+# ------------------------------------------------------------
+# Donation 추가
+# ------------------------------------------------------------
+
+@app.route("/admin/donation/add", methods=["POST"])
+def add_donation():
+
+    quarter = request.form["quarter"]
+
+    net_profit = request.form["net_profit"]
+
+    donation = request.form["donation"]
+
+    proof = request.form["proof"]
+
+
+    execute(
+        """
+        INSERT INTO donation_records
+        (
+            quarter,
+            net_profit,
+            donation,
+            proof
+        )
+        VALUES
+        (%s,%s,%s,%s)
+        """,
+        (
+            quarter,
+            net_profit,
+            donation,
+            proof
+        )
+    )
+
+
+    return redirect("/admin/donation")
+
+# ------------------------------------------------------------
+# Donation 수정
+# ------------------------------------------------------------
+
+@app.route("/admin/donation/edit/<int:id>", methods=["POST"])
+def edit_donation(id):
+
+
+    quarter = request.form["quarter"]
+
+    net_profit = request.form["net_profit"]
+
+    donation = request.form["donation"]
+
+    proof = request.form["proof"]
+
+
+    execute(
+        """
+        UPDATE donation_records
+
+        SET
+            quarter=%s,
+            net_profit=%s,
+            donation=%s,
+            proof=%s
+
+        WHERE id=%s
+
+        """,
+        (
+            quarter,
+            net_profit,
+            donation,
+            proof,
+            id
+        )
+    )
+
+
+    return redirect("/admin/donation")
+
+# ------------------------------------------------------------
+# Donation 삭제
+# ------------------------------------------------------------
+
+@app.route("/admin/donation/delete/<int:id>")
+def delete_donation(id):
+
+
+    execute(
+        """
+        DELETE FROM donation_records
+        WHERE id=%s
+        """,
+        (id,)
+    )
+
+
+    return redirect("/admin/donation")
 # -----------------------------
 # Chart
 # -----------------------------
