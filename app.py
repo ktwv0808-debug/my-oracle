@@ -2612,7 +2612,30 @@ def home():
         "donation.html",
         donations=donations
     )
+# ------------------------------------------------------------
+# Donation
+# ------------------------------------------------------------
+@app.route("/donation")
+def donation():
 
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT *
+        FROM donation_records
+        ORDER BY id DESC
+    """)
+
+    donations = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "donation.html",
+        donations=donations
+    )
 
 
 # -----------------------------
