@@ -3226,6 +3226,183 @@ def delete_donation(id):
     return redirect(
         "/admin/donation"
     )
+
+# ------------------------------------------------------------
+# Community Management
+# 관리자 페이지
+# ------------------------------------------------------------
+
+@app.route("/admin/community")
+def admin_community():
+
+    # --------------------------------------------------------
+    # 관리자 로그인 확인
+    # --------------------------------------------------------
+
+    if not admin_required():
+
+        return redirect(
+            "/admin/login"
+        )
+
+
+    community = fetch_one(
+        """
+        SELECT *
+
+        FROM community_links
+
+        LIMIT 1
+        """
+    )
+
+
+    return render_template(
+
+        "admin_community.html",
+
+        community=community
+
+    )
+
+
+# ------------------------------------------------------------
+# Community 저장
+# 관리자 로그인 필요
+# ------------------------------------------------------------
+
+@app.route(
+    "/admin/community/save",
+    methods=["POST"]
+)
+def save_community():
+
+    # --------------------------------------------------------
+    # 관리자 로그인 확인
+    # --------------------------------------------------------
+
+    if not admin_required():
+
+        return redirect(
+            "/admin/login"
+        )
+
+
+    telegram = request.form["telegram"]
+
+    discord = request.form["discord"]
+
+    twitter = request.form["twitter"]
+
+    youtube = request.form["youtube"]
+
+    website = request.form["website"]
+
+
+    row = fetch_one(
+        """
+        SELECT id
+
+        FROM community_links
+
+        LIMIT 1
+        """
+    )
+
+
+    # --------------------------------------------------------
+    # 데이터가 없으면 INSERT
+    # --------------------------------------------------------
+
+    if row is None:
+
+        execute(
+            """
+            INSERT INTO community_links
+            (
+
+                telegram,
+
+                discord,
+
+                twitter,
+
+                youtube,
+
+                website
+
+            )
+
+            VALUES
+            (%s,%s,%s,%s,%s)
+
+            """,
+
+            (
+
+                telegram,
+
+                discord,
+
+                twitter,
+
+                youtube,
+
+                website
+
+            )
+
+        )
+
+
+    # --------------------------------------------------------
+    # 데이터가 있으면 UPDATE
+    # --------------------------------------------------------
+
+    else:
+
+        execute(
+            """
+            UPDATE community_links
+
+            SET
+
+                telegram=%s,
+
+                discord=%s,
+
+                twitter=%s,
+
+                youtube=%s,
+
+                website=%s
+
+            WHERE id=%s
+
+            """,
+
+            (
+
+                telegram,
+
+                discord,
+
+                twitter,
+
+                youtube,
+
+                website,
+
+                row["id"]
+
+            )
+
+        )
+
+
+    return redirect(
+        "/admin/community"
+    )
 # -----------------------------
 # Chart
 # -----------------------------
