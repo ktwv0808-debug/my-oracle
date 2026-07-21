@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title>Community Management</title>
+
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+</head>
+
+<body class="bg-light">
+
+<div class="container mt-4">
+
+    <!-- ============================================ -->
+    <!-- Header -->
+    <!-- ============================================ -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <h2>
+            🌐 Community Management
+        </h2>
+
+        <a href="/"
+           class="btn btn-secondary">
+
+            ✖ Close
+
+        </a>
+
+    </div>
+
+
+    <!-- ============================================ -->
+    <!-- Form Start -->
+    <!-- ============================================ -->
+
+    <form action="/admin/community/save"
+          method="POST">
+
+
+        <!-- ======================================== -->
+        <!-- Telegram -->
+        <!-- ======================================== -->
+
+        <div class="card mb-3">
+
+            <div class="card-header">
+
+                Telegram
+
+            </div>
+
+            <div class="card-body">
+
+                <label class="form-label">
+
+                    Telegram URL
+
+                </label>
+
+                <input
+                    type="text"
+                    name="telegram"
+                    class="form-control"
+
+                    value="{% if community %}
+                           {{ community.telegram }}
+                           {% endif %}"
+
+                    placeholder="https://t.me/yourgroup"
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- ======================================== -->
+        <!-- Discord -->
+        <!-- ======================================== -->
+
+        <div class="card mb-3">
+
+            <div class="card-header">
+
+                Discord
+
+            </div>
+
+            <div class="card-body">
+
+                <label class="form-label">
+
+                    Discord URL
+
+                </label>
+
+                <input
+                    type="text"
+                    name="discord"
+                    class="form-control"
+
+                    value="{% if community %}
+                           {{ community.discord }}
+                           {% endif %}"
+
+                    placeholder="https://discord.gg/xxxx"
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- ======================================== -->
+        <!-- X (Twitter) -->
+        <!-- ======================================== -->
+
+        <div class="card mb-3">
+
+            <div class="card-header">
+
+                X (Twitter)
+
+            </div>
+
+            <div class="card-body">
+
+                <label class="form-label">
+
+                    X URL
+
+                </label>
+
+                <input
+                    type="text"
+                    name="twitter"
+                    class="form-control"
+
+                    value="{% if community %}
+                           {{ community.twitter }}
+                           {% endif %}"
+
+                    placeholder="https://x.com/youraccount"
+                >
+
+            </div>
+
+        </div>
+           <!-- ======================================== -->
+        <!-- YouTube -->
+        <!-- ======================================== -->
+
+        <div class="card mb-3">
+
+            <div class="card-header">
+
+                YouTube
+
+            </div>
+
+            <div class="card-body">
+
+                <label class="form-label">
+
+                    YouTube URL
+
+                </label>
+
+                <input
+                    type="text"
+                    name="youtube"
+                    class="form-control"
+
+                    value="{% if community %}
+                           {{ community.youtube }}
+                           {% endif %}"
+
+                    placeholder="https://youtube.com/@yourchannel"
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- ======================================== -->
+        <!-- Website -->
+        <!-- ======================================== -->
+
+        <div class="card mb-4">
+
+            <div class="card-header">
+
+                Website
+
+            </div>
+
+            <div class="card-body">
+
+                <label class="form-label">
+
+                    Website URL
+
+                </label>
+
+                <input
+                    type="text"
+                    name="website"
+                    class="form-control"
+
+                    value="{% if community %}
+                           {{ community.website }}
+                           {% endif %}"
+
+                    placeholder="https://yourwebsite.com"
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- ======================================== -->
+        <!-- Save Button -->
+        <!-- ======================================== -->
+
+        <div class="text-center mb-4">
+
+            <button
+                type="submit"
+                class="btn btn-success btn-lg">
+
+                💾 Save Community Links
+
+            </button>
+
+            <a
+                href="/admin/donation"
+                class="btn btn-secondary btn-lg ms-2">
+
+                ← Back
+
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- Bootstrap JS -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>
