@@ -1201,6 +1201,67 @@ def generate_wdm_signal():
 
     }
 # ------------------------------------------------------------
+# RSI 계산
+# ------------------------------------------------------------
+def calculate_rsi(period=14):
+
+    prices = fetch_all(
+        """
+        SELECT price
+        FROM eth_price
+        ORDER BY id ASC
+        """
+    )
+
+
+    if len(prices) < period + 1:
+
+        return None
+
+
+    close_prices = [
+        float(row["price"])
+        for row in prices
+    ]
+
+
+    import pandas as pd
+
+
+    series = pd.Series(close_prices)
+
+
+    delta = series.diff()
+
+
+    gain = delta.clip(lower=0)
+
+    loss = -delta.clip(upper=0)
+
+
+    avg_gain = gain.rolling(
+        window=period
+    ).mean()
+
+
+    avg_loss = loss.rolling(
+        window=period
+    ).mean()
+
+
+    rs = avg_gain / avg_loss
+
+
+    rsi = 100 - (
+        100 / (1 + rs)
+    )
+
+
+    return round(
+        float(rsi.iloc[-1]),
+        2
+    )   
+# ------------------------------------------------------------
 # Moving Average
 # ------------------------------------------------------------
 
