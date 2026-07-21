@@ -2646,13 +2646,31 @@ def trading():
     return render_template("trading.html")
 
 
-# -----------------------------
+# ------------------------------------------------------------
 # Whitepaper
-# -----------------------------
+# ------------------------------------------------------------
 @app.route("/whitepaper")
 def whitepaper():
-    return render_template("whitepaper.html")
 
+    conn = get_db()
+
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT *
+        FROM donation_records
+        ORDER BY id DESC
+    """)
+
+    donations = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "whitepaper.html",
+        donations=donations
+    )
 
 # -----------------------------
 # Poem
