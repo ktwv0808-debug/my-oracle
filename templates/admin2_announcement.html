@@ -321,10 +321,10 @@ Action
 
     &nbsp;&nbsp;
 
-    <a href="/announcement/delete/{{ row.id }}">
-        Delete
-    </a>
-
+   <a href="/admin2/announcement/delete/{{ row.id }}"
+   onclick="return confirm('Delete this announcement?')">
+    Delete
+</a>
 </td>
 
 </tr>
