@@ -3274,6 +3274,34 @@ def announcement_add():
         return redirect("/announcement")
 
     return render_template("announcement_add.html")
+
+# ==========================================================
+# Announcement Edit
+# 공지 수정
+# ==========================================================
+
+@app.route("/announcement/edit/<int:id>", methods=["GET", "POST"])
+def edit_announcement_route(id):
+
+    if request.method == "POST":
+
+        title = request.form["title"]
+
+        content = request.form["content"]
+
+        update_announcement(id, title, content)
+
+        return redirect("/announcement")
+
+    row = get_announcement(id)
+
+    return render_template(
+
+        "announcement_edit.html",
+
+        row=row
+
+    )    
 # ------------------------------------------------------------
 # Admin Login
 # ------------------------------------------------------------
