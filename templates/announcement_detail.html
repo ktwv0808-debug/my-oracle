@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Announcement</title>
+
+<style>
+
+body{
+
+    background:#111;
+
+    color:white;
+
+    font-family:Arial;
+
+}
+
+.container{
+
+    width:80%;
+
+    margin:auto;
+
+}
+
+a{
+
+    color:cyan;
+
+    text-decoration:none;
+
+}
+
+.card{
+
+    background:#222;
+
+    padding:25px;
+
+    border-radius:10px;
+
+}
+
+pre{
+
+    white-space:pre-wrap;
+
+    color:white;
+
+    font-family:Arial;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Announcement</h2>
+
+<div class="card">
+
+<h3>{{ row.title }}</h3>
+
+<hr>
+
+<pre>{{ row.content }}</pre>
+
+<br>
+
+<p>
+
+Created :
+
+{{ row.created_at }}
+
+</p>
+
+</div>
+
+<br>
+
+<a href="/announcement">
+
+← Back to List
+
+</a>
+
+</div>
+
+</body>
+
+</html>
