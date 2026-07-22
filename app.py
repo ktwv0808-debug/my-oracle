@@ -33,7 +33,16 @@ app = Flask(__name__)
 # Session 암호키
 # ------------------------------------------------------------
 app.secret_key = "WDM_ADMIN_SECRET_KEY_2026"
+# ==========================================================
+# Announcement Admin Account
+# 공지사항 관리자 계정
+# 붙여넣기 위치 :
+# app.secret_key 바로 아래
+# ==========================================================
 
+ADMIN2_ID = "admin"
+
+ADMIN2_PASSWORD = "1234"
 # ============================================================
 # PART 2 : PostgreSQL
 # ============================================================
@@ -3253,7 +3262,50 @@ def announcement():
         announcements=announcements
 
     )
+# ==========================================================
+# Announcement Admin Login
+# 공지사항 관리자 로그인
+# ==========================================================
 
+@app.route("/admin/login2", methods=["GET", "POST"])
+def admin_login2():
+
+    if request.method == "POST":
+
+        userid = request.form["userid"]
+        password = request.form["password"]
+
+        if userid == ADMIN2_ID and password == ADMIN2_PASSWORD:
+
+            session["admin2"] = True
+
+            return redirect("/admin/dashboard2")
+
+    return render_template("admin_login2.html")
+
+# ==========================================================
+# Announcement Admin Dashboard
+# ==========================================================
+
+@app.route("/admin/dashboard2")
+def admin_dashboard2():
+
+    if not session.get("admin2"):
+
+        return redirect("/admin/login2")
+
+    return render_template("admin_dashboard2.html")  
+
+# ==========================================================
+# Announcement Admin Logout
+# ==========================================================
+
+@app.route("/admin/logout2")
+def admin_logout2():
+
+    session.pop("admin2", None)
+
+    return redirect("/admin/login2")
 # ==========================================================
 # Announcement Add
 # 관리자 공지 등록
@@ -3264,10 +3316,15 @@ def announcement():
 @app.route("/announcement/add", methods=["GET", "POST"])
 def announcement_add():
 
+    # ----------------------------------------------------------
+    # 관리자 로그인 확인
+    # ----------------------------------------------------------
+    if not session.get("admin2"):
+        return redirect("/admin/login2")
+
     if request.method == "POST":
 
         title = request.form["title"]
-
         content = request.form["content"]
 
         add_announcement(title, content)
@@ -3275,7 +3332,6 @@ def announcement_add():
         return redirect("/announcement")
 
     return render_template("announcement_add.html")
-
 # ==========================================================
 # Announcement Edit
 # 공지 수정
@@ -3284,10 +3340,15 @@ def announcement_add():
 @app.route("/announcement/edit/<int:id>", methods=["GET", "POST"])
 def edit_announcement_route(id):
 
+    # ----------------------------------------------------------
+    # 관리자 로그인 확인
+    # ----------------------------------------------------------
+    if not session.get("admin2"):
+        return redirect("/admin/login2")
+
     if request.method == "POST":
 
         title = request.form["title"]
-
         content = request.form["content"]
 
         update_announcement(id, title, content)
@@ -3297,18 +3358,20 @@ def edit_announcement_route(id):
     row = get_announcement(id)
 
     return render_template(
-
         "announcement_edit.html",
-
         row=row
-
-    )    
-
+    )
 # ----------------------------------------------------------
 # 공지 삭제
 # ----------------------------------------------------------
 @app.route("/announcement/delete/<int:id>")
 def delete_announcement_route(id):
+
+    # ----------------------------------------------------------
+    # 관리자 로그인 확인
+    # ----------------------------------------------------------
+    if not session.get("admin2"):
+        return redirect("/admin/login2")
 
     delete_announcement(id)
 
@@ -3362,6 +3425,41 @@ def admin_logout():
     session.clear()
 
     return redirect("/admin/login")
+
+# ----------------------------------------------------------
+# Admin Login-2
+# ----------------------------------------------------------
+@app.route("/admin/login2", methods=["GET","POST"])
+def admin_login():
+
+    if request.method == "POST":
+
+        userid = request.form["userid"]
+
+        password = request.form["password"]
+
+        if userid == ADMIN_ID and password == ADMIN_PASSWORD:
+
+            session["admin"] = True
+
+            return redirect("/announcement")
+
+        return render_template(
+            "admin_login.html",
+            message="Login Failed"
+        )
+
+    return render_template("admin_login.html")
+
+# ----------------------------------------------------------
+# Admin Logout-2
+# ----------------------------------------------------------
+@app.route("/admin/logout2")
+def admin_logout():
+
+    session.clear()
+
+    return redirect("/")
 # ------------------------------------------------------------
 # Donation Management
 # 기부 보고서 관리자 페이지
