@@ -3426,40 +3426,40 @@ def admin_logout():
 
     return redirect("/admin/login")
 
-# ----------------------------------------------------------
-# Admin Login-2
-# ----------------------------------------------------------
-@app.route("/admin/login2", methods=["GET","POST"])
-def admin_login():
+# ==========================================================
+# Announcement Admin Login
+# ==========================================================
+
+@app.route("/admin2/login2", methods=["GET", "POST"])
+def admin_login2():
 
     if request.method == "POST":
 
-        userid = request.form["userid"]
-
+        user_id = request.form["id"]
         password = request.form["password"]
 
-        if userid == ADMIN_ID and password == ADMIN_PASSWORD:
+        if user_id == ADMIN_ID and password == ADMIN_PASSWORD:
 
-            session["admin"] = True
+            session["admin2"] = True
 
             return redirect("/announcement")
 
         return render_template(
-            "admin_login.html",
-            message="Login Failed"
+            "admin_login2.html",
+            error="Login Failed"
         )
 
-    return render_template("admin_login.html")
+    return render_template("admin_login2.html")
+# ==========================================================
+# Announcement Admin Logout
+# ==========================================================
 
-# ----------------------------------------------------------
-# Admin Logout-2
-# ----------------------------------------------------------
-@app.route("/admin/logout2")
-def admin_logout():
+@app.route("/admin2/logout2")
+def admin_logout2():
 
-    session.clear()
+    session.pop("admin2", None)
 
-    return redirect("/")
+    return render_template("admin_logout2.html")
 # ------------------------------------------------------------
 # Donation Management
 # 기부 보고서 관리자 페이지
