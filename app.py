@@ -3274,7 +3274,54 @@ def announcement():
         rows=rows
 
     )
+# ==========================================================
+# Admin Announcement CMS
+# 관리자 전용 공지 관리
+# 붙여넣기 위치 :
+# @app.route("/announcement/<int:id>") 아래
+# ==========================================================
 
+@app.route("/admin2/announcement", methods=["GET", "POST"])
+def admin2_announcement():
+
+    # ------------------------------------------------------
+    # 관리자 로그인 확인
+    # ------------------------------------------------------
+    if not session.get("admin2"):
+        return redirect("/admin2/login2")
+
+    # ------------------------------------------------------
+    # 공지 등록
+    # ------------------------------------------------------
+    if request.method == "POST":
+
+        title = request.form["title"]
+        content = request.form["content"]
+
+        add_announcement(title, content)
+
+        return redirect("/admin2/announcement")
+
+    # ------------------------------------------------------
+    # 공지 목록
+    # ------------------------------------------------------
+    rows = fetch_all("""
+
+        SELECT *
+
+        FROM announcements
+
+        ORDER BY id DESC
+
+    """)
+
+    return render_template(
+
+        "admin2_announcement.html",
+
+        rows=rows
+
+    )
 # ==========================================================
 # Announcement Detail
 # 일반 사용자 공지 상세보기
