@@ -3252,6 +3252,28 @@ def announcement():
         announcements=announcements
 
     )
+
+# ==========================================================
+# Announcement Add
+# 관리자 공지 등록
+# 붙여넣기 위치 :
+# @app.route("/announcement") 바로 아래
+# ==========================================================
+
+@app.route("/announcement/add", methods=["GET", "POST"])
+def announcement_add():
+
+    if request.method == "POST":
+
+        title = request.form["title"]
+
+        content = request.form["content"]
+
+        add_announcement(title, content)
+
+        return redirect("/announcement")
+
+    return render_template("announcement_add.html")
 # ------------------------------------------------------------
 # Admin Login
 # ------------------------------------------------------------
