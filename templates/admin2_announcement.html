@@ -161,6 +161,63 @@ Logout
 
 <form method="POST">
 
+{% if edit_row %}
+
+<input
+type="hidden"
+name="action"
+value="edit"
+>
+
+<input
+type="hidden"
+name="id"
+value="{{ edit_row.id }}"
+>
+
+<h3>
+
+Edit Announcement
+
+</h3>
+
+Title
+
+<input
+type="text"
+name="title"
+value="{{ edit_row.title }}"
+required
+>
+
+Content
+
+<textarea
+name="content"
+rows="8"
+required
+>{{ edit_row.content }}</textarea>
+
+<button type="submit">
+
+Update
+
+</button>
+
+<a href="/admin2/announcement">
+
+Cancel
+
+</a>
+
+{% else %}
+
+<input
+type="hidden"
+name="action"
+value="add"
+>
+
 <h3>
 
 Add Announcement
@@ -170,25 +227,17 @@ Add Announcement
 Title
 
 <input
-
 type="text"
-
 name="title"
-
 required
-
 >
 
 Content
 
 <textarea
-
 name="content"
-
 rows="8"
-
 required
-
 ></textarea>
 
 <button type="submit">
@@ -197,8 +246,9 @@ Save
 
 </button>
 
-</form>
+{% endif %}
 
+</form>
 <hr>
 
 <h3>
