@@ -3336,15 +3336,7 @@ def delete_announcement_route(id):
 
     return redirect("/announcement")
 
-# ----------------------------------------------------------
-# Admin Logout2
-# ----------------------------------------------------------
-@app.route("/admin2/logout2")
-def admin_logout2():
 
-    session.pop("admin2", None)
-
-    return redirect("/admin2/login2")
 # ------------------------------------------------------------
 # Admin Login
 # ------------------------------------------------------------
