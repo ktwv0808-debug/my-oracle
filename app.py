@@ -3284,63 +3284,54 @@ def announcement():
 @app.route("/admin2/announcement", methods=["GET", "POST"])
 def admin2_announcement():
 
-    # ------------------------------------------------------
+    # ----------------------------------------------------------
     # 관리자 로그인 확인
-    # ------------------------------------------------------
+    # ----------------------------------------------------------
     if not session.get("admin2"):
         return redirect("/admin2/login2")
 
-   # ==========================================================
-# Add / Update
-# ==========================================================
+    # ==========================================================
+    # Add / Update
+    # ==========================================================
+    if request.method == "POST":
 
-if request.method == "POST":
+        action = request.form.get("action")
 
-    action = request.form.get("action")
+        title = request.form["title"]
 
-    title = request.form["title"]
+        content = request.form["content"]
 
-    content = request.form["content"]
+        # 등록
+        if action == "add":
 
-    # --------------------------------------------
-    # 등록
-    # --------------------------------------------
-    if action == "add":
+            add_announcement(title, content)
 
-        add_announcement(title, content)
+        # 수정
+        elif action == "edit":
 
-    # --------------------------------------------
-    # 수정
-    # --------------------------------------------
-    elif action == "edit":
+            announcement_id = request.form["id"]
 
-        announcement_id = request.form["id"]
+            update_announcement(
+                announcement_id,
+                title,
+                content
+            )
 
-        update_announcement(
+        return redirect("/admin2/announcement")
 
-            announcement_id,
-
-            title,
-
-            content
-
-        )
-
-    return redirect("/admin2/announcement")
     # ==========================================================
     # Edit Mode
     # ==========================================================
- 
     edit_id = request.args.get("edit")
 
     edit_row = None
 
     if edit_id:
-
         edit_row = get_announcement(edit_id)
-    # ------------------------------------------------------
+
+    # ----------------------------------------------------------
     # 공지 목록
-    # ------------------------------------------------------
+    # ----------------------------------------------------------
     rows = fetch_all("""
 
         SELECT *
@@ -3359,7 +3350,7 @@ if request.method == "POST":
 
         edit_row=edit_row
 
-)
+    )
 # ==========================================================
 # Announcement Detail
 # 일반 사용자 공지 상세보기
