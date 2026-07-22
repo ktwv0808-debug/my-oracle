@@ -1,0 +1,119 @@
+<meta charset="UTF-8">
+
+<title>Announcement</title>
+
+<style>
+
+body{
+
+    background:#111;
+
+    color:white;
+
+    font-family:Arial;
+
+}
+
+.container{
+
+    width:90%;
+
+    margin:auto;
+
+}
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+th,td{
+
+    border:1px solid #555;
+
+    padding:10px;
+
+}
+
+th{
+
+    background:#222;
+
+}
+
+tr:nth-child(even){
+
+    background:#1a1a1a;
+
+}
+
+a{
+
+    color:#00ccff;
+
+    text-decoration:none;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>
+
+📢 Announcement
+
+</h2>
+
+<table>
+
+<tr>
+
+<th>ID</th>
+
+<th>Title</th>
+
+<th>Date</th>
+
+</tr>
+
+{% for row in announcements %}
+
+<tr>
+
+<td>{{ row.id }}</td>
+
+<td>
+
+<a href="/announcement/{{ row.id }}">
+
+{{ row.title }}
+
+</a>
+
+</td>
+
+<td>
+
+{{ row.created_at }}
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+</body>
+
+</html>
