@@ -5,61 +5,105 @@
 
 <meta charset="UTF-8">
 
-<title>Announcement</title>
+<title>Announcements</title>
 
 <style>
 
 body{
 
+    background:#111;
+
+    color:white;
+
     font-family:Arial;
 
-    background:#f5f5f5;
-
-    margin:30px;
+    margin:0;
 
 }
 
 .container{
 
-    width:900px;
+    width:90%;
 
     margin:auto;
 
+    margin-top:40px;
+
 }
 
-.card{
+h2{
 
-    background:white;
+    text-align:center;
+
+    margin-bottom:30px;
+
+}
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    background:#222;
+
+}
+
+th{
+
+    background:#333;
 
     padding:15px;
 
-    margin-bottom:15px;
+    border:1px solid #444;
 
-    border-radius:8px;
+}
 
-    box-shadow:0 2px 6px rgba(0,0,0,.15);
+td{
+
+    padding:12px;
+
+    border:1px solid #444;
+
+}
+
+tr:hover{
+
+    background:#2c2c2c;
 
 }
 
 a{
 
+    color:#00d4ff;
+
     text-decoration:none;
-
-    color:#0066cc;
-
-    font-size:18px;
-
-    font-weight:bold;
 
 }
 
-.date{
+a:hover{
+
+    color:yellow;
+
+}
+
+.empty{
+
+    text-align:center;
+
+    padding:40px;
 
     color:#888;
 
-    font-size:13px;
+}
 
-    margin-top:5px;
+.back{
+
+    margin-top:20px;
+
+    display:inline-block;
+
+    color:cyan;
 
 }
 
@@ -71,11 +115,33 @@ a{
 
 <div class="container">
 
-<h1>Announcement</h1>
+<h2>📢 World Vision Announcements</h2>
+
+<table>
+
+<tr>
+
+<th width="80">No</th>
+
+<th>Title</th>
+
+<th width="220">Created</th>
+
+</tr>
+
+{% if rows %}
 
 {% for row in rows %}
 
-<div class="card">
+<tr>
+
+<td align="center">
+
+{{ row.id }}
+
+</td>
+
+<td>
 
 <a href="/announcement/{{ row.id }}">
 
@@ -83,15 +149,41 @@ a{
 
 </a>
 
-<div class="date">
+</td>
+
+<td align="center">
 
 {{ row.created_at }}
 
-</div>
+</td>
 
-</div>
+</tr>
 
 {% endfor %}
+
+{% else %}
+
+<tr>
+
+<td colspan="3" class="empty">
+
+No announcements available.
+
+</td>
+
+</tr>
+
+{% endif %}
+
+</table>
+
+<br>
+
+<a class="back" href="/">
+
+← Back Home
+
+</a>
 
 </div>
 
