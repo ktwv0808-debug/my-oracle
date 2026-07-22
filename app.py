@@ -459,70 +459,82 @@ def init_db():
     ADD COLUMN IF NOT EXISTS signal VARCHAR(20);
 
     """)
-# ==========================================================
-# Announcement Table
-# ==========================================================
+    # ==========================================================
+    # Announcement Table 생성
+    # init_db() 함수 내부에 위치
+    # ==========================================================
 
-cursor.execute("""
+    cursor.execute("""
 
-CREATE TABLE IF NOT EXISTS announcements(
+    CREATE TABLE IF NOT EXISTS announcements(
 
-    id SERIAL PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
 
-    title VARCHAR(200) NOT NULL,
+        title VARCHAR(200) NOT NULL,
 
-    content TEXT NOT NULL,
+        content TEXT NOT NULL,
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-)
+    )
 
-""")
+    """)
 
-# --------------------------------------------------------
-# WDM PRICE
-# --------------------------------------------------------
+    # ==========================================================
+    # WDM PRICE TABLE 생성
+    # ==========================================================
 
-cursor.execute("""
+    cursor.execute("""
 
-CREATE TABLE IF NOT EXISTS wdm_price(
+    CREATE TABLE IF NOT EXISTS wdm_price(
 
-    id SERIAL PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
 
-    price NUMERIC(18,8),
+        price NUMERIC(18,8),
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-)
+    )
 
-""")
+    """)
 
-# =====================================================
-# WDM Price Table 컬럼 추가
-# =====================================================
+    # ==========================================================
+    # WDM PRICE TABLE
+    # MA20 컬럼 추가
+    # ==========================================================
 
-cursor.execute("""
+    cursor.execute("""
 
-ALTER TABLE wdm_price
-ADD COLUMN IF NOT EXISTS ma20 DOUBLE PRECISION;
+    ALTER TABLE wdm_price
+    ADD COLUMN IF NOT EXISTS ma20 DOUBLE PRECISION;
 
-""")
+    """)
 
-cursor.execute("""
+    # ==========================================================
+    # WDM PRICE TABLE
+    # MA60 컬럼 추가
+    # ==========================================================
 
-ALTER TABLE wdm_price
-ADD COLUMN IF NOT EXISTS ma60 DOUBLE PRECISION;
+    cursor.execute("""
 
-""")
+    ALTER TABLE wdm_price
+    ADD COLUMN IF NOT EXISTS ma60 DOUBLE PRECISION;
 
-cursor.execute("""
+    """)
 
-ALTER TABLE wdm_price
-ADD COLUMN IF NOT EXISTS signal VARCHAR(20);
+    # ==========================================================
+    # WDM PRICE TABLE
+    # SIGNAL 컬럼 추가
+    # ==========================================================
 
-""")
+    cursor.execute("""
+
+    ALTER TABLE wdm_price
+    ADD COLUMN IF NOT EXISTS signal VARCHAR(20);
+
+    """)
    
     # --------------------------------------------------------
     # WDM PRICE HISTORY
