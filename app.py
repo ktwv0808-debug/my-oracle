@@ -384,11 +384,14 @@ def init_db():
 
     )
     """)
+    
     # ==========================================================
     # Announcement Table
+    # 공지사항 테이블 생성
+    # init_db() 함수 내부
     # ==========================================================
 
-    cursor.execute("""
+    cur.execute("""
 
     CREATE TABLE IF NOT EXISTS announcements(
 
