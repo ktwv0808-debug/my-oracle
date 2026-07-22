@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Announcement Detail</title>
+
+<style>
+
+body{
+    font-family:Arial;
+    background:#f4f4f4;
+    margin:40px;
+}
+
+.container{
+    width:900px;
+    margin:auto;
+    background:white;
+    padding:30px;
+    border-radius:10px;
+    box-shadow:0 0 10px #ccc;
+}
+
+h1{
+    color:#0066cc;
+}
+
+.btn{
+    display:inline-block;
+    padding:10px 20px;
+    background:#0066cc;
+    color:white;
+    text-decoration:none;
+    border-radius:6px;
+    margin-top:20px;
+}
+
+.btn:hover{
+    background:#003d80;
+}
+
+pre{
+    white-space:pre-wrap;
+    font-size:17px;
+}
+
+.info{
+    color:#888;
+    margin-top:20px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>{{ row.title }}</h1>
+
+<hr>
+
+<pre>{{ row.content }}</pre>
+
+<div class="info">
+
+Created :
+{{ row.created_at }}
+
+</div>
+
+<br>
+
+<a href="/admin2/announcement" class="btn">
+
+← Back to Admin
+
+</a>
+
+</div>
+
+</body>
+
+</html>
