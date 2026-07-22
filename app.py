@@ -413,7 +413,7 @@ def init_db():
     # WDM PRICE TABLE
     # --------------------------------------------------------
 
-    cursor.execute("""
+    cur.execute("""
 
     CREATE TABLE IF NOT EXISTS wdm_price(
 
@@ -432,7 +432,7 @@ def init_db():
     # MA20 컬럼
     # --------------------------------------------------------
 
-    cursor.execute("""
+    cur.execute("""
 
     ALTER TABLE wdm_price
     ADD COLUMN IF NOT EXISTS ma20 DOUBLE PRECISION;
@@ -444,7 +444,7 @@ def init_db():
     # MA60 컬럼
     # --------------------------------------------------------
 
-    cursor.execute("""
+    cur.execute("""
 
     ALTER TABLE wdm_price
     ADD COLUMN IF NOT EXISTS ma60 DOUBLE PRECISION;
@@ -456,7 +456,7 @@ def init_db():
     # SIGNAL 컬럼
     # --------------------------------------------------------
 
-    cursor.execute("""
+    cur.execute("""
 
     ALTER TABLE wdm_price
     ADD COLUMN IF NOT EXISTS signal VARCHAR(20);
@@ -467,7 +467,7 @@ def init_db():
     # init_db() 함수 내부에 위치
     # ==========================================================
 
-    cursor.execute("""
+    cur.execute("""
 
     CREATE TABLE IF NOT EXISTS announcements(
 
@@ -489,7 +489,7 @@ def init_db():
     # WDM PRICE TABLE 생성
     # ==========================================================
 
-    cursor.execute("""
+    cur.execute("""
 
     CREATE TABLE IF NOT EXISTS wdm_price(
 
@@ -508,7 +508,7 @@ def init_db():
     # MA20 컬럼 추가
     # ==========================================================
 
-    cursor.execute("""
+    cur.execute("""
 
     ALTER TABLE wdm_price
     ADD COLUMN IF NOT EXISTS ma20 DOUBLE PRECISION;
@@ -520,7 +520,7 @@ def init_db():
     # MA60 컬럼 추가
     # ==========================================================
 
-    cursor.execute("""
+    cur.execute("""
 
     ALTER TABLE wdm_price
     ADD COLUMN IF NOT EXISTS ma60 DOUBLE PRECISION;
@@ -532,7 +532,7 @@ def init_db():
     # SIGNAL 컬럼 추가
     # ==========================================================
 
-    cursor.execute("""
+    cur.execute("""
 
     ALTER TABLE wdm_price
     ADD COLUMN IF NOT EXISTS signal VARCHAR(20);
