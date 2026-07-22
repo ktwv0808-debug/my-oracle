@@ -3430,22 +3430,21 @@ def edit_announcement_route(id):
         "announcement_edit.html",
         row=row
     )
-# ----------------------------------------------------------
-# 공지 삭제
-# ----------------------------------------------------------
-@app.route("/announcement/delete/<int:id>")
-def delete_announcement_route(id):
+# ==========================================================
+# Admin2 Announcement Delete
+# ==========================================================
 
-    # ----------------------------------------------------------
+@app.route("/admin2/announcement/delete/<int:id>")
+def admin2_delete_announcement(id):
+
     # 관리자 로그인 확인
-    # ----------------------------------------------------------
     if not session.get("admin2"):
         return redirect("/admin2/login2")
 
     delete_announcement(id)
 
-    return redirect("/announcement")
-
+    # 관리자 목록으로 이동
+    return redirect("/admin2/announcement")
 # ==========================================================
 # Admin Announcement Detail
 # ==========================================================
