@@ -384,6 +384,81 @@ def init_db():
 
     )
     """)
+    # ==========================================================
+    # Announcement Table
+    # ==========================================================
+
+    cursor.execute("""
+
+    CREATE TABLE IF NOT EXISTS announcements(
+
+        id SERIAL PRIMARY KEY,
+
+        title VARCHAR(200) NOT NULL,
+
+        content TEXT NOT NULL,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    )
+
+    """)
+
+    # --------------------------------------------------------
+    # WDM PRICE TABLE
+    # --------------------------------------------------------
+
+    cursor.execute("""
+
+    CREATE TABLE IF NOT EXISTS wdm_price(
+
+        id SERIAL PRIMARY KEY,
+
+        price NUMERIC(18,8),
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    )
+
+    """)
+
+    # --------------------------------------------------------
+    # WDM PRICE TABLE
+    # MA20 컬럼
+    # --------------------------------------------------------
+
+    cursor.execute("""
+
+    ALTER TABLE wdm_price
+    ADD COLUMN IF NOT EXISTS ma20 DOUBLE PRECISION;
+
+    """)
+
+    # --------------------------------------------------------
+    # WDM PRICE TABLE
+    # MA60 컬럼
+    # --------------------------------------------------------
+
+    cursor.execute("""
+
+    ALTER TABLE wdm_price
+    ADD COLUMN IF NOT EXISTS ma60 DOUBLE PRECISION;
+
+    """)
+
+    # --------------------------------------------------------
+    # WDM PRICE TABLE
+    # SIGNAL 컬럼
+    # --------------------------------------------------------
+
+    cursor.execute("""
+
+    ALTER TABLE wdm_price
+    ADD COLUMN IF NOT EXISTS signal VARCHAR(20);
+
+    """)
 # ==========================================================
 # Announcement Table
 # ==========================================================
