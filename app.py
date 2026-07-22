@@ -3290,18 +3290,54 @@ def admin2_announcement():
     if not session.get("admin2"):
         return redirect("/admin2/login2")
 
-    # ------------------------------------------------------
-    # 공지 등록
-    # ------------------------------------------------------
-    if request.method == "POST":
+   # ==========================================================
+# Add / Update
+# ==========================================================
 
-        title = request.form["title"]
-        content = request.form["content"]
+if request.method == "POST":
+
+    action = request.form.get("action")
+
+    title = request.form["title"]
+
+    content = request.form["content"]
+
+    # --------------------------------------------
+    # 등록
+    # --------------------------------------------
+    if action == "add":
 
         add_announcement(title, content)
 
-        return redirect("/admin2/announcement")
+    # --------------------------------------------
+    # 수정
+    # --------------------------------------------
+    elif action == "edit":
 
+        announcement_id = request.form["id"]
+
+        update_announcement(
+
+            announcement_id,
+
+            title,
+
+            content
+
+        )
+
+    return redirect("/admin2/announcement")
+    # ==========================================================
+    # Edit Mode
+    # ==========================================================
+ 
+    edit_id = request.args.get("edit")
+
+    edit_row = None
+
+    if edit_id:
+
+        edit_row = get_announcement(edit_id)
     # ------------------------------------------------------
     # 공지 목록
     # ------------------------------------------------------
@@ -3319,9 +3355,11 @@ def admin2_announcement():
 
         "admin2_announcement.html",
 
-        rows=rows
+        rows=rows,
 
-    )
+        edit_row=edit_row
+
+)
 # ==========================================================
 # Announcement Detail
 # 일반 사용자 공지 상세보기
