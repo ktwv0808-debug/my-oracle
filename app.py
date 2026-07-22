@@ -139,7 +139,118 @@ def execute(sql, params=None):
     cur.close()
     conn.close()
 
+# ==========================================================
+# Announcement Helper Functions
+# ==========================================================
 
+# ----------------------------------------------------------
+# 공지 전체 조회
+# ----------------------------------------------------------
+def fetch_announcements():
+
+    return fetch_all("""
+
+        SELECT *
+
+        FROM announcements
+
+        ORDER BY created_at DESC
+
+    """)
+
+
+# ----------------------------------------------------------
+# 공지 1개 조회
+# ----------------------------------------------------------
+def get_announcement(id):
+
+    return fetch_one("""
+
+        SELECT *
+
+        FROM announcements
+
+        WHERE id=%s
+
+    """, (id,))
+
+
+# ----------------------------------------------------------
+# 공지 등록
+# ----------------------------------------------------------
+def add_announcement(title, content):
+
+    execute("""
+
+        INSERT INTO announcements(
+
+            title,
+
+            content
+
+        )
+
+        VALUES(
+
+            %s,
+
+            %s
+
+        )
+
+    """, (
+
+        title,
+
+        content
+
+    ))
+
+
+# ----------------------------------------------------------
+# 공지 수정
+# ----------------------------------------------------------
+def update_announcement(id, title, content):
+
+    execute("""
+
+        UPDATE announcements
+
+        SET
+
+            title=%s,
+
+            content=%s,
+
+            updated_at=CURRENT_TIMESTAMP
+
+        WHERE id=%s
+
+    """, (
+
+        title,
+
+        content,
+
+        id
+
+    ))
+
+
+# ----------------------------------------------------------
+# 공지 삭제
+# ----------------------------------------------------------
+def delete_announcement(id):
+
+    execute("""
+
+        DELETE
+
+        FROM announcements
+
+        WHERE id=%s
+
+    """, (id,))
 # ------------------------------------------------------------
 # Keep Latest Rows
 # ------------------------------------------------------------
@@ -3021,6 +3132,26 @@ def portfolio():
 @app.route("/swap")
 def swap():
     return render_template("swap.html")
+
+# ==========================================================
+# Announcement Page
+# ==========================================================
+
+# ----------------------------------------------------------
+# 공지사항 목록
+# ----------------------------------------------------------
+@app.route("/announcement")
+def announcement():
+
+    announcements = fetch_announcements()
+
+    return render_template(
+
+        "announcement.html",
+
+        announcements=announcements
+
+    )
 # ------------------------------------------------------------
 # Admin Login
 # ------------------------------------------------------------
