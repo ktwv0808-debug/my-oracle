@@ -3279,7 +3279,7 @@ def announcement_add():
     # 관리자 로그인 확인
     # ----------------------------------------------------------
     if not session.get("admin2"):
-        return redirect("/admin/login2")
+        return redirect("/admin2/login2")
 
     if request.method == "POST":
 
@@ -3303,7 +3303,7 @@ def edit_announcement_route(id):
     # 관리자 로그인 확인
     # ----------------------------------------------------------
     if not session.get("admin2"):
-        return redirect("/admin/login2")
+        return redirect("/admin2/login2")
 
     if request.method == "POST":
 
@@ -3330,11 +3330,21 @@ def delete_announcement_route(id):
     # 관리자 로그인 확인
     # ----------------------------------------------------------
     if not session.get("admin2"):
-        return redirect("/admin/login2")
+        return redirect("/admin2/login2")
 
     delete_announcement(id)
 
     return redirect("/announcement")
+
+# ----------------------------------------------------------
+# Admin Logout2
+# ----------------------------------------------------------
+@app.route("/admin2/logout2")
+def admin_logout2():
+
+    session.pop("admin2", None)
+
+    return redirect("/admin2/login2")
 # ------------------------------------------------------------
 # Admin Login
 # ------------------------------------------------------------
