@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>공지 수정</title>
+
+</head>
+
+<body>
+
+<h2>공지 수정</h2>
+
+<form method="POST">
+
+제목<br>
+
+<input
+type="text"
+name="title"
+value="{{ row.title }}"
+style="width:500px">
+
+<br><br>
+
+내용<br>
+
+<textarea
+name="content"
+rows="10"
+cols="80">{{ row.content }}</textarea>
+
+<br><br>
+
+<button type="submit">
+
+수정 완료
+
+</button>
+
+</form>
+
+<br>
+
+<a href="/announcement">
+
+목록으로
+
+</a>
+
+</body>
+
+</html>
