@@ -3262,50 +3262,9 @@ def announcement():
         announcements=announcements
 
     )
-# ==========================================================
-# Announcement Admin Login
-# 공지사항 관리자 로그인
-# ==========================================================
 
-@app.route("/admin/login2", methods=["GET", "POST"])
-def admin_login2():
 
-    if request.method == "POST":
 
-        userid = request.form["userid"]
-        password = request.form["password"]
-
-        if userid == ADMIN2_ID and password == ADMIN2_PASSWORD:
-
-            session["admin2"] = True
-
-            return redirect("/admin/dashboard2")
-
-    return render_template("admin_login2.html")
-
-# ==========================================================
-# Announcement Admin Dashboard
-# ==========================================================
-
-@app.route("/admin/dashboard2")
-def admin_dashboard2():
-
-    if not session.get("admin2"):
-
-        return redirect("/admin/login2")
-
-    return render_template("admin_dashboard2.html")  
-
-# ==========================================================
-# Announcement Admin Logout
-# ==========================================================
-
-@app.route("/admin/logout2")
-def admin_logout2():
-
-    session.pop("admin2", None)
-
-    return redirect("/admin/login2")
 # ==========================================================
 # Announcement Add
 # 관리자 공지 등록
@@ -3450,6 +3409,20 @@ def admin_login2():
         )
 
     return render_template("admin_login2.html")
+
+# ==========================================================
+# Announcement Admin Dashboard
+# ==========================================================
+
+@app.route("/admin2/dashboard2")
+def admin_dashboard2():
+
+    if not session.get("admin2"):
+
+        return redirect("/admin/login2")
+
+    return render_template("admin_dashboard2.html")  
+
 # ==========================================================
 # Announcement Admin Logout
 # ==========================================================
