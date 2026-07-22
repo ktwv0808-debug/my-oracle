@@ -3275,7 +3275,29 @@ def announcement():
 
     )
 
+# ==========================================================
+# Announcement Detail
+# 일반 사용자 공지 상세보기
+# 붙여넣기 위치 :
+# @app.route("/announcement") 바로 아래
+# ==========================================================
 
+@app.route("/announcement/<int:id>")
+def announcement_detail(id):
+
+    row = get_announcement(id)
+
+    if row is None:
+
+        return "Announcement Not Found", 404
+
+    return render_template(
+
+        "announcement_detail.html",
+
+        row=row
+
+    )
 
 # ==========================================================
 # Announcement Add
