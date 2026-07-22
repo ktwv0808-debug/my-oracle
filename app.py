@@ -386,7 +386,6 @@ def init_db():
     """)
 # ==========================================================
 # Announcement Table
-# 공지사항
 # ==========================================================
 
 cursor.execute("""
@@ -406,38 +405,49 @@ CREATE TABLE IF NOT EXISTS announcements(
 )
 
 """)
-    # --------------------------------------------------------
-    # WDM PRICE
-    # --------------------------------------------------------
 
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS wdm_price(
+# --------------------------------------------------------
+# WDM PRICE
+# --------------------------------------------------------
 
-        id SERIAL PRIMARY KEY,
+cursor.execute("""
 
-        price NUMERIC(18,8),
+CREATE TABLE IF NOT EXISTS wdm_price(
 
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id SERIAL PRIMARY KEY,
 
-    )
-    """)
-    # =====================================================
-    # WDM Price Table 컬럼 추가
-    # =====================================================
-    cur.execute("""
-    ALTER TABLE wdm_price
-    ADD COLUMN IF NOT EXISTS ma20 DOUBLE PRECISION;
-    """)
+    price NUMERIC(18,8),
 
-    cur.execute("""
-    ALTER TABLE wdm_price
-    ADD COLUMN IF NOT EXISTS ma60 DOUBLE PRECISION;
-    """)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-    cur.execute("""
-    ALTER TABLE wdm_price
-    ADD COLUMN IF NOT EXISTS signal VARCHAR(20);
-    """)
+)
+
+""")
+
+# =====================================================
+# WDM Price Table 컬럼 추가
+# =====================================================
+
+cursor.execute("""
+
+ALTER TABLE wdm_price
+ADD COLUMN IF NOT EXISTS ma20 DOUBLE PRECISION;
+
+""")
+
+cursor.execute("""
+
+ALTER TABLE wdm_price
+ADD COLUMN IF NOT EXISTS ma60 DOUBLE PRECISION;
+
+""")
+
+cursor.execute("""
+
+ALTER TABLE wdm_price
+ADD COLUMN IF NOT EXISTS signal VARCHAR(20);
+
+""")
    
     # --------------------------------------------------------
     # WDM PRICE HISTORY
