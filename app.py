@@ -3387,10 +3387,9 @@ def admin_logout():
 
     return redirect("/admin/login")
 
-# ==========================================================
-# Announcement Admin Login
-# ==========================================================
-
+# ----------------------------------------------------------
+# Admin Login2
+# ----------------------------------------------------------
 @app.route("/admin2/login2", methods=["GET", "POST"])
 def admin_login2():
 
@@ -3398,13 +3397,11 @@ def admin_login2():
 
         user_id = request.form["id"]
         password = request.form["password"]
+
+        # 로그인 확인
         if user_id == ADMIN2_ID and password == ADMIN2_PASSWORD:
 
-           session["admin2"] = True
-
-           return redirect("/announcement")
-       
-           session["admin2"] = True
+            session["admin2"] = True
 
             return redirect("/announcement")
 
