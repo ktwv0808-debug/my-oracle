@@ -3446,7 +3446,22 @@ def delete_announcement_route(id):
 
     return redirect("/announcement")
 
+# ==========================================================
+# Admin Announcement Detail
+# ==========================================================
 
+@app.route("/admin2/announcement/<int:id>")
+def admin2_announcement_detail(id):
+
+    if not session.get("admin2"):
+        return redirect("/admin2/login2")
+
+    row = get_announcement(id)
+
+    return render_template(
+        "admin2_announcement_detail.html",
+        row=row
+    )
 # ------------------------------------------------------------
 # Admin Login
 # ------------------------------------------------------------
