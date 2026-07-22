@@ -3398,10 +3398,13 @@ def admin_login2():
 
         user_id = request.form["id"]
         password = request.form["password"]
+        if user_id == ADMIN2_ID and password == ADMIN2_PASSWORD:
 
-        if user_id == ADMIN_ID and password == ADMIN_PASSWORD:
+           session["admin2"] = True
 
-            session["admin2"] = True
+           return redirect("/announcement")
+       
+           session["admin2"] = True
 
             return redirect("/announcement")
 
