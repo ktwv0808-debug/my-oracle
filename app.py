@@ -3247,19 +3247,31 @@ def swap():
 # Announcement Page
 # ==========================================================
 
-# ----------------------------------------------------------
-# 공지사항 목록
-# ----------------------------------------------------------
+# ==========================================================
+# Announcement
+# 일반 사용자 공지 목록
+# 붙여넣기 위치 :
+# 기존 @app.route("/announcement") 삭제 후
+# ==========================================================
+
 @app.route("/announcement")
 def announcement():
 
-    announcements = fetch_announcements()
+    rows = fetch_all("""
+
+        SELECT *
+
+        FROM announcements
+
+        ORDER BY created_at DESC
+
+    """)
 
     return render_template(
 
         "announcement.html",
 
-        announcements=announcements
+        rows=rows
 
     )
 
