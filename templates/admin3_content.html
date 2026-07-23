@@ -4,45 +4,52 @@
 
 <head>
 
+<meta charset="UTF-8">
+
 <title>
-Content Admin
+
+Content CMS
+
 </title>
 
 </head>
-
 
 <body>
 
 
 <h1>
-Content Management
-</h1>
 
+Content Management
+
+</h1>
 
 <hr>
 
 
-<form method="POST"
-      enctype="multipart/form-data">
-
+<form
+method="POST"
+enctype="multipart/form-data">
 
 
 {% if edit_row %}
 
-<input type="hidden"
+<input
+type="hidden"
 name="action"
 value="edit">
 
 
-<input type="hidden"
+<input
+type="hidden"
 name="id"
-value="{{edit_row.id}}">
+value="{{ edit_row.id }}">
 
 
 {% else %}
 
 
-<input type="hidden"
+<input
+type="hidden"
 name="action"
 value="add">
 
@@ -50,16 +57,14 @@ value="add">
 {% endif %}
 
 
-
 Title
 
 <br>
 
-<input 
+<input
 name="title"
 style="width:500px"
-value="{{edit_row.title if edit_row else ''}}">
-
+value="{{ edit_row.title if edit_row else '' }}">
 
 
 <br><br>
@@ -69,16 +74,10 @@ Content
 
 <br>
 
-
 <textarea
 name="content"
 rows="10"
-cols="70">
-
-{{edit_row.content if edit_row else ''}}
-
-</textarea>
-
+cols="70">{{ edit_row.content if edit_row else '' }}</textarea>
 
 
 <br><br>
@@ -88,12 +87,10 @@ Image URL
 
 <br>
 
-
 <input
 name="image"
 style="width:500px"
-value="{{edit_row.image if edit_row else ''}}">
-
+value="{{ edit_row.image if edit_row else '' }}">
 
 
 <br><br>
@@ -103,17 +100,15 @@ Attachment File
 
 <br>
 
-
 <input
 type="file"
 name="file">
 
 
-
 <br><br>
 
 
-<button>
+<button type="submit">
 
 Save
 
@@ -123,19 +118,17 @@ Save
 </form>
 
 
-
 <hr>
 
 
-
 <h2>
+
 Content List
+
 </h2>
 
 
-
-<table border="1">
-
+<table border="1" cellpadding="5" cellspacing="0">
 
 <tr>
 
@@ -145,6 +138,8 @@ Content List
 
 <th>File</th>
 
+<th>Views</th>
+
 <th>Date</th>
 
 <th>Action</th>
@@ -152,20 +147,25 @@ Content List
 </tr>
 
 
-
 {% for row in rows %}
-
 
 <tr>
 
-
 <td>
-{{row.id}}
+
+{{ row.id }}
+
 </td>
 
 
 <td>
-{{row.title}}
+
+<a href="/admin3/content/{{ row.id }}">
+
+{{ row.title }}
+
+</a>
+
 </td>
 
 
@@ -173,7 +173,11 @@ Content List
 
 {% if row.file_name %}
 
-{{row.file_name}}
+{{ row.file_name }}
+
+{% else %}
+
+-
 
 {% endif %}
 
@@ -181,37 +185,42 @@ Content List
 
 
 <td>
-{{row.created_at}}
+
+{{ row.views }}
+
 </td>
 
 
 <td>
 
+{{ row.created_at }}
 
-<a href="/admin3/content?edit={{row.id}}">
+</td>
+
+
+<td>
+
+<a href="/admin3/content?edit={{ row.id }}">
+
 Edit
-</a>
 
+</a>
 
 |
 
-
-<a href="/admin3/content?delete={{row.id}}"
-onclick="return confirm('Delete?')">
+<a
+href="/admin3/content?delete={{ row.id }}"
+onclick="return confirm('Delete this content?')">
 
 Delete
 
 </a>
 
-
 </td>
-
 
 </tr>
 
-
 {% endfor %}
-
 
 </table>
 
