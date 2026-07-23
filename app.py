@@ -22,7 +22,7 @@ import os
 from werkzeug.utils import secure_filename
 import psycopg2
 from psycopg2.extras import RealDictCursor
-
+from flask import send_file
 
 # ------------------------------------------------------------
 # Flask
@@ -4001,6 +4001,38 @@ def admin_logout3():
     session.pop("admin3", None)
 
     return redirect("/admin3/login3")
+
+@app.route("/download/content/<int:content_id>")
+def download_content(content_id):
+
+
+    row = fetch_one("""
+        SELECT *
+
+        FROM contents
+
+        WHERE id=%s
+
+    """,
+    (
+        content_id,
+    ))
+
+
+    if not row:
+
+        return "Not Found"
+
+
+    return send_file(
+
+        row["file_path"],
+
+        as_attachment=True,
+
+        download_name=row["file_name"]
+
+    )
 # ------------------------------------------------------------
 # Donation Management
 # 기부 보고서 관리자 페이지
