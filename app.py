@@ -4005,33 +4005,19 @@ def admin_logout3():
 @app.route("/download/content/<int:content_id>")
 def download_content(content_id):
 
-
     row = fetch_one("""
         SELECT *
-
         FROM contents
-
         WHERE id=%s
-
-    """,
-    (
-        content_id,
-    ))
-
+    """, (content_id,))
 
     if not row:
-
         return "Not Found"
 
-
     return send_file(
-
         row["file_path"],
-
         as_attachment=True,
-
         download_name=row["file_name"]
-
     )
 # ------------------------------------------------------------
 # Donation Management
