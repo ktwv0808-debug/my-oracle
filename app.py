@@ -10,7 +10,7 @@ from flask import (
     session,
     jsonify
 )
-
+import uuid
 import os
 import threading
 import time
@@ -3602,7 +3602,13 @@ def admin_content():
 
             file_path = None
 
+            # ----------------------------------------------------
+            # File Name Length Limit
+            # ----------------------------------------------------
 
+            if len(original_name) > 100:
+
+               original_name = original_name[:100]
 
             # ------------------------------------------------
             # File Upload
