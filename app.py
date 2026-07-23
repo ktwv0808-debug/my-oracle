@@ -3679,7 +3679,7 @@ if delete_id:
 
 
 
-        return redirect("/admin2/content")
+       return redirect("/admin2/content")
 
 
 
