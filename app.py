@@ -18,7 +18,8 @@ from datetime import datetime
 import traceback
 import requests
 import pandas as pd
-
+import os
+from werkzeug.utils import secure_filename
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -28,7 +29,19 @@ from psycopg2.extras import RealDictCursor
 # ------------------------------------------------------------
 
 app = Flask(__name__)
+# ============================================================
+# File Upload Setting
+# ============================================================
 
+UPLOAD_FOLDER = "static/uploads/content"
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+
+os.makedirs(
+    UPLOAD_FOLDER,
+    exist_ok=True
+)
 # ------------------------------------------------------------
 # Session 암호키
 # ------------------------------------------------------------
@@ -419,6 +432,34 @@ def init_db():
 
     """)
 
+    # ============================================================
+    # Content Table
+    # ============================================================
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS contents (
+
+        id SERIAL PRIMARY KEY,
+
+        title VARCHAR(255) NOT NULL,
+
+        content TEXT NOT NULL,
+
+        image TEXT,
+
+        file_name TEXT,
+
+        file_path TEXT,
+
+        views INTEGER DEFAULT 0,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """)
+     
     # --------------------------------------------------------
     # WDM PRICE TABLE
     # --------------------------------------------------------
@@ -3560,6 +3601,204 @@ def admin_logout2():
     session.pop("admin2", None)
 
     return render_template("admin_logout2.html")
+
+# ============================================================
+# Admin2 Content Management
+# Content 등록 / 수정 / 삭제
+# ============================================================
+
+@app.route("/admin2/content", methods=["GET", "POST"])
+def admin_content():
+
+
+    # --------------------------------------------------------
+    # Content Delete
+    # --------------------------------------------------------
+
+    delete_id = request.args.get("delete")
+
+
+    if delete_id:
+
+
+        execute("""
+            DELETE FROM contents
+            WHERE id=%s
+        """,
+        (
+            delete_id,
+        ))
+
+
+        return redirect("/admin2/content")
+
+
+
+    # --------------------------------------------------------
+    # Content Add / Edit
+    # --------------------------------------------------------
+
+    if request.method == "POST":
+
+
+        action = request.form.get("action")
+
+
+
+        # ----------------------------------------------------
+        # Add Content
+        # ----------------------------------------------------
+
+        if action == "add":
+
+
+            upload_file = request.files.get("file")
+
+
+            file_name = None
+
+            file_path = None
+
+
+
+            # -----------------------------------------------
+            # File Upload
+            # -----------------------------------------------
+
+            if upload_file and upload_file.filename:
+
+
+                file_name = secure_filename(
+                    upload_file.filename
+                )
+
+
+                file_path = os.path.join(
+                    UPLOAD_FOLDER,
+                    file_name
+                )
+
+
+                upload_file.save(
+                    file_path
+                )
+
+
+
+            execute("""
+                INSERT INTO contents
+                (
+                    title,
+                    content,
+                    image,
+                    file_name,
+                    file_path
+                )
+
+                VALUES
+                (%s,%s,%s,%s,%s)
+
+            """,
+            (
+
+                request.form["title"],
+
+                request.form["content"],
+
+                request.form.get("image"),
+
+                file_name,
+
+                file_path
+
+            ))
+
+
+
+        # ----------------------------------------------------
+        # Edit Content
+        # ----------------------------------------------------
+
+        elif action == "edit":
+
+
+            execute("""
+                UPDATE contents
+
+                SET
+
+                title=%s,
+
+                content=%s,
+
+                image=%s,
+
+                updated_at=CURRENT_TIMESTAMP
+
+
+                WHERE id=%s
+
+            """,
+            (
+
+                request.form["title"],
+
+                request.form["content"],
+
+                request.form.get("image"),
+
+                request.form["id"]
+
+            ))
+
+
+
+        return redirect("/admin2/content")
+
+
+
+    # --------------------------------------------------------
+    # Content List
+    # --------------------------------------------------------
+
+    rows = fetch_all("""
+        SELECT *
+        FROM contents
+        ORDER BY id DESC
+    """)
+
+
+
+    edit_row = None
+
+
+    edit_id = request.args.get("edit")
+
+
+
+    if edit_id:
+
+
+        edit_row = fetch_one("""
+            SELECT *
+            FROM contents
+            WHERE id=%s
+
+        """,
+        (
+            edit_id,
+        ))
+
+
+
+    return render_template(
+        "admin2_content.html",
+
+        rows=rows,
+
+        edit_row=edit_row
+
+    )
 # ------------------------------------------------------------
 # Donation Management
 # 기부 보고서 관리자 페이지
