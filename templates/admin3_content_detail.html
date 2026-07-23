@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>{{ row.title }}</title>
+
+</head>
+
+<body>
+
+<h2>
+
+{{ row.title }}
+
+</h2>
+
+<hr>
+
+작성일 :
+{{ row.created_at }}
+
+<br>
+
+조회수 :
+{{ row.views }}
+
+<hr>
+
+<p>
+
+{{ row.content }}
+
+</p>
+
+{% if row.image %}
+
+<hr>
+
+<img
+src="{{ row.image }}"
+style="max-width:600px">
+
+{% endif %}
+
+{% if row.file_name %}
+
+<hr>
+
+첨부파일
+
+<br><br>
+
+<a href="/download/content/{{ row.id }}">
+
+📎 {{ row.file_name }}
+
+</a>
+
+{% endif %}
+
+<hr>
+
+<a href="/admin3/content">
+
+← Back to Content CMS
+
+</a>
+
+|
+
+<a href="/admin3/content?edit={{ row.id }}">
+
+Edit
+
+</a>
+
+</body>
+
+</html>
