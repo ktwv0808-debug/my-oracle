@@ -3883,18 +3883,18 @@ def admin_content():
 # ============================================================
 
 @app.route("/admin3/content/<int:content_id>")
-def admin3_content_detail():
+def admin3_content_detail(content_id):
 
     if not session.get("admin3"):
         return redirect("/admin3/login3")
-
-    content_id = request.view_args["content_id"]
 
     row = fetch_one("""
         SELECT *
         FROM contents
         WHERE id=%s
-    """, (content_id,))
+    """, (
+        content_id,
+    ))
 
     if not row:
         return "Content Not Found"
