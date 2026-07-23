@@ -3799,6 +3799,43 @@ def admin_content():
         edit_row=edit_row
 
     )
+
+# ============================================================
+# Public Content List
+# 사용자 콘텐츠 목록 페이지
+# ============================================================
+
+@app.route("/content")
+def content():
+
+
+    # --------------------------------------------------------
+    # Content List 조회
+    # --------------------------------------------------------
+
+    rows = fetch_all("""
+        SELECT
+            id,
+            title,
+            image,
+            file_name,
+            views,
+            created_at
+
+        FROM contents
+
+        ORDER BY id DESC
+
+    """)
+
+
+
+    return render_template(
+        "content.html",
+
+        rows=rows
+
+    )
 # ------------------------------------------------------------
 # Donation Management
 # 기부 보고서 관리자 페이지
