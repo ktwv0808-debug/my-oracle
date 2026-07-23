@@ -12,24 +12,65 @@ Content CMS
 
 </title>
 
+<style>
+
+body{
+
+    font-family:Arial;
+
+    margin:30px;
+
+}
+
+table{
+
+    border-collapse:collapse;
+
+    width:100%;
+
+}
+
+th,td{
+
+    border:1px solid #ccc;
+
+    padding:8px;
+
+    text-align:center;
+
+}
+
+img{
+
+    max-width:120px;
+
+    max-height:80px;
+
+}
+
+textarea{
+
+    resize:vertical;
+
+}
+
+</style>
+
 </head>
 
 <body>
 
-
 <h1>
 
-Content Management
+Content CMS
 
 </h1>
 
 <hr>
 
-
 <form
 method="POST"
 enctype="multipart/form-data">
-
 
 {% if edit_row %}
 
@@ -38,65 +79,56 @@ type="hidden"
 name="action"
 value="edit">
 
-
 <input
 type="hidden"
 name="id"
 value="{{ edit_row.id }}">
 
-
 {% else %}
-
 
 <input
 type="hidden"
 name="action"
 value="add">
 
-
 {% endif %}
 
-
-Title
+<b>Title</b>
 
 <br>
 
 <input
+type="text"
 name="title"
-style="width:500px"
+style="width:600px"
 value="{{ edit_row.title if edit_row else '' }}">
-
 
 <br><br>
 
-
-Content
+<b>Content</b>
 
 <br>
 
 <textarea
 name="content"
 rows="10"
-cols="70">{{ edit_row.content if edit_row else '' }}</textarea>
-
+cols="90">{{ edit_row.content if edit_row else '' }}</textarea>
 
 <br><br>
 
-
-Image URL
+<b>Image URL</b>
 
 <br>
 
 <input
+type="text"
 name="image"
-style="width:500px"
+style="width:600px"
 value="{{ edit_row.image if edit_row else '' }}">
-
 
 <br><br>
 
-
-Attachment File
+<b>Attachment File</b>
 
 <br>
 
@@ -104,9 +136,7 @@ Attachment File
 type="file"
 name="file">
 
-
 <br><br>
-
 
 <button type="submit">
 
@@ -114,12 +144,9 @@ Save
 
 </button>
 
-
 </form>
 
-
 <hr>
-
 
 <h2>
 
@@ -127,12 +154,13 @@ Content List
 
 </h2>
 
-
-<table border="1" cellpadding="5" cellspacing="0">
+<table>
 
 <tr>
 
-<th>ID</th>
+<th>No</th>
+
+<th>Image</th>
 
 <th>Title</th>
 
@@ -146,30 +174,23 @@ Content List
 
 </tr>
 
-
 {% for row in rows %}
 
 <tr>
 
-<td>{{ loop.index }}</td>
-
-
 <td>
 
-<a href="/admin3/content/{{ row.id }}">
-
-{{ row.title }}
-
-</a>
+{{ loop.index }}
 
 </td>
 
-
 <td>
 
-{% if row.file_name %}
+{% if row.image %}
 
-{{ row.file_name }}
+<img
+src="{{ row.image }}"
+alt="Image">
 
 {% else %}
 
@@ -179,6 +200,33 @@ Content List
 
 </td>
 
+<td>
+
+<a href="/content/{{ row.id }}">
+
+{{ row.title }}
+
+</a>
+
+</td>
+
+<td>
+
+{% if row.file_name %}
+
+<a href="/download/content/{{ row.id }}">
+
+{{ row.file_name }}
+
+</a>
+
+{% else %}
+
+-
+
+{% endif %}
+
+</td>
 
 <td>
 
@@ -186,13 +234,11 @@ Content List
 
 </td>
 
-
 <td>
 
 {{ row.created_at }}
 
 </td>
-
 
 <td>
 
@@ -219,7 +265,6 @@ Delete
 {% endfor %}
 
 </table>
-
 
 </body>
 
