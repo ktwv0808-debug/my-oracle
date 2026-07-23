@@ -36,7 +36,45 @@ app = Flask(__name__)
 UPLOAD_FOLDER = "static/uploads/content"
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+# ============================================================
+# Allowed Upload Extensions
+# ============================================================
 
+ALLOWED_EXTENSIONS = {
+
+    "pdf",
+
+    "doc",
+
+    "docx",
+
+    "xls",
+
+    "xlsx",
+
+    "ppt",
+
+    "pptx",
+
+    "txt",
+
+    "zip",
+
+    "rar",
+
+    "jpg",
+
+    "jpeg",
+
+    "png",
+
+    "gif",
+
+    "hwp",
+
+    "webp"
+
+}
 
 os.makedirs(
     UPLOAD_FOLDER,
@@ -59,7 +97,23 @@ ADMIN2_PASSWORD = "1234"
 # ============================================================
 # PART 2 : PostgreSQL
 # ============================================================
+# ============================================================
+# Check Allowed File Extension
+# ============================================================
 
+def allowed_file(filename):
+
+    return (
+
+        "." in filename
+
+        and
+
+        filename.rsplit(".", 1)[1].lower()
+
+        in ALLOWED_EXTENSIONS
+
+    )
 # ------------------------------------------------------------
 # PostgreSQL Connection
 # ------------------------------------------------------------
@@ -3617,6 +3671,23 @@ def admin_content():
 
             if upload_file and upload_file.filename:
 
+                # -----------------------------------------------
+                # Extension Check
+                # -----------------------------------------------
+
+                if not allowed_file(upload_file.filename):
+
+                    return """
+                    <h3>
+
+                    Upload Failed
+
+                    <br><br>
+
+                    File type is not allowed.
+
+                    </h3>
+                    """
 
                 original_name = secure_filename(
                     upload_file.filename
