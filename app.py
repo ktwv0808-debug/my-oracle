@@ -3502,106 +3502,6 @@ def admin2_announcement_detail(id):
         "admin2_announcement_detail.html",
         row=row
     )
-# ------------------------------------------------------------
-# Admin Login
-# ------------------------------------------------------------
-
-@app.route("/admin/login", methods=["GET","POST"])
-def admin_login():
-
-    if request.method == "POST":
-
-        username = request.form["username"]
-
-        password = request.form["password"]
-
-
-        # 관리자 계정
-        if (
-            username == "admin"
-            and password == "1234"
-        ):
-
-            session["admin"] = True
-
-            return redirect(
-                "/admin/donation"
-            )
-
-
-        else:
-
-            return """
-            <h3>
-            Login Failed
-            </h3>
-            """
-
-
-    return render_template(
-        "admin_login.html"
-    )
-
-# ------------------------------------------------------------
-# Admin Logout
-# ------------------------------------------------------------
-@app.route("/admin/logout")
-def admin_logout():
-
-    session.clear()
-
-    return redirect("/admin/login")
-
-# ==========================================================
-# Announcement Admin Login
-# ==========================================================
-
-@app.route("/admin2/login2", methods=["GET", "POST"])
-def admin_login2():
-
-    if request.method == "POST":
-
-        user_id = request.form["id"]
-        password = request.form["password"]
-
-        if user_id == ADMIN2_ID and password == ADMIN2_PASSWORD:
-
-            session["admin2"] = True
-
-            # 관리자 페이지로 이동
-            return redirect("/admin2/announcement")
-
-        return render_template(
-            "admin_login2.html",
-            error="Login Failed"
-        )
-
-    return render_template("admin_login2.html")
-
-# ==========================================================
-# Announcement Admin Dashboard
-# ==========================================================
-
-@app.route("/admin2/dashboard2")
-def admin_dashboard2():
-
-    if not session.get("admin2"):
-
-        return redirect("/admin/login2")
-
-    return render_template("admin_dashboard2.html")  
-
-# ==========================================================
-# Announcement Admin Logout
-# ==========================================================
-
-@app.route("/admin2/logout2")
-def admin_logout2():
-
-    session.pop("admin2", None)
-
-    return render_template("admin_logout2.html")
-
 # ============================================================
 # Admin2 Content Management
 # Content 등록 / 수정 / 삭제
@@ -3613,76 +3513,69 @@ def admin_content():
 
     # --------------------------------------------------------
     # Content Delete
+    # DB + Uploaded File 삭제
     # --------------------------------------------------------
 
     delete_id = request.args.get("delete")
 
 
-    # --------------------------------------------------------
-# Content Delete
-# DB + Uploaded File 삭제
-# --------------------------------------------------------
-
-delete_id = request.args.get("delete")
+    if delete_id:
 
 
+        # ----------------------------------------------------
+        # 1. 삭제할 파일 정보 조회
+        # ----------------------------------------------------
 
-if delete_id:
+        file_info = fetch_one("""
+            SELECT file_path
+            FROM contents
+            WHERE id=%s
 
-
-    # ----------------------------------------------------
-    # 1. 삭제할 파일 정보 조회
-    # ----------------------------------------------------
-
-    file_info = fetch_one("""
-        SELECT file_path
-        FROM contents
-        WHERE id=%s
-
-    """,
-    (
-        delete_id,
-    ))
+        """,
+        (
+            delete_id,
+        ))
 
 
 
-    # ----------------------------------------------------
-    # 2. 실제 업로드 파일 삭제
-    # ----------------------------------------------------
+        # ----------------------------------------------------
+        # 2. 실제 업로드 파일 삭제
+        # ----------------------------------------------------
 
-    if file_info and file_info["file_path"]:
-
-
-        if os.path.exists(
-            file_info["file_path"]
-        ):
+        if file_info and file_info["file_path"]:
 
 
-            os.remove(
+            if os.path.exists(
                 file_info["file_path"]
-            )
+            ):
+
+
+                os.remove(
+                    file_info["file_path"]
+                )
 
 
 
-    # ----------------------------------------------------
-    # 3. DB 데이터 삭제
-    # ----------------------------------------------------
+        # ----------------------------------------------------
+        # 3. PostgreSQL 데이터 삭제
+        # ----------------------------------------------------
 
-    execute("""
-        DELETE FROM contents
-        WHERE id=%s
+        execute("""
+            DELETE FROM contents
+            WHERE id=%s
 
-    """,
-    (
-        delete_id,
-    ))
+        """,
+        (
+            delete_id,
+        ))
 
 
-    # ----------------------------------------------------
-    # 저장 완료 후 Content 목록 이동
-    # ----------------------------------------------------
 
-    return redirect("/admin2/content")
+        return redirect(
+            "/admin2/content"
+        )
+
+
 
     # --------------------------------------------------------
     # Content Add / Edit
@@ -3711,22 +3604,39 @@ if delete_id:
 
 
 
-            # -----------------------------------------------
+            # ------------------------------------------------
             # File Upload
-            # -----------------------------------------------
+            # 랜덤 파일명 생성
+            # ------------------------------------------------
 
             if upload_file and upload_file.filename:
 
 
-                file_name = secure_filename(
+                original_name = secure_filename(
                     upload_file.filename
+                )
+
+
+                ext = os.path.splitext(
+                    original_name
+                )[1]
+
+
+                random_name = (
+                    str(uuid.uuid4())
+                    +
+                    ext
                 )
 
 
                 file_path = os.path.join(
                     UPLOAD_FOLDER,
-                    file_name
+                    random_name
                 )
+
+
+                file_name = original_name
+
 
 
                 upload_file.save(
@@ -3803,7 +3713,9 @@ if delete_id:
 
 
 
-        return redirect("/admin2/content")
+        return redirect(
+            "/admin2/content"
+        )
 
 
 
@@ -3815,6 +3727,7 @@ if delete_id:
         SELECT *
         FROM contents
         ORDER BY id DESC
+
     """)
 
 
