@@ -3670,13 +3670,7 @@ def admin_content():
 
             file_path = None
 
-            # ----------------------------------------------------
-            # File Name Length Limit
-            # ----------------------------------------------------
-
-            if len(original_name) > 100:
-
-               original_name = original_name[:100]
+          
 
             # ------------------------------------------------
             # File Upload
@@ -3707,7 +3701,15 @@ def admin_content():
                     upload_file.filename
                 )
 
+                # ----------------------------------------------------
+                # File Name Length Limit
+                # ----------------------------------------------------
 
+                if len(original_name) > 100:
+
+                    original_name = original_name[:100]
+
+                
                 ext = os.path.splitext(
                     original_name
                 )[1]
