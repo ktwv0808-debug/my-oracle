@@ -3618,19 +3618,68 @@ def admin_content():
     delete_id = request.args.get("delete")
 
 
-    if delete_id:
+    # --------------------------------------------------------
+# Content Delete
+# DB + Uploaded File 삭제
+# --------------------------------------------------------
+
+delete_id = request.args.get("delete")
 
 
-        execute("""
-            DELETE FROM contents
-            WHERE id=%s
-        """,
-        (
-            delete_id,
-        ))
+
+if delete_id:
 
 
-        return redirect("/admin2/content")
+    # ----------------------------------------------------
+    # 1. 삭제할 파일 정보 조회
+    # ----------------------------------------------------
+
+    file_info = fetch_one("""
+        SELECT file_path
+        FROM contents
+        WHERE id=%s
+
+    """,
+    (
+        delete_id,
+    ))
+
+
+
+    # ----------------------------------------------------
+    # 2. 실제 업로드 파일 삭제
+    # ----------------------------------------------------
+
+    if file_info and file_info["file_path"]:
+
+
+        if os.path.exists(
+            file_info["file_path"]
+        ):
+
+
+            os.remove(
+                file_info["file_path"]
+            )
+
+
+
+    # ----------------------------------------------------
+    # 3. DB 데이터 삭제
+    # ----------------------------------------------------
+
+    execute("""
+        DELETE FROM contents
+        WHERE id=%s
+
+    """,
+    (
+        delete_id,
+    ))
+
+
+
+    return redirect("/admin2/content")
 
 
 
