@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+
+<html>
+
+
+<head>
+
+
+<title>
+
+{{row.title}}
+
+</title>
+
+
+
+<style>
+
+
+body {
+
+    font-family: Arial;
+
+    width:80%;
+
+    margin:auto;
+
+}
+
+
+
+.content-box {
+
+    margin-top:30px;
+
+}
+
+
+
+img {
+
+    max-width:500px;
+
+}
+
+
+
+.file-box {
+
+    margin-top:30px;
+
+    padding:15px;
+
+    border:1px solid #ddd;
+
+}
+
+
+
+</style>
+
+
+</head>
+
+
+
+<body>
+
+
+
+<h1>
+
+{{row.title}}
+
+</h1>
+
+
+<hr>
+
+
+
+<div>
+
+
+작성일 :
+
+{{row.created_at}}
+
+
+<br>
+
+
+조회수 :
+
+{{row.views + 1}}
+
+
+
+</div>
+
+
+
+<hr>
+
+
+
+
+{% if row.image %}
+
+
+
+<img src="{{row.image}}">
+
+
+
+<hr>
+
+
+
+{% endif %}
+
+
+
+
+<div class="content-box">
+
+
+{{row.content}}
+
+
+</div>
+
+
+
+
+
+{% if row.file_name %}
+
+
+
+<div class="file-box">
+
+
+
+<h3>
+
+Attachment
+
+</h3>
+
+
+
+📎
+
+
+<a href="/{{row.file_path}}"
+download>
+
+
+{{row.file_name}}
+
+
+</a>
+
+
+
+</div>
+
+
+
+{% endif %}
+
+
+
+
+<br><br>
+
+
+
+
+<a href="/content">
+
+← Back to List
+
+</a>
+
+
+
+</body>
+
+
+</html>
