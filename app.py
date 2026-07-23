@@ -95,6 +95,13 @@ ADMIN2_ID = "admin"
 
 ADMIN2_PASSWORD = "1234"
 # ============================================================
+# Content Admin Account
+# ============================================================
+
+ADMIN3_ID = "admin"
+
+ADMIN3_PASSWORD = "1234"
+# ============================================================
 # PART 2 : PostgreSQL
 # ============================================================
 # ============================================================
@@ -3561,9 +3568,16 @@ def admin2_announcement_detail(id):
 # Content 등록 / 수정 / 삭제
 # ============================================================
 
-@app.route("/admin2/content", methods=["GET", "POST"])
+@app.route("/admin3/content", methods=["GET", "POST"])
 def admin_content():
 
+    # --------------------------------------------------------
+    # Admin3 Login Check
+    # --------------------------------------------------------
+
+    if not session.get("admin3"):
+
+        return redirect("/admin3/login3")
 
     # --------------------------------------------------------
     # Content Delete
@@ -3626,7 +3640,7 @@ def admin_content():
 
 
         return redirect(
-            "/admin2/content"
+            "/admin3/content"
         )
 
 
@@ -3791,7 +3805,7 @@ def admin_content():
 
 
         return redirect(
-            "/admin2/content"
+            "/admin3/content"
         )
 
 
@@ -3832,7 +3846,7 @@ def admin_content():
 
 
     return render_template(
-        "admin2_content.html",
+        "admin3_content.html",
 
         rows=rows,
 
@@ -3941,6 +3955,50 @@ def content_detail(id):
         row=row
 
     )
+
+# ============================================================
+# Content Admin Login
+# ============================================================
+
+@app.route("/admin3/login3", methods=["GET", "POST"])
+def admin_login3():
+
+    if request.method == "POST":
+
+        user_id = request.form["id"]
+        password = request.form["password"]
+
+        if (
+            user_id == ADMIN3_ID
+            and
+            password == ADMIN3_PASSWORD
+        ):
+
+            session["admin3"] = True
+
+            return redirect("/admin3/content")
+
+
+        return render_template(
+            "admin_login3.html",
+            error="Login Failed"
+        )
+
+
+    return render_template(
+        "admin_login3.html"
+    )
+
+# ============================================================
+# Content Admin Logout
+# ============================================================
+
+@app.route("/admin3/logout3")
+def admin_logout3():
+
+    session.pop("admin3", None)
+
+    return redirect("/admin3/login3")
 # ------------------------------------------------------------
 # Donation Management
 # 기부 보고서 관리자 페이지
