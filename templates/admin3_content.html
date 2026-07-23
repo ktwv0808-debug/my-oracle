@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>
+Content Admin
+</title>
+
+</head>
+
+
+<body>
+
+
+<h1>
+Content Management
+</h1>
+
+
+<hr>
+
+
+<form method="POST"
+      enctype="multipart/form-data">
+
+
+
+{% if edit_row %}
+
+<input type="hidden"
+name="action"
+value="edit">
+
+
+<input type="hidden"
+name="id"
+value="{{edit_row.id}}">
+
+
+{% else %}
+
+
+<input type="hidden"
+name="action"
+value="add">
+
+
+{% endif %}
+
+
+
+Title
+
+<br>
+
+<input 
+name="title"
+style="width:500px"
+value="{{edit_row.title if edit_row else ''}}">
+
+
+
+<br><br>
+
+
+Content
+
+<br>
+
+
+<textarea
+name="content"
+rows="10"
+cols="70">
+
+{{edit_row.content if edit_row else ''}}
+
+</textarea>
+
+
+
+<br><br>
+
+
+Image URL
+
+<br>
+
+
+<input
+name="image"
+style="width:500px"
+value="{{edit_row.image if edit_row else ''}}">
+
+
+
+<br><br>
+
+
+Attachment File
+
+<br>
+
+
+<input
+type="file"
+name="file">
+
+
+
+<br><br>
+
+
+<button>
+
+Save
+
+</button>
+
+
+</form>
+
+
+
+<hr>
+
+
+
+<h2>
+Content List
+</h2>
+
+
+
+<table border="1">
+
+
+<tr>
+
+<th>ID</th>
+
+<th>Title</th>
+
+<th>File</th>
+
+<th>Date</th>
+
+<th>Action</th>
+
+</tr>
+
+
+
+{% for row in rows %}
+
+
+<tr>
+
+
+<td>
+{{row.id}}
+</td>
+
+
+<td>
+{{row.title}}
+</td>
+
+
+<td>
+
+{% if row.file_name %}
+
+{{row.file_name}}
+
+{% endif %}
+
+</td>
+
+
+<td>
+{{row.created_at}}
+</td>
+
+
+<td>
+
+
+<a href="/admin2/content?edit={{row.id}}">
+Edit
+</a>
+
+
+|
+
+
+<a href="/admin2/content?delete={{row.id}}"
+onclick="return confirm('Delete?')">
+
+Delete
+
+</a>
+
+
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+</table>
+
+
+</body>
+
+</html>
