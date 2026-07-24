@@ -18,7 +18,7 @@ from datetime import datetime
 import traceback
 import requests
 import pandas as pd
-import os
+import base64
 from werkzeug.utils import secure_filename
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -156,7 +156,184 @@ def fetch_all(sql, params=None):
     conn.close()
 
     return rows
+# ==========================================================
+# GitHub File Upload
+# ==========================================================
 
+def upload_file_to_github(file, filename):
+
+    token = os.getenv("GITHUB_TOKEN")
+
+    repo = os.getenv("GITHUB_REPO")
+
+    branch = os.getenv("GITHUB_BRANCH")
+
+    folder = os.getenv("GITHUB_FOLDER")
+
+
+    # ------------------------------------------------------
+    # File Read
+    # ------------------------------------------------------
+
+    content = base64.b64encode(
+        file.read()
+    ).decode("utf-8")
+
+
+    # ------------------------------------------------------
+    # GitHub API URL
+    # ------------------------------------------------------
+
+    url = (
+        f"https://api.github.com/repos/"
+        f"{repo}/contents/"
+        f"{folder}/{filename}"
+    )
+
+
+    headers = {
+
+        "Authorization":
+        f"Bearer {token}",
+
+        "Accept":
+        "application/vnd.github+json"
+
+    }
+
+
+    data = {
+
+        "message":
+        f"Upload {filename}",
+
+        "content":
+        content,
+
+        "branch":
+        branch
+
+    }
+
+
+    response = requests.put(
+
+        url,
+
+        headers=headers,
+
+        json=data
+
+    )
+
+
+    if response.status_code in [200, 201]:
+
+
+        return (
+
+            f"https://raw.githubusercontent.com/"
+            f"{repo}/"
+            f"{branch}/"
+            f"{folder}/"
+            f"{filename}"
+
+        )
+
+
+    else:
+
+        print(response.text)
+
+        return None
+
+# ==========================================================
+# GitHub File Delete
+# ==========================================================
+
+def delete_file_from_github(file_url):
+
+
+    token = os.getenv("GITHUB_TOKEN")
+
+    repo = os.getenv("GITHUB_REPO")
+
+    branch = os.getenv("GITHUB_BRANCH")
+
+
+    if not file_url:
+
+        return
+
+
+    filename = file_url.split("/")[-1]
+
+
+    url = (
+
+        f"https://api.github.com/repos/"
+        f"{repo}/contents/"
+        f"uploads/{filename}"
+
+    )
+
+
+    headers = {
+
+        "Authorization":
+        f"Bearer {token}",
+
+        "Accept":
+        "application/vnd.github+json"
+
+    }
+
+
+    # ------------------------------------------------------
+    # 파일 정보 조회
+    # ------------------------------------------------------
+
+    response = requests.get(
+
+        url,
+
+        headers=headers
+
+    )
+
+
+    if response.status_code != 200:
+
+        return
+
+
+    sha = response.json()["sha"]
+
+
+    # ------------------------------------------------------
+    # 삭제
+    # ------------------------------------------------------
+
+    requests.delete(
+
+        url,
+
+        headers=headers,
+
+        json={
+
+            "message":
+            f"Delete {filename}",
+
+            "sha":
+            sha,
+
+            "branch":
+            branch
+
+        }
+
+    )
 # ============================================================
 # Load WDM History
 # ============================================================
@@ -3613,15 +3790,11 @@ def admin_content():
         if file_info and file_info["file_path"]:
 
 
-            if os.path.exists(
+            delete_file_from_github(
+
                 file_info["file_path"]
-            ):
 
-
-                os.remove(
-                    file_info["file_path"]
-                )
-
+            )
 
 
         # ----------------------------------------------------
@@ -3752,13 +3925,21 @@ def admin_content():
 
                 file_name = original_name
 
-                # ----------------------------------------------------
-                # Save File
-                # ----------------------------------------------------
+                
+               # ----------------------------------------------------
+               # GitHub Upload
+               # ----------------------------------------------------
 
-                upload_file.save(
-                    file_path
-                )
+               github_url = upload_file_to_github(
+
+                   upload_file,
+
+                   random_name
+
+               )
+
+
+              file_path = github_url
 
 
             execute("""
