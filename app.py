@@ -3544,14 +3544,38 @@ def admin_login():
 
             session["admin"] = True
 
-            return redirect("/admin/donation")
-
+            return redirect("/admin/dashboard")
+        
         return render_template(
             "admin_login.html",
             error="Invalid Username or Password"
         )
 
     return render_template("admin_login.html")
+# ==========================================================
+# Admin Logout
+# ==========================================================
+
+@app.route("/admin/logout")
+def admin_logout():
+
+    session.pop("admin", None)
+
+    return redirect("/admin/login")
+
+
+# ==========================================================
+# Admin Dashboard
+# ==========================================================
+
+@app.route("/admin/dashboard")
+def admin_dashboard():
+
+    if not session.get("admin"):
+        return redirect("/admin/login")
+
+    return render_template("admin_dashboard.html")
+
 # ==========================================================
 # Admin Logout
 # ==========================================================
@@ -3579,7 +3603,7 @@ def admin2_login():
 
         if username == ADMIN2_ID and password == ADMIN2_PASSWORD:
 
-            session["admin2"] = True
+            session["admin"] = True
 
             return redirect("/admin2/announcement")
 
@@ -3598,7 +3622,7 @@ def admin2_login():
 @app.route("/admin2/logout2")
 def admin2_logout():
 
-    session.pop("admin2", None)
+    session.pop("admin", None)
 
     return render_template("admin_logout2.html")
 # ==========================================================
@@ -3641,7 +3665,7 @@ def admin2_announcement():
     # ----------------------------------------------------------
     # 관리자 로그인 확인
     # ----------------------------------------------------------
-    if not session.get("admin2"):
+    if not session.get("admin"):
         return redirect("/admin2/login2")
 
     # ==========================================================
@@ -3742,8 +3766,9 @@ def announcement_add():
     # ----------------------------------------------------------
     # 관리자 로그인 확인
     # ----------------------------------------------------------
-    if not session.get("admin2"):
-        return redirect("/admin2/login2")
+    if not session.get("admin"):
+
+        return redirect("/admin/login")
 
     if request.method == "POST":
 
@@ -3766,8 +3791,8 @@ def edit_announcement_route(id):
     # ----------------------------------------------------------
     # 관리자 로그인 확인
     # ----------------------------------------------------------
-    if not session.get("admin2"):
-        return redirect("/admin2/login2")
+    if not session.get("admin"):
+        return redirect("/admin/login")
 
     if request.method == "POST":
 
@@ -3792,8 +3817,8 @@ def edit_announcement_route(id):
 def admin2_delete_announcement(id):
 
     # 관리자 로그인 확인
-    if not session.get("admin2"):
-        return redirect("/admin2/login2")
+    if not session.get("admin"):
+        return redirect("/admin/login")
 
     delete_announcement(id)
 
@@ -3806,9 +3831,8 @@ def admin2_delete_announcement(id):
 @app.route("/admin2/announcement/<int:id>")
 def admin2_announcement_detail(id):
 
-    if not session.get("admin2"):
-        return redirect("/admin2/login2")
-
+    if not session.get("admin"):
+        return redirect("/admin/login")
     row = get_announcement(id)
 
     return render_template(
@@ -3827,9 +3851,9 @@ def admin_content():
     # Admin3 Login Check
     # --------------------------------------------------------
 
-    if not session.get("admin3"):
+    if not session.get("admin"):
 
-        return redirect("/admin3/login3")
+        return redirect("/admin/login")
 
     # --------------------------------------------------------
     # Content Delete
@@ -4129,8 +4153,9 @@ def admin_content():
 @app.route("/admin3/content/<int:content_id>")
 def admin3_content_detail(content_id):
 
-    if not session.get("admin3"):
-        return redirect("/admin3/login3")
+    if not session.get("admin"):
+
+        return redirect("/admin/login")
 
     row = fetch_one("""
         SELECT *
@@ -4258,7 +4283,7 @@ def admin_login3():
             password == ADMIN3_PASSWORD
         ):
 
-            session["admin3"] = True
+            session["admin"] = True
 
             return redirect("/admin3/content")
 
@@ -4280,7 +4305,7 @@ def admin_login3():
 @app.route("/admin3/logout3")
 def admin_logout3():
 
-    session.pop("admin3", None)
+    session.pop("admin", None)
 
     return redirect("/admin3/login3")
 
@@ -4401,8 +4426,7 @@ def add_donation():
 
     keep_latest_rows("donation_records")
 
-    return redirect("/admin/donation")
-
+    return redirect("/admin/dashboard")
 
 # ------------------------------------------------------------
 # Donation 수정
