@@ -4499,23 +4499,26 @@ def chart_data():
 
     cur.execute("""
 
-        SELECT
+    SELECT
 
-            created_at,
-            price,
-            ma20,
-            ma60
+        created_at,
+        price,
+        ma20,
+        ma60
 
-        FROM eth_price
+    FROM eth_price
 
-        ORDER BY id ASC
+    ORDER BY id DESC
 
-        LIMIT 300
+    LIMIT 300
 
-    """)
+""")
 
     rows = cur.fetchall()
+    # 최신순으로 가져온 데이터를
+    # 차트 표시용 과거순으로 변경
 
+    rows = list(reversed(rows))
     cur.close()
     conn.close()
 
