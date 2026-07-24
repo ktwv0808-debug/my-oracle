@@ -46,7 +46,7 @@ style="max-width:600px">
 
 {% endif %}
 
-{% if row.file_name %}
+{% if row.file_path %}
 
 <hr>
 
@@ -54,7 +54,7 @@ style="max-width:600px">
 
 <br><br>
 
-<a href="/download/content/{{ row.id }}">
+<a href="{{ row.file_path }}" target="_blank">
 
 📎 {{ row.file_name }}
 
