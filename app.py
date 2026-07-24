@@ -4226,6 +4226,9 @@ def admin_logout3():
 
     return redirect("/admin3/login3")
 
+# ------------------------------------------------------------
+# Content Download (GitHub)
+# ------------------------------------------------------------
 @app.route("/download/content/<int:content_id>")
 def download_content(content_id):
 
@@ -4233,15 +4236,43 @@ def download_content(content_id):
         SELECT *
         FROM contents
         WHERE id=%s
-    """, (content_id,))
+    """,
+    (
+        content_id,
+    ))
 
     if not row:
+
         return "Not Found"
 
+
+    # --------------------------------------------------------
+    # GitHub File Download
+    # --------------------------------------------------------
+
+    response = requests.get(
+        row["file_path"]
+    )
+
+    if response.status_code != 200:
+
+        return "File Not Found"
+
+
+    # --------------------------------------------------------
+    # Original File Name Download
+    # --------------------------------------------------------
+
+    from io import BytesIO
+
     return send_file(
-        row["file_path"],
+
+        BytesIO(response.content),
+
         as_attachment=True,
+
         download_name=row["file_name"]
+
     )
 # ------------------------------------------------------------
 # Donation Management
