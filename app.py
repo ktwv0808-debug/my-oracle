@@ -4080,33 +4080,24 @@ def admin3_content_detail(content_id):
 @app.route("/content")
 def content():
 
-
-    # --------------------------------------------------------
-    # Content List 조회
-    # --------------------------------------------------------
-
     rows = fetch_all("""
         SELECT
             id,
             title,
             image,
             file_name,
+            file_path,
             views,
             created_at
 
         FROM contents
 
         ORDER BY id DESC
-
     """)
-
-
 
     return render_template(
         "content.html",
-
         rows=rows
-
     )
 
 # ============================================================
