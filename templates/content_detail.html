@@ -134,37 +134,23 @@ img {
 
 
 
-{% if row.file_name %}
-
-
+{% if row.file_path %}
 
 <div class="file-box">
 
-
-
 <h3>
-
 Attachment
-
 </h3>
-
-
 
 📎
 
-
-<a href="/download/content/{{ row.id }}">
+<a href="{{ row.file_path }}" target="_blank">
     {{ row.file_name }}
 </a>
 
-
-
 </div>
 
-
-
 {% endif %}
-
 
 
 
