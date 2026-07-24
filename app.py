@@ -3926,21 +3926,17 @@ def admin_content():
                 file_name = original_name
 
                 
-               # ----------------------------------------------------
-               # GitHub Upload
-               # ----------------------------------------------------
+                # ----------------------------------------------------
+                # GitHub Upload
+                # ----------------------------------------------------
 
-               github_url = upload_file_to_github(
-
-                   upload_file,
-
-                   random_name
-
-               )
+                github_url = upload_file_to_github(
+                    upload_file,
+                    random_name
+                )
 
 
-              file_path = github_url
-
+                file_path = github_url
 
             execute("""
                 INSERT INTO contents
