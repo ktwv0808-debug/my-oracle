@@ -3880,9 +3880,7 @@ def admin_content():
                 # Safe File Name (서버 저장용)
                 # ----------------------------------------------------
 
-                safe_name = secure_filename(
-                    upload_file.filename
-                )
+                ext = os.path.splitext(upload_file.filename)[1]
 
                 # ----------------------------------------------------
                 # File Name Length Limit
@@ -3892,13 +3890,7 @@ def admin_content():
 
                     original_name = original_name[:100]
 
-                # ----------------------------------------------------
-                # Extension
-                # ----------------------------------------------------
-
-                ext = os.path.splitext(
-                    safe_name
-                )[1]
+              
 
                 # ----------------------------------------------------
                 # Random File Name
