@@ -3537,10 +3537,10 @@ def admin_login():
 
     if request.method == "POST":
 
-        user_id = request.form["id"]
+        username = request.form["username"]
         password = request.form["password"]
 
-        if user_id == ADMIN_ID and password == ADMIN_PASSWORD:
+        if username == ADMIN_ID and password == ADMIN_PASSWORD:
 
             session["admin"] = True
 
@@ -3548,7 +3548,7 @@ def admin_login():
 
         return render_template(
             "admin_login.html",
-            error="Invalid ID or Password"
+            error="Invalid Username or Password"
         )
 
     return render_template("admin_login.html")
