@@ -3584,11 +3584,11 @@ def admin2_login():
             return redirect("/admin2/announcement")
 
         return render_template(
-            "admin2_login.html",
+            "admin_login2.html",
             error="Invalid ID or Password"
         )
 
-    return render_template("admin2_login.html")
+    return render_template("admin_login2.html")
 
 
 # ==========================================================
@@ -3600,7 +3600,7 @@ def admin2_logout():
 
     session.pop("admin2", None)
 
-    return render_template("admin2_logout2.html")
+    return render_template("admin_logout2.html")
 # ==========================================================
 # Announcement
 # 일반 사용자 공지 목록
