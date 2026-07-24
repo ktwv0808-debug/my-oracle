@@ -85,6 +85,12 @@ os.makedirs(
 # ------------------------------------------------------------
 app.secret_key = "WDM_ADMIN_SECRET_KEY_2026"
 # ==========================================================
+# Admin Login
+# ==========================================================
+
+ADMIN_ID = "admin"
+ADMIN_PASSWORD = "1234"
+# ==========================================================
 # Announcement Admin Account
 # 공지사항 관리자 계정
 # 붙여넣기 위치 :
@@ -3522,6 +3528,40 @@ def portfolio():
 def swap():
     return render_template("swap.html")
 
+# ==========================================================
+# Admin Login
+# ==========================================================
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+
+    if request.method == "POST":
+
+        user_id = request.form["id"]
+        password = request.form["password"]
+
+        if user_id == ADMIN_ID and password == ADMIN_PASSWORD:
+
+            session["admin"] = True
+
+            return redirect("/admin/donation")
+
+        return render_template(
+            "admin_login.html",
+            error="Invalid ID or Password"
+        )
+
+    return render_template("admin_login.html")
+# ==========================================================
+# Admin Logout
+# ==========================================================
+
+@app.route("/admin/logout")
+def admin_logout():
+
+    session.pop("admin", None)
+
+    return redirect("/admin/login")
 # ==========================================================
 # Announcement Page
 # ==========================================================
