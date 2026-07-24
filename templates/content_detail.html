@@ -1,173 +1,122 @@
 <!DOCTYPE html>
-
-<html>
-
+<html lang="en">
 
 <head>
 
+<meta charset="UTF-8">
 
-<title>
-
-{{row.title}}
-
-</title>
-
-
+<title>{{ row.title }}</title>
 
 <style>
 
-
-body {
-
-    font-family: Arial;
-
+body{
+    font-family: Arial, sans-serif;
     width:80%;
-
     margin:auto;
-
+    padding:30px;
 }
 
-
-
-.content-box {
-
+.content-box{
     margin-top:30px;
-
+    line-height:1.8;
+    white-space:pre-wrap;
 }
 
-
-
-img {
-
-    max-width:500px;
-
+img{
+    max-width:600px;
+    border-radius:10px;
 }
 
-
-
-.file-box {
-
+.file-box{
     margin-top:30px;
-
     padding:15px;
-
     border:1px solid #ddd;
-
+    border-radius:10px;
+    background:#f8f8f8;
 }
 
+.btn{
+    display:inline-block;
+    padding:10px 20px;
+    background:#0066cc;
+    color:white;
+    text-decoration:none;
+    border-radius:8px;
+}
 
+.btn:hover{
+    background:#004c99;
+}
 
 </style>
 
-
 </head>
-
-
 
 <body>
 
-
-
-<h1>
-
-{{row.title}}
-
-</h1>
-
+<h1>{{ row.title }}</h1>
 
 <hr>
-
-
 
 <div>
 
-
-작성일 :
-
-{{row.created_at}}
-
+<strong>Date :</strong>
+{{ row.created_at }}
 
 <br>
 
-
-조회수 :
-
-{{row.views + 1}}
-
-
+<strong>Views :</strong>
+{{ row.views + 1 }}
 
 </div>
 
-
-
 <hr>
-
-
-
 
 {% if row.image %}
 
-
-
-<img src="{{row.image}}">
-
-
+<img src="{{ row.image }}">
 
 <hr>
 
-
-
 {% endif %}
-
-
-
 
 <div class="content-box">
 
-
-{{row.content}}
-
+{{ row.content }}
 
 </div>
-
-
-
-
 
 {% if row.file_path %}
 
 <div class="file-box">
 
-<h3>
-Attachment
-</h3>
+<h3>Attachment</h3>
 
 📎
 
-<a href="{{ row.file_path }}" target="_blank">
-    {{ row.file_name }}
+<a class="btn"
+   href="/download/content/{{ row.id }}">
+
+Download
+(
+{{ row.file_name }}
+)
+
 </a>
 
 </div>
 
 {% endif %}
 
-
-
 <br><br>
 
-
-
-
-<a href="/content">
+<a class="btn"
+   href="/content">
 
 ← Back to List
 
 </a>
 
-
-
 </body>
-
 
 </html>
