@@ -3552,16 +3552,6 @@ def admin_login():
         )
 
     return render_template("admin_login.html")
-# ==========================================================
-# Admin Logout
-# ==========================================================
-
-@app.route("/admin/logout")
-def admin_logout():
-
-    session.pop("admin", None)
-
-    return redirect("/admin/login")
 
 
 # ==========================================================
