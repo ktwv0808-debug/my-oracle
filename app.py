@@ -7,7 +7,7 @@ from flask import (
     render_template,
     request,
     redirect,
-    session,
+    session, 
     jsonify
 )
 import uuid
