@@ -3577,22 +3577,18 @@ def admin2_login():
         username = request.form["username"]
         password = request.form["password"]
 
-        if (
-            username == ADMIN2_ID
-            and
-            password == ADMIN2_PASSWORD
-        ):
+        if username == ADMIN2_ID and password == ADMIN2_PASSWORD:
 
             session["admin2"] = True
 
             return redirect("/admin2/announcement")
 
         return render_template(
-            "admin2_login2.html",
+            "admin2_login.html",
             error="Invalid Username or Password"
         )
 
-    return render_template("admin2_login2.html")
+    return render_template("admin2_login.html")
 
 
 # ==========================================================
@@ -3605,7 +3601,6 @@ def admin2_logout():
     session.pop("admin2", None)
 
     return render_template("admin2_logout2.html")
-붙여넣기 위치
 # ==========================================================
 # Announcement
 # 일반 사용자 공지 목록
