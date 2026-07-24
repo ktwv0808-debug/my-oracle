@@ -212,9 +212,9 @@ alt="Image">
 
 <td>
 
-{% if row.file_name %}
+{% if row.file_path %}
 
-<a href="/download/content/{{ row.id }}">
+<a href="{{ row.file_path }}" target="_blank">
 
 {{ row.file_name }}
 
