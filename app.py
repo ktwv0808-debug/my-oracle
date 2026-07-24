@@ -3574,7 +3574,7 @@ def admin2_login():
 
     if request.method == "POST":
 
-        username = request.form["username"]
+        username = request.form["id"]
         password = request.form["password"]
 
         if username == ADMIN2_ID and password == ADMIN2_PASSWORD:
@@ -3585,7 +3585,7 @@ def admin2_login():
 
         return render_template(
             "admin2_login.html",
-            error="Invalid Username or Password"
+            error="Invalid ID or Password"
         )
 
     return render_template("admin2_login.html")
