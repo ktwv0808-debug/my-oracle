@@ -214,7 +214,7 @@ alt="Image">
 
 {% if row.file_path %}
 
-<a href="{{ row.file_path }}" target="_blank">
+<a href="/download/content/{{ row.id }}">
 
 {{ row.file_name }}
 
@@ -227,7 +227,6 @@ alt="Image">
 {% endif %}
 
 </td>
-
 <td>
 
 {{ row.views }}
