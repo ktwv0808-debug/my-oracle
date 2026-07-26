@@ -3579,42 +3579,7 @@ def admin_logout():
 # ==========================================================
 # Announcement Page
 # ==========================================================
-# ==========================================================
-# Admin2 Login
-# ==========================================================
 
-@app.route("/admin2/login2", methods=["GET", "POST"])
-def admin2_login():
-
-    if request.method == "POST":
-
-        username = request.form["id"]
-        password = request.form["password"]
-
-        if username == ADMIN2_ID and password == ADMIN2_PASSWORD:
-
-            session["admin"] = True
-
-            return redirect("/admin2/announcement")
-
-        return render_template(
-            "admin_login2.html",
-            error="Invalid ID or Password"
-        )
-
-    return render_template("admin_login2.html")
-
-
-# ==========================================================
-# Admin2 Logout
-# ==========================================================
-
-@app.route("/admin2/logout2")
-def admin2_logout():
-
-    session.pop("admin", None)
-
-    return render_template("admin_logout2.html")
 # ==========================================================
 # Announcement
 # 일반 사용자 공지 목록
@@ -3652,11 +3617,8 @@ def announcement():
 @app.route("/admin2/announcement", methods=["GET", "POST"])
 def admin2_announcement():
 
-    # ----------------------------------------------------------
-    # 관리자 로그인 확인
-    # ----------------------------------------------------------
-    if not session.get("admin"):
-        return redirect("/admin2/login2")
+  
+    
 
     # ==========================================================
     # Add / Update
@@ -4255,49 +4217,6 @@ def content_detail(id):
 
     )
 
-# ============================================================
-# Content Admin Login
-# ============================================================
-
-@app.route("/admin3/login3", methods=["GET", "POST"])
-def admin_login3():
-
-    if request.method == "POST":
-
-        user_id = request.form["id"]
-        password = request.form["password"]
-
-        if (
-            user_id == ADMIN3_ID
-            and
-            password == ADMIN3_PASSWORD
-        ):
-
-            session["admin"] = True
-
-            return redirect("/admin3/content")
-
-
-        return render_template(
-            "admin_login3.html",
-            error="Login Failed"
-        )
-
-
-    return render_template(
-        "admin_login3.html"
-    )
-
-# ============================================================
-# Content Admin Logout
-# ============================================================
-
-@app.route("/admin3/logout3")
-def admin_logout3():
-
-    session.pop("admin", None)
-
-    return redirect("/admin3/login3")
 
 # ------------------------------------------------------------
 # Content Download (GitHub)
