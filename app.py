@@ -721,12 +721,12 @@ def init_db():
 
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-    )
+   )
 
-    """)
+   """)
 
-    conn.commit()
-    conn.close()
+   conn.commit()
+   conn.close()
     
     # --------------------------------------------------------
     # WDM PRICE TABLE
