@@ -703,7 +703,31 @@ def init_db():
 
     )
     """)
-     
+    # ==========================================================
+    # FAQ Table
+    # ==========================================================
+
+    cursor.execute("""
+
+    CREATE TABLE IF NOT EXISTS faq (
+
+        id SERIAL PRIMARY KEY,
+
+        question TEXT NOT NULL,
+
+        answer TEXT NOT NULL,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    )
+
+    """)
+
+    conn.commit()
+    conn.close()
+    
     # --------------------------------------------------------
     # WDM PRICE TABLE
     # --------------------------------------------------------
