@@ -7,45 +7,79 @@
 
 <title>Frequently Asked Questions</title>
 
+
 <style>
 
+/* ==========================================================
+   FAQ Page Style
+========================================================== */
+
 body{
+
     width:1000px;
     margin:auto;
     font-family:Arial, Helvetica, sans-serif;
+
 }
-<!-- ========================================================== -->
-<!-- Close Button -->
-<!-- ========================================================== -->
 
-<div style="text-align:right; margin:20px;">
 
-    <button
-        onclick="window.close();"
-        style="
-            padding:8px 20px;
-            background:#0066cc;
-            color:white;
-            border:none;
-            border-radius:8px;
-            cursor:pointer;
-        ">
+/* ==========================================================
+   Close Button Style
+========================================================== */
 
-        Close
+.close-area{
 
-    </button>
+    text-align:right;
+    margin:20px;
 
-</div>
+}
+
+
+.close-btn{
+
+    padding:8px 20px;
+    background:#0066cc;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:15px;
+
+}
+
+
+.close-btn:hover{
+
+    background:#004999;
+
+}
+
+
+/* ==========================================================
+   Title
+========================================================== */
+
 h1{
+
     text-align:center;
+
 }
+
+
+
+/* ==========================================================
+   Question Form
+========================================================== */
 
 form{
+
     border:1px solid #ddd;
     padding:20px;
     margin-bottom:30px;
     border-radius:10px;
+
 }
+
 
 input[type=text],
 input[type=email],
@@ -59,11 +93,14 @@ textarea{
 
 }
 
+
 textarea{
 
     height:120px;
 
 }
+
+
 
 button{
 
@@ -71,6 +108,12 @@ button{
     cursor:pointer;
 
 }
+
+
+
+/* ==========================================================
+   FAQ List
+========================================================== */
 
 .faq-item{
 
@@ -81,6 +124,8 @@ button{
 
 }
 
+
+
 .question{
 
     font-weight:bold;
@@ -89,12 +134,16 @@ button{
 
 }
 
+
+
 .answer{
 
     margin-top:10px;
     color:#444;
 
 }
+
+
 
 .wait{
 
@@ -103,17 +152,48 @@ button{
 
 }
 
+
 </style>
+
 
 </head>
 
+
+
 <body>
+
+
+<!-- ==========================================================
+     Close Button
+========================================================== -->
+
+<div class="close-area">
+
+
+<button 
+class="close-btn"
+onclick="window.close();">
+
+Close
+
+</button>
+
+
+</div>
+
+
+
 
 <h1>Frequently Asked Questions</h1>
 
+
+
 <h2>Submit Your Question</h2>
 
+
+
 <form method="POST">
+
 
 <label>Name</label>
 
@@ -122,6 +202,8 @@ type="text"
 name="name"
 required>
 
+
+
 <label>Email</label>
 
 <input
@@ -129,11 +211,15 @@ type="email"
 name="email"
 required>
 
+
+
 <label>Question</label>
 
 <textarea
 name="question"
 required></textarea>
+
+
 
 <button type="submit">
 
@@ -141,29 +227,49 @@ Submit Question
 
 </button>
 
+
 </form>
+
+
+
 
 <hr>
 
+
+
+
 <h2>FAQ List</h2>
+
+
+
 
 {% for faq in faqs %}
 
+
 <div class="faq-item">
+
 
 <div class="question">
 
+
 Q. {{ faq.question }}
+
 
 </div>
 
+
+
 <div class="answer">
+
 
 {% if faq.answer %}
 
+
 A. {{ faq.answer }}
 
+
 {% else %}
+
 
 <span class="wait">
 
@@ -171,14 +277,24 @@ Awaiting Administrator Response
 
 </span>
 
+
 {% endif %}
 
-</div>
+
 
 </div>
+
+
+</div>
+
+
 
 {% endfor %}
 
+
+
+
 </body>
+
 
 </html>
