@@ -988,11 +988,23 @@ def save_access_log():
 
     try:
 
-        ip = request.headers.get(
-            "X-Forwarded-For",
-            request.remote_addr
+# ==========================================================
+# Get Real Visitor IP
+# 실제 방문자 IP 추출
+# ==========================================================
+
+        forwarded = request.headers.get(
+            "X-Forwarded-For"
         )
 
+
+        if forwarded:
+
+            ip = forwarded.split(",")[0].strip()
+
+        else:
+
+            ip = request.remote_addr
         path = request.path
 
         agent = request.headers.get(
