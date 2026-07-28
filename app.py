@@ -4293,36 +4293,36 @@ def admin_faq():
     # ------------------------------------------------------
     if request.method == "POST":
 
-        action = request.form.get("action")
+    action = request.form.get("action")
 
-        question = request.form.get("question")
+    question = request.form.get("question")
 
-        answer = request.form.get("answer")
+    answer = request.form.get("answer")
 
-      
+    if action == "add":
 
-        # -------------------------------
-        # FAQ 수정
-        # -------------------------------
-        elif action == "edit":
+        execute("""
+            INSERT INTO faq(question,answer)
+            VALUES(%s,%s)
+        """,(question,answer))
 
-            execute("""
-                UPDATE faq
+    elif action == "edit":
 
-                SET
-                    question=%s,
-                    answer=%s,
-                    updated_at=CURRENT_TIMESTAMP
+        execute("""
+            UPDATE faq
+            SET
+                question=%s,
+                answer=%s,
+                updated_at=CURRENT_TIMESTAMP
+            WHERE id=%s
+        """,
+        (
+            question,
+            answer,
+            request.form.get("id")
+        ))
 
-                WHERE id=%s
-            """,
-            (
-                question,
-                answer,
-                request.form.get("id")
-            ))
-
-        return redirect("/admin/faq")
+    return redirect("/admin/faq")
 
     # ------------------------------------------------------
     # 수정모드
