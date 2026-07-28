@@ -4748,6 +4748,37 @@ def admin_statistics():
 
         """
     )
+
+# ==========================================================
+# Country Visitor Statistics
+# 국가별 방문 통계
+# ==========================================================
+
+    country_stats = fetch_all(
+        """
+        SELECT
+
+        country,
+
+        COUNT(DISTINCT ip) AS visitors
+
+
+        FROM access_logs
+
+
+        WHERE country IS NOT NULL
+
+
+        GROUP BY country
+
+
+        ORDER BY visitors DESC
+
+
+        LIMIT 10
+
+        """
+    )
     logs = fetch_all(
         """
         SELECT *
@@ -4759,12 +4790,19 @@ def admin_statistics():
         """
     )
 
+# ==========================================================
+# Render Access Statistics Page
+# 접속통계 페이지 출력
+# ==========================================================
 
     return render_template(
         "admin_statistics.html",
         total=total,
         today=today,
         pages=pages,
+        daily_stats=daily_stats,
+        monthly_stats=monthly_stats,
+        country_stats=country_stats,
         logs=logs
     )
 # ------------------------------------------------------------
