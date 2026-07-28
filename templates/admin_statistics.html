@@ -9,41 +9,76 @@ Access Statistics
 </title>
 
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
 <style>
+
 
 body{
 
-width:1000px;
-margin:auto;
-font-family:Arial;
+    width:1000px;
+
+    margin:auto;
+
+    font-family:Arial, Helvetica, sans-serif;
 
 }
+
+
+
+h1{
+
+    text-align:center;
+
+}
+
 
 
 .box{
 
-border:1px solid #ddd;
-padding:20px;
-margin:20px;
-border-radius:10px;
+    border:1px solid #ddd;
+
+    padding:20px;
+
+    margin:20px;
+
+    border-radius:10px;
 
 }
+
 
 
 table{
 
-width:100%;
-border-collapse:collapse;
+    width:100%;
+
+    border-collapse:collapse;
 
 }
+
 
 
 td,th{
 
-border:1px solid #ddd;
-padding:10px;
+    border:1px solid #ddd;
+
+    padding:10px;
+
+    text-align:center;
 
 }
+
+
+
+.chart-box{
+
+    width:90%;
+
+    margin:auto;
+
+}
+
 
 
 </style>
@@ -52,7 +87,9 @@ padding:10px;
 </head>
 
 
+
 <body>
+
 
 
 <h1>
@@ -61,22 +98,38 @@ Website Access Statistics
 
 
 
+
+<!-- ==========================================================
+     Visitor Count
+     방문자 통계
+========================================================== -->
+
+
 <div class="box">
+
 
 <h2>
 Visitor Count
 </h2>
 
 
+
 <p>
+
 Today :
+
 {{ today.cnt }}
+
 </p>
 
 
+
 <p>
+
 Total :
+
 {{ total.cnt }}
+
 </p>
 
 
@@ -84,12 +137,168 @@ Total :
 
 
 
+
+
+<!-- ==========================================================
+     Daily Visitor Chart
+     일별 방문자 차트
+========================================================== -->
+
+
 <div class="box">
 
 
 <h2>
-Top Pages
+
+Daily Visitors
+
 </h2>
+
+
+
+<div class="chart-box">
+
+
+<canvas id="dailyChart"></canvas>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<!-- ==========================================================
+     Monthly Visitor Chart
+     월별 방문자 차트
+========================================================== -->
+
+
+<div class="box">
+
+
+<h2>
+
+Monthly Visitors
+
+</h2>
+
+
+
+<div class="chart-box">
+
+
+<canvas id="monthlyChart"></canvas>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- ==========================================================
+     Country Statistics
+     국가별 방문 통계
+========================================================== -->
+
+
+<div class="box">
+
+
+<h2>
+
+Country Statistics
+
+</h2>
+
+
+
+<table>
+
+
+<tr>
+
+<th>
+Country
+</th>
+
+
+<th>
+Visitors
+</th>
+
+
+</tr>
+
+
+
+
+{% for c in country_stats %}
+
+
+<tr>
+
+
+<td>
+
+{{ c.country }}
+
+</td>
+
+
+<td>
+
+{{ c.visitors }}
+
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+
+
+</table>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- ==========================================================
+     Top Pages
+     인기 페이지
+========================================================== -->
+
+
+<div class="box">
+
+
+<h2>
+
+Top Pages
+
+</h2>
+
 
 
 <table>
@@ -101,11 +310,14 @@ Top Pages
 Page
 </th>
 
+
 <th>
 Count
 </th>
 
+
 </tr>
+
 
 
 
@@ -114,18 +326,27 @@ Count
 
 <tr>
 
-<td>
-{{p.path}}
-</td>
 
 <td>
-{{p.cnt}}
+
+{{ p.path }}
+
 </td>
+
+
+<td>
+
+{{ p.cnt }}
+
+</td>
+
 
 </tr>
 
 
 {% endfor %}
+
+
 
 
 </table>
@@ -136,12 +357,25 @@ Count
 
 
 
+
+
+
+
+<!-- ==========================================================
+     Recent Access
+     최근 접속 기록
+========================================================== -->
+
+
 <div class="box">
 
 
 <h2>
+
 Recent Access
+
 </h2>
+
 
 
 <table>
@@ -149,20 +383,30 @@ Recent Access
 
 <tr>
 
+
 <th>
 IP
 </th>
 
+
+<th>
+Country
+</th>
+
+
 <th>
 Path
 </th>
+
 
 <th>
 Time
 </th>
 
 
+
 </tr>
+
 
 
 
@@ -171,23 +415,43 @@ Time
 
 <tr>
 
-<td>
-{{log.ip}}
-</td>
 
 <td>
-{{log.path}}
+
+{{ log.ip }}
+
 </td>
 
+
 <td>
-{{log.created_at}}
+
+{{ log.country }}
+
 </td>
+
+
+<td>
+
+{{ log.path }}
+
+</td>
+
+
+<td>
+
+{{ log.created_at }}
+
+</td>
+
 
 
 </tr>
 
 
+
 {% endfor %}
+
+
 
 
 </table>
@@ -197,6 +461,160 @@ Time
 
 
 
+
+
+
+
+<script>
+
+
+// ==========================================================
+// Daily Visitor Chart
+// 일별 방문자 그래프
+// ==========================================================
+
+
+const dailyLabels = [
+
+{% for d in daily_stats %}
+
+"{{ d.day }}",
+
+{% endfor %}
+
+];
+
+
+
+const dailyData = [
+
+{% for d in daily_stats %}
+
+{{ d.visitors }},
+
+{% endfor %}
+
+];
+
+
+
+
+
+new Chart(
+
+document.getElementById(
+"dailyChart"
+),
+
+{
+
+
+type:"line",
+
+
+data:{
+
+
+labels:dailyLabels,
+
+
+datasets:[{
+
+label:"Visitors",
+
+data:dailyData
+
+}]
+
+
+}
+
+
+}
+
+);
+
+
+
+
+
+
+
+
+// ==========================================================
+// Monthly Visitor Chart
+// 월별 방문자 그래프
+// ==========================================================
+
+
+const monthLabels = [
+
+{% for m in monthly_stats %}
+
+"{{ m.month }}",
+
+{% endfor %}
+
+];
+
+
+
+const monthData = [
+
+{% for m in monthly_stats %}
+
+{{ m.visitors }},
+
+{% endfor %}
+
+];
+
+
+
+
+
+new Chart(
+
+document.getElementById(
+"monthlyChart"
+),
+
+{
+
+
+type:"bar",
+
+
+data:{
+
+
+labels:monthLabels,
+
+
+datasets:[{
+
+label:"Visitors",
+
+data:monthData
+
+}]
+
+
+}
+
+
+}
+
+);
+
+
+
+</script>
+
+
+
+
 </body>
+
 
 </html>
