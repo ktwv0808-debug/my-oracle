@@ -767,7 +767,26 @@ def init_db():
     """)
 
   
-    
+# ==========================================================
+# Access Statistics Table
+# 방문자 접속 기록 저장 테이블
+# ==========================================================
+
+    execute("""
+    CREATE TABLE IF NOT EXISTS access_logs (
+
+        id SERIAL PRIMARY KEY,
+
+        ip TEXT,
+
+        path TEXT,
+
+        user_agent TEXT,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """)
     # --------------------------------------------------------
     # WDM PRICE TABLE
     # --------------------------------------------------------
@@ -961,7 +980,48 @@ def update_database():
 
     print("Database Updated")
 
+# ==========================================================
+# Save Access Log
+# ==========================================================
 
+def save_access_log():
+
+    try:
+
+        ip = request.remote_addr
+
+        path = request.path
+
+        agent = request.headers.get(
+            "User-Agent"
+        )
+
+
+        execute(
+            """
+            INSERT INTO access_logs
+            (
+                ip,
+                path,
+                user_agent
+            )
+            VALUES
+            (%s,%s,%s)
+            """,
+            (
+                ip,
+                path,
+                agent
+            )
+        )
+
+
+    except Exception as e:
+
+        print(
+            "ACCESS LOG ERROR:",
+            e
+        )
 # ------------------------------------------------------------
 # Insert Default Portfolio
 # ------------------------------------------------------------
@@ -4466,7 +4526,84 @@ def admin_faq_detail(id):
         row=row
 
     )
+# ==========================================================
+# Access Tracking
+# ==========================================================
 
+@app.before_request
+def track_access():
+
+    # 관리자 페이지 제외
+    if not request.path.startswith("/admin"):
+
+        save_access_log()
+
+# ==========================================================
+# Admin Access Statistics
+# ==========================================================
+
+@app.route("/admin/statistics")
+def admin_statistics():
+
+    if not session.get("admin"):
+
+        return redirect("/admin/login")
+
+
+    total = fetch_one(
+        """
+        SELECT COUNT(*) AS cnt
+        FROM access_logs
+        """
+    )
+
+
+    today = fetch_one(
+        """
+        SELECT COUNT(*) AS cnt
+        FROM access_logs
+        WHERE created_at::date =
+        CURRENT_DATE
+        """
+    )
+
+
+    pages = fetch_all(
+        """
+        SELECT
+        path,
+        COUNT(*) AS cnt
+
+        FROM access_logs
+
+        GROUP BY path
+
+        ORDER BY cnt DESC
+
+        LIMIT 10
+        """
+    )
+
+
+    logs = fetch_all(
+        """
+        SELECT *
+        FROM access_logs
+
+        ORDER BY id DESC
+
+        LIMIT 20
+        """
+    )
+
+
+    return render_template(
+        "admin_statistics.html",
+        total=total,
+        today=today,
+        pages=pages,
+        logs=logs
+    )
 # ------------------------------------------------------------
 # Donation Management
 # 기부 보고서 관리자 페이지
