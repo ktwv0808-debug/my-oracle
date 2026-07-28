@@ -4230,9 +4230,36 @@ def download_content(content_id):
 # Public FAQ Page
 # ==========================================================
 
-@app.route("/faq")
+@app.route("/faq", methods=["GET", "POST"])
 def faq():
 
+    # -----------------------------
+    # 질문 등록
+    # -----------------------------
+    if request.method == "POST":
+
+        execute("""
+            INSERT INTO faq
+            (
+                name,
+                email,
+                question,
+                status
+            )
+            VALUES
+            (%s,%s,%s,'WAIT')
+        """,
+        (
+            request.form["name"],
+            request.form["email"],
+            request.form["question"]
+        ))
+
+        return redirect("/faq")
+
+    # -----------------------------
+    # FAQ 목록
+    # -----------------------------
     faqs = fetch_all("""
 
         SELECT *
@@ -4250,36 +4277,6 @@ def faq():
         faqs=faqs
 
     )
-
-
-# ==========================================================
-# FAQ Question
-# 사용자 질문 등록
-# ==========================================================
-
-@app.route("/faq/question", methods=["POST"])
-def faq_question():
-
-    question = request.form["question"]
-
-    execute("""
-
-        INSERT INTO faq
-        (
-            question
-        )
-
-        VALUES
-        (%s)
-
-    """,
-    (
-        question,
-    ))
-
-    return redirect("/faq")
-
-
 # ==========================================================
 # FAQ CMS
 # 관리자 FAQ 관리
@@ -4302,24 +4299,7 @@ def admin_faq():
 
         answer = request.form.get("answer")
 
-        # -------------------------------
-        # FAQ 등록
-        # -------------------------------
-        if action == "add":
-
-            execute("""
-                INSERT INTO faq
-                (
-                    question,
-                    answer
-                )
-                VALUES
-                (%s,%s)
-            """,
-            (
-                question,
-                answer
-            ))
+      
 
         # -------------------------------
         # FAQ 수정
