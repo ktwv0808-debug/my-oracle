@@ -1017,31 +1017,49 @@ def save_access_log():
 
             ip = request.remote_addr
 
-
-
 # ==========================================================
 # Get Visitor Country
 # 방문자 국가 정보 조회
 # ==========================================================
 
+country = "Unknown"
+
+
+try:
+
+    response = requests.get(
+        f"https://ipapi.co/{ip}/country_name/",
+        timeout=5
+    )
+
+    country = response.text.strip()
+
+
+    # ------------------------------------------------------
+    # ipapi RateLimit 및 오류 응답 제거
+    # ------------------------------------------------------
+
+    if (
+        "RateLimited" in country
+        or "pricing" in country
+        or "error" in country
+        or "contact us" in country
+    ):
+
         country = "Unknown"
 
 
-        try:
+except Exception as e:
 
-            country = requests.get(
-                f"https://ipapi.co/{ip}/country_name/",
-                timeout=5
-            ).text.strip()
+    print(
+        "COUNTRY LOOKUP ERROR :",
+        e
+    )
+
+    country = "Unknown"
 
 
-        except Exception as e:
-
-            print(
-                "COUNTRY LOOKUP ERROR :",
-                e
-            )
-
+        
 
 
 # ==========================================================
