@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>
+Access Statistics
+</title>
+
+
+<style>
+
+body{
+
+width:1000px;
+margin:auto;
+font-family:Arial;
+
+}
+
+
+.box{
+
+border:1px solid #ddd;
+padding:20px;
+margin:20px;
+border-radius:10px;
+
+}
+
+
+table{
+
+width:100%;
+border-collapse:collapse;
+
+}
+
+
+td,th{
+
+border:1px solid #ddd;
+padding:10px;
+
+}
+
+
+</style>
+
+
+</head>
+
+
+<body>
+
+
+<h1>
+Website Access Statistics
+</h1>
+
+
+
+<div class="box">
+
+<h2>
+Visitor Count
+</h2>
+
+
+<p>
+Today :
+{{ today.cnt }}
+</p>
+
+
+<p>
+Total :
+{{ total.cnt }}
+</p>
+
+
+</div>
+
+
+
+<div class="box">
+
+
+<h2>
+Top Pages
+</h2>
+
+
+<table>
+
+
+<tr>
+
+<th>
+Page
+</th>
+
+<th>
+Count
+</th>
+
+</tr>
+
+
+
+{% for p in pages %}
+
+
+<tr>
+
+<td>
+{{p.path}}
+</td>
+
+<td>
+{{p.cnt}}
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+</table>
+
+
+</div>
+
+
+
+
+<div class="box">
+
+
+<h2>
+Recent Access
+</h2>
+
+
+<table>
+
+
+<tr>
+
+<th>
+IP
+</th>
+
+<th>
+Path
+</th>
+
+<th>
+Time
+</th>
+
+
+</tr>
+
+
+
+{% for log in logs %}
+
+
+<tr>
+
+<td>
+{{log.ip}}
+</td>
+
+<td>
+{{log.path}}
+</td>
+
+<td>
+{{log.created_at}}
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+</table>
+
+
+</div>
+
+
+
+</body>
+
+</html>
