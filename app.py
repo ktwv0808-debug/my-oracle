@@ -703,44 +703,45 @@ def init_db():
 
     )
     """)
-# ==========================================================
-# FAQ Table
-# ==========================================================
 
-cur.execute("""
-CREATE TABLE IF NOT EXISTS faq (
+    # ==========================================================
+    # FAQ Table
+    # ==========================================================
 
-    id SERIAL PRIMARY KEY,
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS faq (
 
-    question TEXT NOT NULL,
+        id SERIAL PRIMARY KEY,
 
-    answer TEXT NOT NULL,
+        question TEXT NOT NULL,
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        answer TEXT NOT NULL,
 
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-)
-""")
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-# ==========================================================
-# FAQ Table Upgrade
-# ==========================================================
+    )
+    """)
 
-cur.execute("""
-ALTER TABLE faq
-ADD COLUMN IF NOT EXISTS name TEXT;
-""")
+    # ==========================================================
+    # FAQ Table Upgrade
+    # ==========================================================
 
-cur.execute("""
-ALTER TABLE faq
-ADD COLUMN IF NOT EXISTS email TEXT;
-""")
+    cur.execute("""
+    ALTER TABLE faq
+    ADD COLUMN IF NOT EXISTS name TEXT;
+    """)
 
-cur.execute("""
-ALTER TABLE faq
-ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'WAIT';
-""")
+    cur.execute("""
+    ALTER TABLE faq
+    ADD COLUMN IF NOT EXISTS email TEXT;
+    """)
+
+    cur.execute("""
+    ALTER TABLE faq
+    ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'WAIT';
+    """)
 
 # ==========================================================
 # FAQ answer NULL 허용
