@@ -4,47 +4,78 @@
 
 <meta charset="UTF-8">
 
-<title>FAQ</title>
+<title>Frequently Asked Questions</title>
 
 <style>
 
 body{
+    font-family:Arial;
+    width:1000px;
+    margin:auto;
+}
 
-font-family:Arial;
+h1{
+    text-align:center;
+}
 
-width:1000px;
+table{
+    width:100%;
+    border-collapse:collapse;
+}
 
-margin:auto;
+th,td{
+    border:1px solid #ddd;
+    padding:10px;
+}
+
+input[type=text],
+input[type=email]{
+
+    width:100%;
+    padding:8px;
+    box-sizing:border-box;
+
+}
+
+textarea{
+
+    width:100%;
+    height:120px;
+    padding:8px;
+    box-sizing:border-box;
+
+}
+
+button{
+
+    padding:10px 25px;
 
 }
 
 .question{
 
-background:#f5f5f5;
-
-padding:15px;
-
-margin-top:15px;
-
-font-weight:bold;
+    font-weight:bold;
+    color:#0d6efd;
 
 }
 
 .answer{
 
-padding:15px;
-
-border:1px solid #ddd;
-
-border-top:none;
+    color:#444;
 
 }
 
 .wait{
 
-color:red;
+    color:red;
+    font-weight:bold;
 
-font-weight:bold;
+}
+
+.complete{
+
+    color:green;
+    font-weight:bold;
 
 }
 
@@ -54,41 +85,139 @@ font-weight:bold;
 
 <body>
 
-<h1>
+<h1>Frequently Asked Questions</h1>
 
-Frequently Asked Questions
+<hr>
 
-</h1>
+<h2>질문 등록</h2>
+
+<form action="/faq/question" method="POST">
+
+이름
+
+<input
+type="text"
+name="name"
+required>
+
+<br><br>
+
+이메일
+
+<input
+type="email"
+name="email"
+required>
+
+<br><br>
+
+질문
+
+<textarea
+name="question"
+required></textarea>
+
+<br><br>
+
+<button type="submit">
+
+질문 등록
+
+</button>
+
+</form>
+
+<hr>
+
+<h2>FAQ 목록</h2>
+
+<table>
+
+<tr>
+
+<th width="8%">번호</th>
+
+<th width="42%">질문</th>
+
+<th width="40%">답변</th>
+
+<th width="10%">상태</th>
+
+</tr>
 
 {% for row in faqs %}
 
-<div class="question">
+<tr>
 
-Q.
+<td>
 
-{{ row.question }}
+{{ row.id }}
 
-</div>
+</td>
 
-<div class="answer">
+<td class="question">
+
+Q. {{ row.question }}
+
+<br><br>
+
+<small>
+
+작성자 :
+{{ row.name if row.name else "-" }}
+
+</small>
+
+</td>
+
+<td class="answer">
 
 {% if row.answer %}
+
+A.
 
 {{ row.answer }}
 
 {% else %}
 
-<div class="wait">
+<span class="wait">
 
-관리자가 답변을 준비중입니다.
+답변 대기중입니다.
 
-</div>
+</span>
 
 {% endif %}
 
-</div>
+</td>
+
+<td>
+
+{% if row.status=="COMPLETE" %}
+
+<span class="complete">
+
+답변완료
+
+</span>
+
+{% else %}
+
+<span class="wait">
+
+대기
+
+</span>
+
+{% endif %}
+
+</td>
+
+</tr>
 
 {% endfor %}
 
+</table>
+
 </body>
+
 </html>
