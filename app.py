@@ -4316,25 +4316,34 @@ def admin_faq():
                 answer
             ))
 
-        # -------------------------------
-        # FAQ 수정
-        # -------------------------------
+
+  
+        # ------------------------------------------------------
+        # FAQ Answer
+        # Administrator writes an answer
+        # ------------------------------------------------------
+
         elif action == "edit":
 
             execute("""
+
                 UPDATE faq
+
                 SET
-                    question=%s,
+
                     answer=%s,
+
+                    status='ANSWERED',
+
                     updated_at=CURRENT_TIMESTAMP
+
                 WHERE id=%s
+
             """,
             (
-                question,
                 answer,
                 request.form.get("id")
             ))
-
         return redirect("/admin/faq")
 
     # ------------------------------------------------------
