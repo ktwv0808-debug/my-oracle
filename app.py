@@ -4264,7 +4264,7 @@ def faq_question():
 
 # ==========================================================
 # FAQ CMS
-# 관리자 답변 / 수정
+# 관리자 FAQ 관리
 # ==========================================================
 
 @app.route("/admin/faq", methods=["GET", "POST"])
@@ -4273,58 +4273,62 @@ def admin_faq():
     if not session.get("admin"):
         return redirect("/admin/login")
 
-   if request.method == "POST":
+    # ------------------------------------------------------
+    # POST
+    # ------------------------------------------------------
+    if request.method == "POST":
 
-    print("FAQ POST")
+        action = request.form.get("action")
 
-    action = request.form.get("action")
-    question = request.form.get("question")
-    answer = request.form.get("answer")
+        question = request.form.get("question")
 
-    print(action, question, answer)
+        answer = request.form.get("answer")
 
-    if action == "add":
+        # -------------------------------
+        # FAQ 등록
+        # -------------------------------
+        if action == "add":
 
-        execute(
-            """
-            INSERT INTO faq (question, answer)
-            VALUES (%s, %s)
+            execute("""
+                INSERT INTO faq
+                (
+                    question,
+                    answer
+                )
+                VALUES
+                (%s,%s)
             """,
-            (question, answer)
-        )
+            (
+                question,
+                answer
+            ))
 
-        print("FAQ INSERT SUCCESS")
-
-    return redirect("/admin/faq")
-
-        # --------------------------------------
-        # 수정
-        # --------------------------------------
-
+        # -------------------------------
+        # FAQ 수정
+        # -------------------------------
         elif action == "edit":
 
             execute("""
-
                 UPDATE faq
 
                 SET
-
                     question=%s,
-
                     answer=%s,
-
                     updated_at=CURRENT_TIMESTAMP
 
                 WHERE id=%s
-
             """,
             (
-                request.form["question"],
-                request.form["answer"],
-                request.form["id"]
+                question,
+                answer,
+                request.form.get("id")
             ))
 
         return redirect("/admin/faq")
+
+    # ------------------------------------------------------
+    # 수정모드
+    # ------------------------------------------------------
 
     edit_row = None
 
@@ -4333,38 +4337,25 @@ def admin_faq():
     if edit_id:
 
         edit_row = fetch_one("""
-
             SELECT *
-
             FROM faq
-
             WHERE id=%s
-
         """,
         (
             edit_id,
         ))
 
     rows = fetch_all("""
-
         SELECT *
-
         FROM faq
-
         ORDER BY id DESC
-
     """)
 
     return render_template(
-
         "admin_faq.html",
-
         rows=rows,
-
         edit_row=edit_row
-
     )
-
 
 # ==========================================================
 # FAQ Delete
