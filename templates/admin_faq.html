@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
 
 <meta charset="UTF-8">
@@ -10,7 +10,7 @@
 
 body{
     font-family:Arial;
-    width:1000px;
+    width:1200px;
     margin:auto;
 }
 
@@ -26,15 +26,21 @@ th,td{
 
 textarea{
     width:100%;
-    height:120px;
-}
-
-input[type=text]{
-    width:100%;
+    height:180px;
 }
 
 button{
     padding:8px 20px;
+}
+
+.wait{
+    color:red;
+    font-weight:bold;
+}
+
+.done{
+    color:green;
+    font-weight:bold;
 }
 
 </style>
@@ -42,11 +48,11 @@ button{
 </head>
 <body>
 
-<h1>FAQ CMS</h1>
+<h1>FAQ CMS (Answer Management)</h1>
 
 {% if edit_row %}
 
-<h3>FAQ 수정</h3>
+<h3>Answer Question</h3>
 
 <form method="POST">
 
@@ -54,84 +60,73 @@ button{
 
 <input type="hidden" name="id" value="{{ edit_row.id }}">
 
-질문
+<p>
 
-<input
-type="text"
-name="question"
-value="{{ edit_row.question }}"
-required>
+<b>Name</b><br>
 
-<br><br>
+{{ edit_row.name }}
 
-답변
+</p>
 
-<textarea
-name="answer">{{ edit_row.answer }}</textarea>
+<p>
+
+<b>Email</b><br>
+
+{{ edit_row.email }}
+
+</p>
+
+<p>
+
+<b>Question</b><br>
+
+{{ edit_row.question }}
+
+</p>
+
+<p>
+
+<b>Answer</b>
+
+</p>
+
+<textarea name="answer">{{ edit_row.answer }}</textarea>
 
 <br><br>
 
 <button type="submit">
 
-수정완료
+Save Answer
 
 </button>
 
 <a href="/admin/faq">
 
-취소
+Cancel
 
 </a>
 
 </form>
 
-{% else %}
-
-<h3>FAQ 등록</h3>
-
-<form method="POST">
-
-<input type="hidden" name="action" value="add">
-
-질문
-
-<input
-type="text"
-name="question"
-required>
-
-<br><br>
-
-답변
-
-<textarea
-name="answer"></textarea>
-
-<br><br>
-
-<button type="submit">
-
-FAQ 등록
-
-</button>
-
-</form>
+<hr>
 
 {% endif %}
-
-<hr>
 
 <table>
 
 <tr>
 
-<th>번호</th>
+<th>ID</th>
 
-<th>질문</th>
+<th>Name</th>
 
-<th>답변</th>
+<th>Email</th>
 
-<th>관리</th>
+<th>Question</th>
+
+<th>Status</th>
+
+<th>Management</th>
 
 </tr>
 
@@ -141,21 +136,29 @@ FAQ 등록
 
 <td>{{ row.id }}</td>
 
+<td>{{ row.name }}</td>
+
+<td>{{ row.email }}</td>
+
 <td>{{ row.question }}</td>
 
 <td>
 
-{% if row.answer %}
+{% if row.status=="WAIT" %}
 
-{{ row.answer }}
+<span class="wait">
+
+WAIT
+
+</span>
 
 {% else %}
 
-<font color="red">
+<span class="done">
 
-답변대기
+ANSWERED
 
-</font>
+</span>
 
 {% endif %}
 
@@ -165,17 +168,16 @@ FAQ 등록
 
 <a href="/admin/faq?edit={{ row.id }}">
 
-수정
+Answer
 
 </a>
 
 |
 
-<a
-href="/admin/faq/delete/{{ row.id }}"
-onclick="return confirm('삭제하시겠습니까?');">
+<a href="/admin/faq/delete/{{ row.id }}"
+onclick="return confirm('Delete?');">
 
-삭제
+Delete
 
 </a>
 
