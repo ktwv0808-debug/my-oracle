@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>FAQ CMS</title>
+
+<style>
+
+body{
+    font-family:Arial;
+    background:#f4f4f4;
+    margin:40px;
+}
+
+h1{
+    color:#333;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:30px;
+}
+
+table th,
+table td{
+
+    border:1px solid #ddd;
+    padding:12px;
+
+}
+
+table th{
+
+    background:#333;
+    color:white;
+
+}
+
+textarea{
+
+    width:100%;
+    height:120px;
+
+}
+
+input[type=text]{
+
+    width:100%;
+    padding:10px;
+
+}
+
+button{
+
+    padding:10px 20px;
+    cursor:pointer;
+
+}
+
+.btn-edit{
+
+    background:#ffc107;
+    color:black;
+    border:none;
+
+}
+
+.btn-delete{
+
+    background:#dc3545;
+    color:white;
+    border:none;
+
+}
+
+.btn-save{
+
+    background:#28a745;
+    color:white;
+    border:none;
+    margin-top:15px;
+
+}
+
+.menu{
+
+    margin-bottom:30px;
+
+}
+
+.menu a{
+
+    margin-right:20px;
+    text-decoration:none;
+    font-weight:bold;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="menu">
+
+<a href="/admin/dashboard">← Dashboard</a>
+
+<a href="/admin/logout">Logout</a>
+
+</div>
+
+<h1>FAQ CMS</h1>
+
+<form method="POST" action="/admin/faq/add">
+
+<label>질문</label>
+
+<input
+type="text"
+name="question"
+required>
+
+<br><br>
+
+<label>답변</label>
+
+<textarea
+name="answer"
+required></textarea>
+
+<br>
+
+<button
+class="btn-save"
+type="submit">
+
+FAQ 등록
+
+</button>
+
+</form>
+
+<hr>
+
+<table>
+
+<tr>
+
+<th width="5%">번호</th>
+
+<th width="30%">질문</th>
+
+<th>답변</th>
+
+<th width="15%">관리</th>
+
+</tr>
+
+{% for faq in faqs %}
+
+<tr>
+
+<td>
+
+{{ faq.id }}
+
+</td>
+
+<td>
+
+{{ faq.question }}
+
+</td>
+
+<td>
+
+{{ faq.answer }}
+
+</td>
+
+<td>
+
+<a
+class="btn-edit"
+href="/admin/faq/edit/{{ faq.id }}">
+
+수정
+
+</a>
+
+<a
+class="btn-delete"
+href="/admin/faq/delete/{{ faq.id }}"
+onclick="return confirm('삭제하시겠습니까?')">
+
+삭제
+
+</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</body>
+
+</html>
