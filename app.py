@@ -745,82 +745,8 @@ def init_db():
 
     """)
 
-    # --------------------------------------------------------
-    # WDM PRICE TABLE
-    # MA20 컬럼
-    # --------------------------------------------------------
-
-    cur.execute("""
-
-    ALTER TABLE wdm_price
-    ADD COLUMN IF NOT EXISTS ma20 DOUBLE PRECISION;
-
-    """)
-
-    # --------------------------------------------------------
-    # WDM PRICE TABLE
-    # MA60 컬럼
-    # --------------------------------------------------------
-
-    cur.execute("""
-
-    ALTER TABLE wdm_price
-    ADD COLUMN IF NOT EXISTS ma60 DOUBLE PRECISION;
-
-    """)
-
-    # --------------------------------------------------------
-    # WDM PRICE TABLE
-    # SIGNAL 컬럼
-    # --------------------------------------------------------
-
-    cur.execute("""
-
-    ALTER TABLE wdm_price
-    ADD COLUMN IF NOT EXISTS signal VARCHAR(20);
-
-    """)
-    # ==========================================================
-    # Announcement Table 생성
-    # init_db() 함수 내부에 위치
-    # ==========================================================
-
-    cur.execute("""
-
-    CREATE TABLE IF NOT EXISTS announcements(
-
-        id SERIAL PRIMARY KEY,
-
-        title VARCHAR(200) NOT NULL,
-
-        content TEXT NOT NULL,
-
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
-    )
-
-    """)
-
-    # ==========================================================
-    # WDM PRICE TABLE 생성
-    # ==========================================================
-
-    cur.execute("""
-
-    CREATE TABLE IF NOT EXISTS wdm_price(
-
-        id SERIAL PRIMARY KEY,
-
-        price NUMERIC(18,8),
-
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
-    )
-
-    """)
-
+     
+    
     # ==========================================================
     # WDM PRICE TABLE
     # MA20 컬럼 추가
@@ -857,39 +783,7 @@ def init_db():
 
     """)
    
-    # --------------------------------------------------------
-    # WDM PRICE HISTORY
-    # --------------------------------------------------------
-
-    cur.execute("""
-
-    CREATE TABLE IF NOT EXISTS wdm_price_history(
-
-        id SERIAL PRIMARY KEY,
-
-        price NUMERIC(18,8),
-
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
-    )
-    """)
-    # --------------------------------------------------------
-    # WDM INFORMATION
-    # --------------------------------------------------------
-
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS wdm_info(
-
-        id SERIAL PRIMARY KEY,
-
-        name TEXT,
-
-        symbol TEXT,
-
-        total_supply NUMERIC
-
-    )
-    """)
+   
     # --------------------------------------------------------
     # WDM COIN
     # --------------------------------------------------------
