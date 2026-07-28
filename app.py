@@ -4273,33 +4273,29 @@ def admin_faq():
     if not session.get("admin"):
         return redirect("/admin/login")
 
-    if request.method == "POST":
+   if request.method == "POST":
 
-        action = request.form.get("action")
+    print("FAQ POST")
 
-        # --------------------------------------
-        # 답변 등록
-        # --------------------------------------
+    action = request.form.get("action")
+    question = request.form.get("question")
+    answer = request.form.get("answer")
 
-        if action == "answer":
+    print(action, question, answer)
 
-            execute("""
+    if action == "add":
 
-                UPDATE faq
-
-                SET
-
-                    answer=%s,
-
-                    updated_at=CURRENT_TIMESTAMP
-
-                WHERE id=%s
-
+        execute(
+            """
+            INSERT INTO faq (question, answer)
+            VALUES (%s, %s)
             """,
-            (
-                request.form["answer"],
-                request.form["id"]
-            ))
+            (question, answer)
+        )
+
+        print("FAQ INSERT SUCCESS")
+
+    return redirect("/admin/faq")
 
         # --------------------------------------
         # 수정
