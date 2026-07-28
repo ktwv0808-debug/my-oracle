@@ -739,8 +739,8 @@ def init_db():
         ALTER TABLE faq
         ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'WAIT';
         """)
-
-   
+        )
+        """)
 
 # ==========================================================
 # FAQ answer NULL 허용
