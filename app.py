@@ -988,7 +988,10 @@ def save_access_log():
 
     try:
 
-        ip = request.remote_addr
+        ip = request.headers.get(
+            "X-Forwarded-For",
+            request.remote_addr
+        )
 
         path = request.path
 
