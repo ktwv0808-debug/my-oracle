@@ -707,40 +707,40 @@ def init_db():
 # FAQ Table
 # ==========================================================
 
-    cur.execute("""
+cur.execute("""
+CREATE TABLE IF NOT EXISTS faq (
 
-    CREATE TABLE IF NOT EXISTS faq (
+    id SERIAL PRIMARY KEY,
 
-        id SERIAL PRIMARY KEY,
+    question TEXT NOT NULL,
 
-        question TEXT NOT NULL,
+    answer TEXT NOT NULL,
 
-        answer TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+)
+""")
 
-        # ==========================================================
-        # FAQ Table Upgrade
-        # ==========================================================
+# ==========================================================
+# FAQ Table Upgrade
+# ==========================================================
 
-        cur.execute("""
-        ALTER TABLE faq
-        ADD COLUMN IF NOT EXISTS name TEXT;
-        """)
+cur.execute("""
+ALTER TABLE faq
+ADD COLUMN IF NOT EXISTS name TEXT;
+""")
 
-        cur.execute("""
-        ALTER TABLE faq
-        ADD COLUMN IF NOT EXISTS email TEXT;
-        """)
+cur.execute("""
+ALTER TABLE faq
+ADD COLUMN IF NOT EXISTS email TEXT;
+""")
 
-        cur.execute("""
-        ALTER TABLE faq
-        ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'WAIT';
-        """)
-    )
-    """)
+cur.execute("""
+ALTER TABLE faq
+ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'WAIT';
+""")
 
 # ==========================================================
 # FAQ answer NULL 허용
