@@ -4288,23 +4288,30 @@ def admin_faq():
     if not session.get("admin"):
         return redirect("/admin/login")
 
-    # ------------------------------------------------------
-    # POST
-    # ------------------------------------------------------
-    if request.method == "POST":
+# ------------------------------------------------------
+# POST
+# ------------------------------------------------------
+if request.method == "POST":
 
     action = request.form.get("action")
-
     question = request.form.get("question")
-
     answer = request.form.get("answer")
 
     if action == "add":
 
         execute("""
-            INSERT INTO faq(question,answer)
-            VALUES(%s,%s)
-        """,(question,answer))
+            INSERT INTO faq
+            (
+                question,
+                answer
+            )
+            VALUES
+            (%s,%s)
+        """,
+        (
+            question,
+            answer
+        ))
 
     elif action == "edit":
 
