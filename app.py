@@ -4192,22 +4192,15 @@ def download_content(content_id):
 @app.route("/faq")
 def faq():
 
-    rows = fetch_all("""
-
+    faqs = fetch_all("""
         SELECT *
-
         FROM faq
-
         ORDER BY id DESC
-
     """)
 
     return render_template(
-
         "faq.html",
-
-        rows=rows
-
+        faqs=faqs
     )
 
 # ==========================================================
