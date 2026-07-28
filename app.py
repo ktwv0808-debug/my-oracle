@@ -4288,53 +4288,58 @@ def admin_faq():
     if not session.get("admin"):
         return redirect("/admin/login")
 
-# ------------------------------------------------------
-# POST
-# ------------------------------------------------------
-if request.method == "POST":
+    # ------------------------------------------------------
+    # POST
+    # ------------------------------------------------------
+    if request.method == "POST":
 
-    action = request.form.get("action")
-    question = request.form.get("question")
-    answer = request.form.get("answer")
+        action = request.form.get("action")
+        question = request.form.get("question")
+        answer = request.form.get("answer")
 
-    if action == "add":
+        # -------------------------------
+        # FAQ 등록
+        # -------------------------------
+        if action == "add":
 
-        execute("""
-            INSERT INTO faq
+            execute("""
+                INSERT INTO faq
+                (
+                    question,
+                    answer
+                )
+                VALUES
+                (%s,%s)
+            """,
             (
                 question,
                 answer
-            )
-            VALUES
-            (%s,%s)
-        """,
-        (
-            question,
-            answer
-        ))
+            ))
 
-    elif action == "edit":
+        # -------------------------------
+        # FAQ 수정
+        # -------------------------------
+        elif action == "edit":
 
-        execute("""
-            UPDATE faq
-            SET
-                question=%s,
-                answer=%s,
-                updated_at=CURRENT_TIMESTAMP
-            WHERE id=%s
-        """,
-        (
-            question,
-            answer,
-            request.form.get("id")
-        ))
+            execute("""
+                UPDATE faq
+                SET
+                    question=%s,
+                    answer=%s,
+                    updated_at=CURRENT_TIMESTAMP
+                WHERE id=%s
+            """,
+            (
+                question,
+                answer,
+                request.form.get("id")
+            ))
 
-    return redirect("/admin/faq")
+        return redirect("/admin/faq")
 
     # ------------------------------------------------------
     # 수정모드
     # ------------------------------------------------------
-
     edit_row = None
 
     edit_id = request.args.get("edit")
@@ -4361,7 +4366,6 @@ if request.method == "POST":
         rows=rows,
         edit_row=edit_row
     )
-
 # ==========================================================
 # FAQ Delete
 # ==========================================================
