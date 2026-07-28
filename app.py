@@ -719,11 +719,28 @@ def init_db():
 
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    )
+        # ==========================================================
+        # FAQ Table Upgrade
+        # ==========================================================
 
-    """)
+        cur.execute("""
+        ALTER TABLE faq
+        ADD COLUMN IF NOT EXISTS name TEXT;
+        """)
+
+        cur.execute("""
+        ALTER TABLE faq
+        ADD COLUMN IF NOT EXISTS email TEXT;
+        """)
+
+        cur.execute("""
+        ALTER TABLE faq
+        ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'WAIT';
+        """)
+
+   
 
 # ==========================================================
 # FAQ answer NULL 허용
