@@ -787,6 +787,15 @@ def init_db():
 
     )
     """)
+# ==========================================================
+# Add Country Column
+# 방문자 국가 정보 저장 컬럼 추가
+# ==========================================================
+
+    execute("""
+    ALTER TABLE access_logs
+    ADD COLUMN IF NOT EXISTS country TEXT
+    """)
     # --------------------------------------------------------
     # WDM PRICE TABLE
     # --------------------------------------------------------
@@ -982,11 +991,13 @@ def update_database():
 
 # ==========================================================
 # Save Access Log
+# 방문자 접속 기록 저장
 # ==========================================================
 
 def save_access_log():
 
     try:
+
 
 # ==========================================================
 # Get Real Visitor IP
@@ -1005,26 +1016,68 @@ def save_access_log():
         else:
 
             ip = request.remote_addr
+
+
+
+# ==========================================================
+# Get Visitor Country
+# 방문자 국가 정보 조회
+# ==========================================================
+
+        country = "Unknown"
+
+
+        try:
+
+            country = requests.get(
+                f"https://ipapi.co/{ip}/country_name/",
+                timeout=5
+            ).text.strip()
+
+
+        except Exception as e:
+
+            print(
+                "COUNTRY LOOKUP ERROR :",
+                e
+            )
+
+
+
+# ==========================================================
+# Get Access Information
+# 접속 페이지 및 브라우저 정보
+# ==========================================================
+
         path = request.path
+
 
         agent = request.headers.get(
             "User-Agent"
         )
 
 
+
+# ==========================================================
+# Insert Access Log
+# 방문 기록 데이터 저장
+# ==========================================================
+
         execute(
             """
             INSERT INTO access_logs
             (
                 ip,
+                country,
                 path,
                 user_agent
             )
             VALUES
-            (%s,%s,%s)
+            (%s,%s,%s,%s)
             """,
             (
                 ip,
+                country,
                 path,
                 agent
             )
@@ -1034,9 +1087,26 @@ def save_access_log():
     except Exception as e:
 
         print(
-            "ACCESS LOG ERROR:",
+            "ACCESS LOG ERROR :",
             e
         )
+
+# ==========================================================
+# Unique Visitor Count
+# 중복 제거 방문자 수 계산
+# ==========================================================
+
+def get_unique_visitors():
+
+    result = fetch_one(
+        """
+        SELECT COUNT(DISTINCT ip) AS cnt
+        FROM access_logs
+        WHERE created_at::date = CURRENT_DATE
+        """
+    )
+
+    return result["cnt"]
 # ------------------------------------------------------------
 # Insert Default Portfolio
 # ------------------------------------------------------------
@@ -4623,6 +4693,61 @@ def admin_statistics():
     )
 
 
+# ==========================================================
+# Daily Visitor Statistics
+# 일별 방문 통계
+# ==========================================================
+
+    daily_stats = fetch_all(
+        """
+        SELECT
+
+        created_at::date AS day,
+
+        COUNT(DISTINCT ip) AS visitors
+
+
+        FROM access_logs
+
+
+        GROUP BY day
+
+
+        ORDER BY day DESC
+
+
+        LIMIT 7
+
+        """
+    )
+
+# ==========================================================
+# Monthly Visitor Statistics
+# 월별 방문 통계
+# ==========================================================
+
+    monthly_stats = fetch_all(
+        """
+        SELECT
+
+        TO_CHAR(created_at,'YYYY-MM') AS month,
+
+        COUNT(DISTINCT ip) AS visitors
+
+
+        FROM access_logs
+
+
+        GROUP BY month
+
+
+        ORDER BY month DESC
+
+
+        LIMIT 12
+
+        """
+    )
     logs = fetch_all(
         """
         SELECT *
