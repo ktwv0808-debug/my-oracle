@@ -719,9 +719,32 @@ def init_db():
 
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
     )
+
+    """)
+
+# ==========================================================
+# FAQ answer NULL 허용
+# ==========================================================
+
+    cur.execute("""
+
+    ALTER TABLE faq
+    ALTER COLUMN answer DROP NOT NULL;
+
+    """)
+
+# ==========================================================
+# FAQ updated_at 기본값
+# ==========================================================
+
+    cur.execute("""
+
+    ALTER TABLE faq
+    ALTER COLUMN updated_at
+    SET DEFAULT CURRENT_TIMESTAMP;
 
     """)
 
@@ -4193,18 +4216,55 @@ def download_content(content_id):
 def faq():
 
     faqs = fetch_all("""
+
         SELECT *
+
         FROM faq
+
         ORDER BY id DESC
+
     """)
 
     return render_template(
+
         "faq.html",
+
         faqs=faqs
+
     )
+
+
+# ==========================================================
+# FAQ Question
+# 사용자 질문 등록
+# ==========================================================
+
+@app.route("/faq/question", methods=["POST"])
+def faq_question():
+
+    question = request.form["question"]
+
+    execute("""
+
+        INSERT INTO faq
+        (
+            question
+        )
+
+        VALUES
+        (%s)
+
+    """,
+    (
+        question,
+    ))
+
+    return redirect("/faq")
+
 
 # ==========================================================
 # FAQ CMS
+# 관리자 답변 / 수정
 # ==========================================================
 
 @app.route("/admin/faq", methods=["GET", "POST"])
@@ -4213,44 +4273,37 @@ def admin_faq():
     if not session.get("admin"):
         return redirect("/admin/login")
 
-    # ------------------------------------------------------
-    # Add / Edit
-    # ------------------------------------------------------
-
     if request.method == "POST":
 
         action = request.form.get("action")
 
-        question = request.form["question"]
+        # --------------------------------------
+        # 답변 등록
+        # --------------------------------------
 
-        answer = request.form["answer"]
-
-        # -------------------------------
-        # Add
-        # -------------------------------
-
-        if action == "add":
+        if action == "answer":
 
             execute("""
 
-                INSERT INTO faq
-                (
-                    question,
-                    answer
-                )
+                UPDATE faq
 
-                VALUES
-                (%s,%s)
+                SET
+
+                    answer=%s,
+
+                    updated_at=CURRENT_TIMESTAMP
+
+                WHERE id=%s
 
             """,
             (
-                question,
-                answer
+                request.form["answer"],
+                request.form["id"]
             ))
 
-        # -------------------------------
-        # Edit
-        # -------------------------------
+        # --------------------------------------
+        # 수정
+        # --------------------------------------
 
         elif action == "edit":
 
@@ -4270,16 +4323,12 @@ def admin_faq():
 
             """,
             (
-                question,
-                answer,
+                request.form["question"],
+                request.form["answer"],
                 request.form["id"]
             ))
 
         return redirect("/admin/faq")
-
-    # ------------------------------------------------------
-    # Edit Mode
-    # ------------------------------------------------------
 
     edit_row = None
 
@@ -4320,6 +4369,7 @@ def admin_faq():
 
     )
 
+
 # ==========================================================
 # FAQ Delete
 # ==========================================================
@@ -4342,6 +4392,7 @@ def admin_delete_faq(id):
     ))
 
     return redirect("/admin/faq")
+
 
 # ==========================================================
 # FAQ Detail
@@ -4375,6 +4426,7 @@ def faq_detail(id):
 
     )
 
+
 # ==========================================================
 # Admin FAQ Detail
 # ==========================================================
@@ -4398,6 +4450,10 @@ def admin_faq_detail(id):
         id,
     ))
 
+    if not row:
+
+        return "FAQ Not Found"
+
     return render_template(
 
         "admin_faq_detail.html",
@@ -4405,7 +4461,6 @@ def admin_faq_detail(id):
         row=row
 
     )
-
 
 # ------------------------------------------------------------
 # Donation Management
