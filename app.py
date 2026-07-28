@@ -1321,40 +1321,63 @@ def insert_test_data():
 # ============================================================
 # PART 4 : Indicator
 # ============================================================
-# ============================================================
-# ETH Price (CoinGecko)
-# ============================================================
+# ==========================================================
+# Get ETH Price From CoinGecko
+# 이더리움 현재 가격 조회
+# ==========================================================
 
 def get_eth_price():
 
     try:
 
-        url = "https://api.coingecko.com/api/v3/simple/price"
+        url = (
+            "https://api.coingecko.com/api/v3/simple/price"
+            "?ids=ethereum&vs_currencies=usd"
+        )
 
-        params = {
-            "ids": "ethereum",
-            "vs_currencies": "usd"
-        }
 
-        r = requests.get(url, params=params, timeout=10)
+        response = requests.get(
+            url,
+            timeout=10
+        )
 
-        # 응답 확인
-        print("STATUS :", r.status_code)
 
-        data = r.json()
+        data = response.json()
 
-        print("RESPONSE :", data)
 
-        # ethereum 키가 없으면 None 반환
-        if "ethereum" not in data:
+        print(
+            "STATUS :",
+            response.status_code
+        )
+
+        print(
+            "RESPONSE :",
+            data
+        )
+
+
+        # --------------------------------------------------
+        # API 제한 오류 처리
+        # --------------------------------------------------
+
+        if response.status_code != 200:
 
             return None
 
-        return float(data["ethereum"]["usd"])
+
+        price = data["ethereum"]["usd"]
+
+
+        return float(price)
+
+
 
     except Exception as e:
 
-        print("ETH PRICE ERROR :", e)
+        print(
+            "GET PRICE ERROR :",
+            e
+        )
 
         return None
 # ------------------------------------------------------------
