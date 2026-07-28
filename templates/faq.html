@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>FAQ</title>
+
+<style>
+
+body{
+
+    font-family:Arial;
+    background:#fafafa;
+    margin:40px;
+
+}
+
+.container{
+
+    width:1000px;
+    margin:auto;
+
+}
+
+.item{
+
+    border:1px solid #ddd;
+    border-radius:6px;
+    margin-bottom:15px;
+    background:white;
+
+}
+
+.question{
+
+    background:#333;
+    color:white;
+    padding:15px;
+    cursor:pointer;
+    font-weight:bold;
+
+}
+
+.answer{
+
+    display:none;
+    padding:20px;
+    line-height:1.8;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Frequently Asked Questions</h1>
+
+{% for faq in faqs %}
+
+<div class="item">
+
+<div
+class="question"
+onclick="toggle({{ faq.id }})">
+
+Q.
+
+{{ faq.question }}
+
+</div>
+
+<div
+class="answer"
+id="faq{{ faq.id }}">
+
+{{ faq.answer }}
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+<script>
+
+function toggle(id){
+
+    let obj=document.getElementById("faq"+id);
+
+    if(obj.style.display==="block"){
+
+        obj.style.display="none";
+
+    }else{
+
+        obj.style.display="block";
+
+    }
+
+}
+
+</script>
+
+</body>
+
+</html>
