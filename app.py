@@ -4183,6 +4183,237 @@ def download_content(content_id):
         download_name=row["file_name"]
 
     )
+
+# ==========================================================
+# FAQ
+# Public FAQ Page
+# ==========================================================
+
+@app.route("/faq")
+def faq():
+
+    rows = fetch_all("""
+
+        SELECT *
+
+        FROM faq
+
+        ORDER BY id DESC
+
+    """)
+
+    return render_template(
+
+        "faq.html",
+
+        rows=rows
+
+    )
+
+# ==========================================================
+# FAQ CMS
+# ==========================================================
+
+@app.route("/admin/faq", methods=["GET", "POST"])
+def admin_faq():
+
+    if not session.get("admin"):
+        return redirect("/admin/login")
+
+    # ------------------------------------------------------
+    # Add / Edit
+    # ------------------------------------------------------
+
+    if request.method == "POST":
+
+        action = request.form.get("action")
+
+        question = request.form["question"]
+
+        answer = request.form["answer"]
+
+        # -------------------------------
+        # Add
+        # -------------------------------
+
+        if action == "add":
+
+            execute("""
+
+                INSERT INTO faq
+                (
+                    question,
+                    answer
+                )
+
+                VALUES
+                (%s,%s)
+
+            """,
+            (
+                question,
+                answer
+            ))
+
+        # -------------------------------
+        # Edit
+        # -------------------------------
+
+        elif action == "edit":
+
+            execute("""
+
+                UPDATE faq
+
+                SET
+
+                    question=%s,
+
+                    answer=%s,
+
+                    updated_at=CURRENT_TIMESTAMP
+
+                WHERE id=%s
+
+            """,
+            (
+                question,
+                answer,
+                request.form["id"]
+            ))
+
+        return redirect("/admin/faq")
+
+    # ------------------------------------------------------
+    # Edit Mode
+    # ------------------------------------------------------
+
+    edit_row = None
+
+    edit_id = request.args.get("edit")
+
+    if edit_id:
+
+        edit_row = fetch_one("""
+
+            SELECT *
+
+            FROM faq
+
+            WHERE id=%s
+
+        """,
+        (
+            edit_id,
+        ))
+
+    rows = fetch_all("""
+
+        SELECT *
+
+        FROM faq
+
+        ORDER BY id DESC
+
+    """)
+
+    return render_template(
+
+        "admin_faq.html",
+
+        rows=rows,
+
+        edit_row=edit_row
+
+    )
+
+# ==========================================================
+# FAQ Delete
+# ==========================================================
+
+@app.route("/admin/faq/delete/<int:id>")
+def admin_delete_faq(id):
+
+    if not session.get("admin"):
+        return redirect("/admin/login")
+
+    execute("""
+
+        DELETE FROM faq
+
+        WHERE id=%s
+
+    """,
+    (
+        id,
+    ))
+
+    return redirect("/admin/faq")
+
+# ==========================================================
+# FAQ Detail
+# ==========================================================
+
+@app.route("/faq/<int:id>")
+def faq_detail(id):
+
+    row = fetch_one("""
+
+        SELECT *
+
+        FROM faq
+
+        WHERE id=%s
+
+    """,
+    (
+        id,
+    ))
+
+    if not row:
+
+        return "FAQ Not Found"
+
+    return render_template(
+
+        "faq_detail.html",
+
+        row=row
+
+    )
+
+# ==========================================================
+# Admin FAQ Detail
+# ==========================================================
+
+@app.route("/admin/faq/<int:id>")
+def admin_faq_detail(id):
+
+    if not session.get("admin"):
+        return redirect("/admin/login")
+
+    row = fetch_one("""
+
+        SELECT *
+
+        FROM faq
+
+        WHERE id=%s
+
+    """,
+    (
+        id,
+    ))
+
+    return render_template(
+
+        "admin_faq_detail.html",
+
+        row=row
+
+    )
+
+
 # ------------------------------------------------------------
 # Donation Management
 # 기부 보고서 관리자 페이지
