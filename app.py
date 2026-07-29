@@ -998,16 +998,12 @@ def save_access_log():
 
     try:
 
-
         # ==========================================================
         # Get Real Visitor IP
         # 실제 방문자 IP 추출
         # ==========================================================
 
-        forwarded = request.headers.get(
-            "X-Forwarded-For"
-        )
-
+        forwarded = request.headers.get("X-Forwarded-For")
 
         if forwarded:
 
@@ -1018,14 +1014,12 @@ def save_access_log():
             ip = request.remote_addr
 
 
-
         # ==========================================================
         # Get Visitor Country
         # 방문자 국가 정보 조회
         # ==========================================================
 
         country = "Unknown"
-
 
         try:
 
@@ -1034,45 +1028,85 @@ def save_access_log():
                 timeout=5
             )
 
-            country = response.text.strip()
+            if response.status_code == 200:
 
+                result = response.text.strip()
 
-            # ------------------------------------------------------
-            # ipapi RateLimit 및 오류 응답 제거
-            # ------------------------------------------------------
+                if (
+                    result
+                    and "RateLimited" not in result
+                    and "pricing" not in result
+                    and "error" not in result
+                    and "contact us" not in result
+                    and "Please sign up" not in result
+                    and "Visit https://" not in result
+                ):
 
-            if (
-                "RateLimited" in country
-                or "pricing" in country
-                or "error" in country
-                or "contact us" in country
-                or "Visit https://" in country
-                or "Please sign up" in country
-            ):
-
-                country = "Unknown"
-
+                    country = result
 
         except Exception as e:
 
-            print(
-                "COUNTRY LOOKUP ERROR :",
-                e
+            print("COUNTRY LOOKUP ERROR :", e)
+
+
+        # ==========================================================
+        # Get Access Information
+        # 접속 페이지 및 브라우저 정보
+        # ==========================================================
+
+        path = request.path
+
+        agent = request.headers.get(
+            "User-Agent",
+            ""
+        )
+
+
+        # ==========================================================
+        # Insert Access Log
+        # 방문 기록 데이터 저장
+        # ==========================================================
+
+        execute(
+            """
+            INSERT INTO access_logs
+            (
+                ip,
+                country,
+                path,
+                user_agent
             )
+            VALUES
+            (%s,%s,%s,%s)
+            """,
+            (
+                ip,
+                country,
+                path,
+                agent
+            )
+        )
 
-            country = "Unknown"
 
+        # ==========================================================
+        # Debug
+        # ==========================================================
+
+        print(
+            f"ACCESS LOG : {ip} | {country} | {path}"
+        )
 
 
     except Exception as e:
+
+        import traceback
+
+        traceback.print_exc()
 
         print(
             "ACCESS LOG ERROR :",
             e
         )
-
-
-        
 
 
 # ==========================================================
