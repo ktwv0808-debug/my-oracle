@@ -1088,7 +1088,6 @@ def save_access_log():
         )
 
 
-
 # ==========================================================
 # Insert Access Log
 # 방문 기록 데이터 저장
@@ -1113,7 +1112,6 @@ def save_access_log():
                 agent
             )
         )
-
 
     except Exception as e:
 
