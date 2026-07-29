@@ -1024,29 +1024,27 @@ def save_access_log():
         try:
 
             response = requests.get(
-                f"https://ipapi.co/{ip}/country_name/",
+                f"http://ip-api.com/json/{ip}",
                 timeout=5
             )
 
-            if response.status_code == 200:
+            data = response.json()
 
-                result = response.text.strip()
+            if data.get("status") == "success":
 
-                if (
-                    result
-                    and "RateLimited" not in result
-                    and "pricing" not in result
-                    and "error" not in result
-                    and "contact us" not in result
-                    and "Please sign up" not in result
-                    and "Visit https://" not in result
-                ):
-
-                    country = result
+                country = data.get(
+                    "country",
+                    "Unknown"
+                )
 
         except Exception as e:
 
-            print("COUNTRY LOOKUP ERROR :", e)
+            print(
+                "COUNTRY LOOKUP ERROR :",
+                e
+            )
+
+            country = "Unknown"
 
 
         # ==========================================================
