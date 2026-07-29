@@ -453,53 +453,7 @@ W-donation is committed to sharing project success with society.
 
 
 
-<!-- ==========================================================
-     Quarterly Donation Report
-========================================================== -->
 
-<h2
-data-en="Quarterly Donation Report"
-data-ko="분기 기부 보고서">
-
-Quarterly Donation Report
-
-</h2>
-
-<table>
-
-<tr>
-
-<th>Quarter</th>
-
-<th>Net Profit</th>
-
-<th>Donation (10%)</th>
-
-<th>Transaction Proof</th>
-
-</tr>
-
-<tbody>
-
-{% for d in donations %}
-
-<tr>
-
-<td>{{ d.quarter }}</td>
-
-<td>{{ d.net_profit }} ETH</td>
-
-<td>{{ d.donation }} ETH</td>
-
-<td>{{ d.proof }}</td>
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
 <!-- ==========================================================
      Why W-donation
 ========================================================== -->
@@ -628,7 +582,53 @@ Together, we can build a better world through blockchain technology.
 
 </p>
 
+<!-- ==========================================================
+     Quarterly Donation Report
+========================================================== -->
 
+<h2
+data-en="Quarterly Donation Report"
+data-ko="분기 기부 보고서">
+
+Quarterly Donation Report
+
+</h2>
+
+<table>
+
+<tr>
+
+<th>Quarter</th>
+
+<th>Net Profit</th>
+
+<th>Donation (10%)</th>
+
+<th>Transaction Proof</th>
+
+</tr>
+
+<tbody>
+
+{% for d in donations %}
+
+<tr>
+
+<td>{{ d.quarter }}</td>
+
+<td>{{ d.net_profit }} ETH</td>
+
+<td>{{ d.donation }} ETH</td>
+
+<td>{{ d.proof }}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
 
 <button
 data-lang="close"
