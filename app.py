@@ -3734,38 +3734,7 @@ def admin_logout():
 
     return redirect("/admin/login")
 
-# ==========================================================
-# Clean Invalid Country Logs
-# 잘못 저장된 국가 데이터 삭제
-# ==========================================================
 
-@app.route("/admin/clean-country")
-def clean_country():
-
-    if not session.get("admin"):
-
-        return redirect("/admin/login")
-
-
-    execute(
-        """
-        DELETE FROM access_logs
-
-        WHERE country LIKE %s
-        OR country LIKE %s
-        OR country LIKE %s
-        OR country LIKE %s
-        """,
-        (
-            "%RateLimited%",
-            "%pricing%",
-            "%error%",
-            "%contact us%"
-        )
-    )
-
-
-    return "Invalid country logs deleted"
 # ==========================================================
 # Announcement Page
 # ==========================================================
