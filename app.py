@@ -1046,6 +1046,8 @@ def save_access_log():
                 or "pricing" in country
                 or "error" in country
                 or "contact us" in country
+                or "Visit https://" in country
+                or "Please sign up" in country
             ):
 
                 country = "Unknown"
