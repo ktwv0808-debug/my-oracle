@@ -1096,6 +1096,24 @@ def save_access_log():
             )
         )
 
+        # ==========================================================
+        # Keep Latest 1000 Access Logs
+        # 최근 1000개 접속기록만 유지
+        # ==========================================================
+
+        execute(
+            """
+            DELETE FROM access_logs
+
+            WHERE id NOT IN
+            (
+                SELECT id
+                FROM access_logs
+                ORDER BY id DESC
+                LIMIT 1000
+            )
+            """
+        )
 
         # ==========================================================
         # Debug
