@@ -1080,7 +1080,7 @@ def save_access_log():
 
                 f"http://ip-api.com/json/{ip}",
 
-                timeout=5
+                timeout=1
 
             )
 
