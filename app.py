@@ -162,6 +162,43 @@ def fetch_all(sql, params=None):
     conn.close()
 
     return rows
+
+# ------------------------------------------------------------
+# Execute SELECT (Single Row)
+# ------------------------------------------------------------
+
+def fetch_one(sql, params=None):
+
+    conn = get_db()
+
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute(sql, params)
+
+    row = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    return row
+
+
+# ------------------------------------------------------------
+# Execute INSERT / UPDATE / DELETE
+# ------------------------------------------------------------
+
+def execute(sql, params=None):
+
+    conn = get_db()
+
+    cur = conn.cursor()
+
+    cur.execute(sql, params)
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
 # ==========================================================
 # GitHub File Upload
 # ==========================================================
@@ -369,42 +406,7 @@ def load_wdm_history():
         """
 
     )
-# ------------------------------------------------------------
-# Execute SELECT (Single Row)
-# ------------------------------------------------------------
 
-def fetch_one(sql, params=None):
-
-    conn = get_db()
-
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-
-    cur.execute(sql, params)
-
-    row = cur.fetchone()
-
-    cur.close()
-    conn.close()
-
-    return row
-
-
-# ------------------------------------------------------------
-# Execute INSERT / UPDATE / DELETE
-# ------------------------------------------------------------
-
-def execute(sql, params=None):
-
-    conn = get_db()
-
-    cur = conn.cursor()
-
-    cur.execute(sql, params)
-
-    conn.commit()
-
-    cur.close()
-    conn.close()
 
 # ==========================================================
 # Announcement Helper Functions
