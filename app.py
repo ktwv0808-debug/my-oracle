@@ -1067,47 +1067,38 @@ def save_access_log():
 
             return
 
-        # ==========================================================
-        # Get Visitor Country
-        # 방문 국가 조회
-        # ==========================================================
+# ==========================================================
+# Get Visitor Country
+# 방문자 국가 정보 조회 (ipwho.is)
+# ==========================================================
 
         country = "Unknown"
 
         try:
 
             response = requests.get(
-
-                f"http://ip-api.com/json/{ip}",
-
-                timeout=1
-
+                f"https://ipwho.is/{ip}",
+                timeout=0.5
             )
 
             data = response.json()
 
-            if data.get("status") == "success":
+            if data.get("success"):
 
                 country = data.get(
-
                     "country",
-
                     "Unknown"
-
                 )
 
         except Exception as e:
 
             print(
-
                 "COUNTRY LOOKUP ERROR :",
-
                 e
-
             )
 
             country = "Unknown"
-
+            
         # ==========================================================
         # Insert Access Log
         # ==========================================================
