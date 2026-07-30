@@ -8,26 +8,55 @@
 Content
 </title>
 
-
 <style>
 
-body {
+body{
 
-    font-family: Arial;
-
-}
-
-
-table {
-
-    border-collapse: collapse;
-
-    width: 90%;
+    font-family:Arial;
 
 }
 
+.topbar{
 
-th, td {
+    text-align:right;
+
+    margin-bottom:20px;
+
+}
+
+.close-btn{
+
+    display:inline-block;
+
+    padding:8px 20px;
+
+    background:#0066cc;
+
+    color:white;
+
+    text-decoration:none;
+
+    border-radius:8px;
+
+    font-weight:bold;
+
+}
+
+.close-btn:hover{
+
+    background:#004999;
+
+}
+
+table{
+
+    border-collapse:collapse;
+
+    width:90%;
+
+}
+
+th,td{
 
     border:1px solid #ccc;
 
@@ -35,87 +64,73 @@ th, td {
 
 }
 
-
 </style>
 
+<script>
+
+function closePopup(){
+
+    window.open("","_self");
+
+    window.close();
+
+}
+
+</script>
 
 </head>
 
-
 <body>
 
+<div class="topbar">
 
+<button
+class="close-btn"
+onclick="closePopup()">
+
+✖ Close
+
+</button>
+
+</div>
 
 <h1>
 Content
 </h1>
 
-
-
 <hr>
-
-
 
 <table>
 
-
 <tr>
 
-<th>
-No
-</th>
+<th>No</th>
 
+<th>Title</th>
 
-<th>
-Title
-</th>
+<th>Attachment</th>
 
+<th>Views</th>
 
-<th>
-Attachment
-</th>
-
-
-<th>
-Views
-</th>
-
-
-<th>
-Date
-</th>
-
+<th>Date</th>
 
 </tr>
 
-
-
-
 {% for row in rows %}
-
-
 
 <tr>
 
-
 <td>{{ loop.index }}</td>
-
-
 
 <td>
 
+<a href="/content/{{ row.id }}">
 
-<a href="/content/{{row.id}}">
-
-{{row.title}}
+{{ row.title }}
 
 </a>
 
-
 </td>
-
-
-
 
 <td>
 
@@ -135,39 +150,15 @@ Date
 
 </td>
 
+<td>{{ row.views }}</td>
 
-
-
-<td>
-
-{{row.views}}
-
-</td>
-
-
-
-
-<td>
-
-{{row.created_at}}
-
-</td>
-
-
+<td>{{ row.created_at }}</td>
 
 </tr>
 
-
-
 {% endfor %}
 
-
-
-
 </table>
-
-
-
 
 </body>
 
