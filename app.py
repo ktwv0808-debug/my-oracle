@@ -1083,11 +1083,39 @@ def save_access_log():
 
 
         # ==========================================================
-        # Visitor Country
-        # 국가 조회 API 비활성화
+        # Get Visitor Country
+        # 방문자 국가 정보 조회
+        #
+        # 속도 개선을 위해 임시 비활성화
+        # 필요 시 아래 주석(#) 제거 후 사용
         # ==========================================================
 
         country = "Unknown"
+
+        # try:
+        #
+        #     response = requests.get(
+        #         f"http://ip-api.com/json/{ip}",
+        #         timeout=0.5
+        #     )
+        #
+        #     data = response.json()
+        #
+        #     if data.get("success"):
+        #
+        #         country = data.get(
+        #             "country",
+        #             "Unknown"
+        #         )
+        #
+        # except Exception as e:
+        #
+        #     print(
+        #         "COUNTRY LOOKUP ERROR :",
+        #         e
+        #     )
+        #
+        #     country = "Unknown"
 
 
         # ==========================================================
@@ -1121,7 +1149,7 @@ def save_access_log():
 
         # ==========================================================
         # Keep Latest 1000 Logs
-        # 최근 1000개만 유지
+        # 최근 방문 기록 1000개 유지
         # ==========================================================
 
         execute(
@@ -1160,51 +1188,6 @@ def save_access_log():
 
             e
 
-        )
-
-# ==========================================================
-# Get Access Information
-# 접속 페이지 및 브라우저 정보
-# ==========================================================
-
-        path = request.path
-
-
-        agent = request.headers.get(
-            "User-Agent"
-        )
-
-
-# ==========================================================
-# Insert Access Log
-# 방문 기록 데이터 저장
-# ==========================================================
-
-        execute(
-            """
-            INSERT INTO access_logs
-            (
-                ip,
-                country,
-                path,
-                user_agent
-            )
-            VALUES
-            (%s,%s,%s,%s)
-            """,
-            (
-                ip,
-                country,
-                path,
-                agent
-            )
-        )
-
-    except Exception as e:
-
-        print(
-            "ACCESS LOG ERROR :",
-            e
         )
 
 # ==========================================================
