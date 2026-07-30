@@ -993,6 +993,7 @@ def update_database():
 
 # ==========================================================
 # Save Access Log
+# 방문 기록 저장
 # ==========================================================
 
 def save_access_log():
@@ -1004,7 +1005,9 @@ def save_access_log():
         # 실제 방문자 IP 추출
         # ==========================================================
 
-        forwarded = request.headers.get("X-Forwarded-For")
+        forwarded = request.headers.get(
+            "X-Forwarded-For"
+        )
 
         if forwarded:
 
@@ -1013,6 +1016,7 @@ def save_access_log():
         else:
 
             ip = request.remote_addr
+
 
         # ==========================================================
         # Ignore Localhost
@@ -1026,6 +1030,7 @@ def save_access_log():
 
             return
 
+
         # ==========================================================
         # Get Access Information
         # 접속 페이지 및 브라우저 정보
@@ -1038,9 +1043,10 @@ def save_access_log():
             ""
         )
 
+
         # ==========================================================
         # Ignore Bot / Crawler
-        # 사람이 아닌 접속 제외
+        # 봇 및 크롤러 제외
         # ==========================================================
 
         bot_keywords = [
@@ -1057,52 +1063,36 @@ def save_access_log():
 
         ]
 
-        if any(x.lower() in agent.lower() for x in bot_keywords):
+
+        if any(
+            x.lower() in agent.lower()
+            for x in bot_keywords
+        ):
 
             return
 
+
         # ==========================================================
         # Ignore favicon
+        # 파비콘 요청 제외
         # ==========================================================
 
         if path == "/favicon.ico":
 
             return
 
-# ==========================================================
-# Get Visitor Country
-# 방문자 국가 정보 조회 (ipwho.is)
-# ==========================================================
+
+        # ==========================================================
+        # Visitor Country
+        # 국가 조회 API 비활성화
+        # ==========================================================
 
         country = "Unknown"
 
-        try:
 
-            response = requests.get(
-                f"http://ip-api.com/json/{ip}",
-                timeout=0.5
-            )
-
-            data = response.json()
-
-            if data.get("success"):
-
-                country = data.get(
-                    "country",
-                    "Unknown"
-                )
-
-        except Exception as e:
-
-            print(
-                "COUNTRY LOOKUP ERROR :",
-                e
-            )
-
-            country = "Unknown"
-            
         # ==========================================================
         # Insert Access Log
+        # 방문 기록 저장
         # ==========================================================
 
         execute(
@@ -1128,8 +1118,10 @@ def save_access_log():
 
         )
 
+
         # ==========================================================
         # Keep Latest 1000 Logs
+        # 최근 1000개만 유지
         # ==========================================================
 
         execute(
@@ -1148,11 +1140,13 @@ def save_access_log():
 
         )
 
+
         print(
 
             f"ACCESS LOG : {ip} | {country} | {path}"
 
         )
+
 
     except Exception as e:
 
