@@ -23,7 +23,7 @@ from werkzeug.utils import secure_filename
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from flask import send_file
-from psycopg2 import pool
+
 # ------------------------------------------------------------
 # Flask
 # ------------------------------------------------------------
@@ -128,49 +128,20 @@ def allowed_file(filename):
 
     )
 # ------------------------------------------------------------
-# PostgreSQL Database URL
-# ------------------------------------------------------------
-
-database_url = os.environ.get("DATABASE_URL")
-
-if not database_url:
-    raise Exception("DATABASE_URL is not set.")
-
-
-# ------------------------------------------------------------
-# PostgreSQL Connection Pool
-# ------------------------------------------------------------
-
-db_pool = pool.SimpleConnectionPool(
-    minconn=1,
-    maxconn=10,
-    dsn=database_url
-)
-
-
-# ------------------------------------------------------------
-# Get PostgreSQL Connection
+# PostgreSQL Connection
 # ------------------------------------------------------------
 
 def get_db():
     """
-    Connection Pool에서 연결 가져오기
+    Render PostgreSQL 연결
     """
 
-    return db_pool.getconn()
+    database_url = os.environ.get("DATABASE_URL")
 
+    if not database_url:
+        raise Exception("DATABASE_URL is not set.")
 
-# ------------------------------------------------------------
-# Return PostgreSQL Connection
-# ------------------------------------------------------------
-
-def release_db(conn):
-    """
-    Connection Pool로 연결 반환
-    """
-
-    if conn:
-        db_pool.putconn(conn)
+    return psycopg2.connect(database_url)
 
 
 # ------------------------------------------------------------
@@ -181,22 +152,16 @@ def fetch_all(sql, params=None):
 
     conn = get_db()
 
-    try:
+    cur = conn.cursor(cursor_factory=RealDictCursor)
 
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute(sql, params)
 
-        cur.execute(sql, params or ())
+    rows = cur.fetchall()
 
-        rows = cur.fetchall()
+    cur.close()
+    conn.close()
 
-        return rows
-
-    finally:
-
-        cur.close()
-
-        release_db(conn)
-
+    return rows
 
 # ------------------------------------------------------------
 # Execute SELECT (Single Row)
@@ -206,21 +171,16 @@ def fetch_one(sql, params=None):
 
     conn = get_db()
 
-    try:
+    cur = conn.cursor(cursor_factory=RealDictCursor)
 
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute(sql, params)
 
-        cur.execute(sql, params or ())
+    row = cur.fetchone()
 
-        row = cur.fetchone()
+    cur.close()
+    conn.close()
 
-        return row
-
-    finally:
-
-        cur.close()
-
-        release_db(conn)
+    return row
 
 
 # ------------------------------------------------------------
@@ -231,19 +191,14 @@ def execute(sql, params=None):
 
     conn = get_db()
 
-    try:
+    cur = conn.cursor()
 
-        cur = conn.cursor()
+    cur.execute(sql, params)
 
-        cur.execute(sql, params or ())
+    conn.commit()
 
-        conn.commit()
-
-    finally:
-
-        cur.close()
-
-        release_db(conn)
+    cur.close()
+    conn.close() : 풀 구조로 다시 처음부터 만들어줘
 # ==========================================================
 # GitHub File Upload
 # ==========================================================
