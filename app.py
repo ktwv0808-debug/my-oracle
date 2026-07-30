@@ -198,7 +198,7 @@ def execute(sql, params=None):
     conn.commit()
 
     cur.close()
-    conn.close() : 풀 구조로 다시 처음부터 만들어줘
+    conn.close() 
 # ==========================================================
 # GitHub File Upload
 # ==========================================================
