@@ -23,7 +23,7 @@ from werkzeug.utils import secure_filename
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from flask import send_file
-
+from psycopg2 import pool
 # ------------------------------------------------------------
 # Flask
 # ------------------------------------------------------------
@@ -128,20 +128,49 @@ def allowed_file(filename):
 
     )
 # ------------------------------------------------------------
-# PostgreSQL Connection
+# PostgreSQL Database URL
+# ------------------------------------------------------------
+
+database_url = os.environ.get("DATABASE_URL")
+
+if not database_url:
+    raise Exception("DATABASE_URL is not set.")
+
+
+# ------------------------------------------------------------
+# PostgreSQL Connection Pool
+# ------------------------------------------------------------
+
+db_pool = pool.SimpleConnectionPool(
+    minconn=1,
+    maxconn=10,
+    dsn=database_url
+)
+
+
+# ------------------------------------------------------------
+# Get PostgreSQL Connection
 # ------------------------------------------------------------
 
 def get_db():
     """
-    Render PostgreSQL 연결
+    Connection Pool에서 연결 가져오기
     """
 
-    database_url = os.environ.get("DATABASE_URL")
+    return db_pool.getconn()
 
-    if not database_url:
-        raise Exception("DATABASE_URL is not set.")
 
-    return psycopg2.connect(database_url)
+# ------------------------------------------------------------
+# Return PostgreSQL Connection
+# ------------------------------------------------------------
+
+def release_db(conn):
+    """
+    Connection Pool로 연결 반환
+    """
+
+    if conn:
+        db_pool.putconn(conn)
 
 
 # ------------------------------------------------------------
@@ -152,16 +181,22 @@ def fetch_all(sql, params=None):
 
     conn = get_db()
 
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
 
-    cur.execute(sql, params)
+        cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    rows = cur.fetchall()
+        cur.execute(sql, params or ())
 
-    cur.close()
-    conn.close()
+        rows = cur.fetchall()
 
-    return rows
+        return rows
+
+    finally:
+
+        cur.close()
+
+        release_db(conn)
+
 
 # ------------------------------------------------------------
 # Execute SELECT (Single Row)
@@ -171,16 +206,21 @@ def fetch_one(sql, params=None):
 
     conn = get_db()
 
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
 
-    cur.execute(sql, params)
+        cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    row = cur.fetchone()
+        cur.execute(sql, params or ())
 
-    cur.close()
-    conn.close()
+        row = cur.fetchone()
 
-    return row
+        return row
+
+    finally:
+
+        cur.close()
+
+        release_db(conn)
 
 
 # ------------------------------------------------------------
@@ -191,14 +231,19 @@ def execute(sql, params=None):
 
     conn = get_db()
 
-    cur = conn.cursor()
+    try:
 
-    cur.execute(sql, params)
+        cur = conn.cursor()
 
-    conn.commit()
+        cur.execute(sql, params or ())
 
-    cur.close()
-    conn.close()
+        conn.commit()
+
+    finally:
+
+        cur.close()
+
+        release_db(conn)
 # ==========================================================
 # GitHub File Upload
 # ==========================================================
