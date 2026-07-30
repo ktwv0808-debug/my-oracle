@@ -991,7 +991,6 @@ def update_database():
 
 # ==========================================================
 # Save Access Log
-# 방문자 접속 기록 저장
 # ==========================================================
 
 def save_access_log():
@@ -1026,39 +1025,6 @@ def save_access_log():
             return
 
         # ==========================================================
-        # Get Visitor Country
-        # 방문자 국가 정보 조회
-        # ==========================================================
-
-        country = "Unknown"
-
-        try:
-
-            response = requests.get(
-                f"http://ip-api.com/json/{ip}",
-                timeout=5
-            )
-
-            data = response.json()
-
-            if data.get("status") == "success":
-
-                country = data.get(
-                    "country",
-                    "Unknown"
-                )
-
-        except Exception as e:
-
-            print(
-                "COUNTRY LOOKUP ERROR :",
-                e
-            )
-
-            country = "Unknown"
-
-
-        # ==========================================================
         # Get Access Information
         # 접속 페이지 및 브라우저 정보
         # ==========================================================
@@ -1070,13 +1036,84 @@ def save_access_log():
             ""
         )
 
+        # ==========================================================
+        # Ignore Bot / Crawler
+        # 사람이 아닌 접속 제외
+        # ==========================================================
+
+        bot_keywords = [
+
+            "bot",
+            "crawl",
+            "spider",
+            "Go-http-client",
+            "python",
+            "curl",
+            "Render",
+            "Uptime",
+            "monitor"
+
+        ]
+
+        if any(x.lower() in agent.lower() for x in bot_keywords):
+
+            return
+
+        # ==========================================================
+        # Ignore favicon
+        # ==========================================================
+
+        if path == "/favicon.ico":
+
+            return
+
+        # ==========================================================
+        # Get Visitor Country
+        # 방문 국가 조회
+        # ==========================================================
+
+        country = "Unknown"
+
+        try:
+
+            response = requests.get(
+
+                f"http://ip-api.com/json/{ip}",
+
+                timeout=5
+
+            )
+
+            data = response.json()
+
+            if data.get("status") == "success":
+
+                country = data.get(
+
+                    "country",
+
+                    "Unknown"
+
+                )
+
+        except Exception as e:
+
+            print(
+
+                "COUNTRY LOOKUP ERROR :",
+
+                e
+
+            )
+
+            country = "Unknown"
 
         # ==========================================================
         # Insert Access Log
-        # 방문 기록 데이터 저장
         # ==========================================================
 
         execute(
+
             """
             INSERT INTO access_logs
             (
@@ -1088,20 +1125,22 @@ def save_access_log():
             VALUES
             (%s,%s,%s,%s)
             """,
+
             (
                 ip,
                 country,
                 path,
                 agent
             )
+
         )
 
         # ==========================================================
-        # Keep Latest 1000 Access Logs
-        # 최근 1000개 접속기록만 유지
+        # Keep Latest 1000 Logs
         # ==========================================================
 
         execute(
+
             """
             DELETE FROM access_logs
 
@@ -1113,16 +1152,14 @@ def save_access_log():
                 LIMIT 1000
             )
             """
-        )
 
-        # ==========================================================
-        # Debug
-        # ==========================================================
+        )
 
         print(
-            f"ACCESS LOG : {ip} | {country} | {path}"
-        )
 
+            f"ACCESS LOG : {ip} | {country} | {path}"
+
+        )
 
     except Exception as e:
 
@@ -1131,10 +1168,12 @@ def save_access_log():
         traceback.print_exc()
 
         print(
-            "ACCESS LOG ERROR :",
-            e
-        )
 
+            "ACCESS LOG ERROR :",
+
+            e
+
+        )
 
 # ==========================================================
 # Get Access Information
