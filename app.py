@@ -1077,7 +1077,7 @@ def save_access_log():
         try:
 
             response = requests.get(
-                f"https://ipwho.is/{ip}",
+                f"http://ip-api.com/json/{ip}",
                 timeout=0.5
             )
 
