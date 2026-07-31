@@ -85,6 +85,14 @@ CACHE_TIME = {
     "signal": 30,
     "wdm_price": 30
 }
+# ==========================================================
+# Access Log Cache
+# 동일 방문자 중복 저장 방지
+# ==========================================================
+
+ACCESS_LOG_CACHE = {}
+
+ACCESS_LOG_CACHE_SECONDS = 30
 
 # ------------------------------------------------------------
 # Flask
@@ -1174,9 +1182,15 @@ def update_database():
 # 방문 기록 저장
 # ==========================================================
 
+# ==========================================================
+# Save Access Log
+# 방문 기록 저장
+# ==========================================================
 def save_access_log():
 
     try:
+
+        import time
 
         # ==========================================================
         # Get Real Visitor IP
@@ -1261,6 +1275,43 @@ def save_access_log():
 
 
         # ==========================================================
+        # Access Log Cache
+        # 동일 IP + 동일 URL 30초 중복 저장 방지
+        # ==========================================================
+
+        now = time.time()
+
+        cache_key = f"{ip}:{path}"
+
+        if cache_key in ACCESS_LOG_CACHE:
+
+            last_time = ACCESS_LOG_CACHE[cache_key]
+
+            if now - last_time < ACCESS_LOG_CACHE_SECONDS:
+
+                return
+
+        ACCESS_LOG_CACHE[cache_key] = now
+
+
+        # ==========================================================
+        # 오래된 Cache 삭제
+        # ==========================================================
+
+        expired_keys = []
+
+        for key, value in ACCESS_LOG_CACHE.items():
+
+            if now - value > ACCESS_LOG_CACHE_SECONDS:
+
+                expired_keys.append(key)
+
+        for key in expired_keys:
+
+            del ACCESS_LOG_CACHE[key]
+
+
+         # ==========================================================
         # Get Visitor Country
         # 방문자 국가 정보 조회
         #
@@ -1367,7 +1418,6 @@ def save_access_log():
             e
 
         )
-
 # ==========================================================
 # Unique Visitor Count
 # 중복 제거 방문자 수 계산
