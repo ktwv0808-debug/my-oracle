@@ -151,15 +151,14 @@ def allowed_file(filename):
 # PostgreSQL Connection
 # ------------------------------------------------------------
 
-def get_db():
-    """
-    Render PostgreSQL 연결
-    """
-
-    database_url = os.environ.get("DATABASE_URL")
 # ==========================================================
 # PostgreSQL Connection Pool
 # ==========================================================
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise Exception("DATABASE_URL is not set.")
 
 db_pool = SimpleConnectionPool(
 
@@ -171,8 +170,13 @@ db_pool = SimpleConnectionPool(
 
 )
 
-    if not database_url:
-        raise Exception("DATABASE_URL is not set.")
+
+# ==========================================================
+# Get Database Connection
+# Connection Pool 사용
+# ==========================================================
+
+def get_db():
 
     return db_pool.getconn()
 # ==========================================================
