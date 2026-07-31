@@ -1567,59 +1567,97 @@ def insert_test_data():
 # Get ETH Price From CoinGecko
 # 이더리움 현재 가격 조회
 # ==========================================================
+# ==========================================================
+# ETH Price Cache
+# CoinGecko 호출 최소화
+# ==========================================================
+
+ETH_PRICE_CACHE = {
+
+    "price": None,
+
+    "time": 0
+
+}
+
+ETH_CACHE_SECONDS = 30
+
+# ==========================================================
+# Get ETH Price
+# CoinGecko Price Cache (30 Seconds)
+# ==========================================================
 
 def get_eth_price():
 
+    global ETH_PRICE_CACHE
+
+    current_time = time.time()
+
+    # ------------------------------------------------------
+    # Cache
+    # ------------------------------------------------------
+
+    if (
+
+        ETH_PRICE_CACHE["price"] is not None
+
+        and
+
+        current_time - ETH_PRICE_CACHE["time"] < ETH_CACHE_SECONDS
+
+    ):
+
+        return ETH_PRICE_CACHE["price"]
+
     try:
 
-        url = (
-            "https://api.coingecko.com/api/v3/simple/price"
-            "?ids=ethereum&vs_currencies=usd"
-        )
-
-
         response = requests.get(
-            url,
-            timeout=10
-        )
 
+            "https://api.coingecko.com/api/v3/simple/price",
+
+            params={
+
+                "ids": "ethereum",
+
+                "vs_currencies": "usd"
+
+            },
+
+            timeout=3
+
+        )
 
         data = response.json()
 
-
-        print(
-            "STATUS :",
-            response.status_code
-        )
-
-        print(
-            "RESPONSE :",
-            data
-        )
-
+        price = float(data["ethereum"]["usd"])
 
         # --------------------------------------------------
-        # API 제한 오류 처리
+        # Cache Save
         # --------------------------------------------------
 
-        if response.status_code != 200:
+        ETH_PRICE_CACHE["price"] = price
 
-            return None
+        ETH_PRICE_CACHE["time"] = current_time
 
-
-        price = data["ethereum"]["usd"]
-
-
-        return float(price)
-
-
+        return price
 
     except Exception as e:
 
         print(
-            "GET PRICE ERROR :",
+
+            "COINGECKO ERROR :",
+
             e
+
         )
+
+        # --------------------------------------------------
+        # API 실패 시 마지막 캐시 사용
+        # --------------------------------------------------
+
+        if ETH_PRICE_CACHE["price"] is not None:
+
+            return ETH_PRICE_CACHE["price"]
 
         return None
 # ------------------------------------------------------------
