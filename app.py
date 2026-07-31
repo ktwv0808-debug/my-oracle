@@ -3575,7 +3575,7 @@ def home():
 
         cur.close()
 
-        close_db(conn)
+        conn.close()
 
         # --------------------------------------------------
         # Cache Save
