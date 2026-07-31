@@ -40,7 +40,28 @@ CACHE = {
     "portfolio_time": 0,
 
     "statistics": None,
-    "statistics_time": 0
+    "statistics_time": 0,
+    # --------------------------------
+    # Trading Indicator Cache
+    # RSI / MA 계산 캐시
+    # --------------------------------
+
+    "rsi": None,
+    "rsi_time": 0,
+
+    "ma20": None,
+    "ma20_time": 0,
+
+    "ma60": None,
+    "ma60_time": 0,
+    
+    "prev_ma20": None,
+    "prev_ma20_time": 0,
+    
+    "prev_ma60": None,
+    "prev_ma60_time": 0,
+    "cross_signal": None,
+    "cross_signal_time": 0
 }
 
 
@@ -50,8 +71,13 @@ CACHE_TIME = {
     "eth_price": 30,
     "chart_data": 30,
     "portfolio": 30,
-    "statistics": 60
-
+    "statistics": 60,
+    "rsi": 30,
+    "ma20": 30,
+    "ma60": 30,
+    "prev_ma20": 30,
+    "prev_ma60": 30,
+    "cross_signal": 30
 }
 
 # ------------------------------------------------------------
@@ -2200,267 +2226,531 @@ def generate_wdm_signal():
 # ------------------------------------------------------------
 # RSI 계산
 # ------------------------------------------------------------
+# ------------------------------------------------------------
+# RSI 계산
+# DB 조회 최소화 캐시 적용
+# ------------------------------------------------------------
+
 def calculate_rsi(period=14):
 
-    prices = fetch_all(
-        """
+
+    import time
+
+
+    now = time.time()
+
+
+
+    # --------------------------------------------------------
+    # RSI Cache
+    # --------------------------------------------------------
+
+    if CACHE["rsi"] is not None:
+
+
+        if now - CACHE["rsi_time"] < CACHE_TIME["rsi"]:
+
+
+            return CACHE["rsi"]
+
+
+
+    # --------------------------------------------------------
+    # 가격 데이터 조회
+    # --------------------------------------------------------
+
+    rows = fetch_all("""
+
         SELECT price
+
         FROM eth_price
-        ORDER BY id ASC
-        """
-    )
+
+        ORDER BY id DESC
+
+        LIMIT 100
+
+    """)
 
 
-    if len(prices) < period + 1:
+
+    if len(rows) <= period:
 
         return None
 
 
-    close_prices = [
+
+    prices = [
+
         float(row["price"])
-        for row in prices
+
+        for row in reversed(rows)
+
     ]
 
 
-    import pandas as pd
+
+    gains = []
+
+    losses = []
 
 
-    series = pd.Series(close_prices)
+
+    for i in range(1, len(prices)):
 
 
-    delta = series.diff()
+        diff = prices[i] - prices[i-1]
 
 
-    gain = delta.clip(lower=0)
+        if diff >= 0:
 
-    loss = -delta.clip(upper=0)
+            gains.append(diff)
 
+            losses.append(0)
 
-    avg_gain = gain.rolling(
-        window=period
-    ).mean()
+        else:
 
+            gains.append(0)
 
-    avg_loss = loss.rolling(
-        window=period
-    ).mean()
+            losses.append(abs(diff))
 
 
-    rs = avg_gain / avg_loss
+
+    avg_gain = sum(gains[-period:]) / period
+
+    avg_loss = sum(losses[-period:]) / period
 
 
-    rsi = 100 - (
-        100 / (1 + rs)
-    )
+
+    if avg_loss == 0:
+
+        rsi = 100
+
+    else:
+
+        rs = avg_gain / avg_loss
+
+        rsi = 100 - (
+            100 / (1 + rs)
+        )
 
 
-    return round(
-        float(rsi.iloc[-1]),
-        2
-    )   
+
+    rsi = round(rsi, 2)
+
+
+
+    # --------------------------------------------------------
+    # 캐시 저장
+    # --------------------------------------------------------
+
+    CACHE["rsi"] = rsi
+
+    CACHE["rsi_time"] = now
+
+
+
+    return rsi
 # ------------------------------------------------------------
 # Moving Average
+# MA20 / MA60 계산 캐시 적용
 # ------------------------------------------------------------
 
 def calculate_ma(period):
 
+
+    import time
+
+
+    now = time.time()
+
+
+    cache_key = f"ma{period}"
+
+
+
+    # --------------------------------------------------------
+    # 캐시 확인
+    # --------------------------------------------------------
+
+    if CACHE.get(cache_key) is not None:
+
+
+        if now - CACHE.get(
+            f"{cache_key}_time",
+            0
+        ) < CACHE_TIME.get(
+            cache_key,
+            30
+        ):
+
+
+            return CACHE[cache_key]
+
+
+
+    # --------------------------------------------------------
+    # DB 조회
+    # --------------------------------------------------------
+
     conn = get_db()
+
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    cur.execute("""
-        SELECT price
-        FROM eth_price
-        ORDER BY id DESC
-        LIMIT %s
-    """, (period,))
 
-    rows = cur.fetchall()
 
-    cur.close()
-    close_db(conn)
-    
+    try:
+
+        cur.execute("""
+            SELECT price
+            FROM eth_price
+            ORDER BY id DESC
+            LIMIT %s
+        """,
+        (
+            period,
+        ))
+
+
+        rows = cur.fetchall()
+
+
+
+    finally:
+
+
+        cur.close()
+
+        close_db(conn)
+
+
+
     if len(rows) < period:
+
         return None
 
-    prices = [float(r["price"]) for r in rows]
+
+
+    prices = [
+
+        float(r["price"])
+
+        for r in rows
+
+    ]
+
+
 
     prices.reverse()
 
-    return round(sum(prices) / period, 2)
+
+
+    ma = round(
+        sum(prices) / period,
+        2
+    )
+
+
+
+    # --------------------------------------------------------
+    # 캐시 저장
+    # --------------------------------------------------------
+
+    CACHE[cache_key] = ma
+
+    CACHE[f"{cache_key}_time"] = now
+
+
+
+    return ma
+
+
+
 
 
 # ------------------------------------------------------------
 # Previous Moving Average
+# 이전 MA 계산 캐시 적용
 # ------------------------------------------------------------
 
 def calculate_previous_ma(period):
 
+
+    import time
+
+
+    now = time.time()
+
+
+    cache_key = f"prev_ma{period}"
+
+
+
+    # --------------------------------------------------------
+    # 캐시 확인
+    # --------------------------------------------------------
+
+    if CACHE.get(cache_key) is not None:
+
+
+        if now - CACHE.get(
+            f"{cache_key}_time",
+            0
+        ) < CACHE_TIME.get(
+            cache_key,
+            30
+        ):
+
+
+            return CACHE[cache_key]
+
+
+
+    # --------------------------------------------------------
+    # DB 조회
+    # --------------------------------------------------------
+
     conn = get_db()
+
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    cur.execute("""
-        SELECT price
-        FROM eth_price
-        ORDER BY id DESC
-        LIMIT %s
-    """, (period + 1,))
 
-    rows = cur.fetchall()
 
-    cur.close()
-    close_db(conn)
-    
+    try:
+
+        cur.execute("""
+            SELECT price
+            FROM eth_price
+            ORDER BY id DESC
+            LIMIT %s
+        """,
+        (
+            period + 1,
+        ))
+
+
+        rows = cur.fetchall()
+
+
+
+    finally:
+
+
+        cur.close()
+
+        close_db(conn)
+
+
+
     if len(rows) < period + 1:
+
         return None
 
-    prices = [float(r["price"]) for r in rows]
+
+
+    prices = [
+
+        float(r["price"])
+
+        for r in rows
+
+    ]
+
+
 
     prices.reverse()
 
+
+
     previous_prices = prices[:-1]
 
-    return round(sum(previous_prices) / period, 2)
 
+
+    previous_ma = round(
+
+        sum(previous_prices) / period,
+
+        2
+
+    )
+
+
+
+    # --------------------------------------------------------
+    # 캐시 저장
+    # --------------------------------------------------------
+
+    CACHE[cache_key] = previous_ma
+
+    CACHE[f"{cache_key}_time"] = now
+
+
+
+    return previous_ma
 # ------------------------------------------------------------
 # Cross Signal
 # MA20 / MA60 실제 교차 계산
 # ------------------------------------------------------------
+# ------------------------------------------------------------
+# Cross Signal
+# MA20 / MA60 실제 교차 계산
+# DB 조회 최소화 캐시 적용
+# ------------------------------------------------------------
+
 def get_cross_signals():
+
+
+    import time
+
+
+    now = time.time()
+
+
+
+    # --------------------------------------------------------
+    # Cross Signal Cache 확인
+    # --------------------------------------------------------
+
+    if CACHE["cross_signal"] is not None:
+
+
+        if now - CACHE["cross_signal_time"] < CACHE_TIME["cross_signal"]:
+
+
+            return CACHE["cross_signal"]
+
+
 
     conn = get_db()
 
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    cur.execute("""
 
-        SELECT
-            id,
-            ma20,
-            ma60,
-            price
-        FROM eth_price
-        ORDER BY id ASC
 
-    """)
+    try:
 
-    rows = cur.fetchall()
 
-    cur.close()
-    close_db(conn)
+        # ----------------------------------------------------
+        # 최근 두 개 데이터만 조회
+        # ----------------------------------------------------
+
+        cur.execute("""
+            SELECT
+                id,
+                ma20,
+                ma60,
+                price
+
+            FROM eth_price
+
+            ORDER BY id DESC
+
+            LIMIT 2
+
+        """)
+
+
+        rows = cur.fetchall()
+
+
+
+    finally:
+
+
+        cur.close()
+
+        close_db(conn)
+
+
 
     if len(rows) < 2:
+
+
         return "HOLD"
 
-    prev = rows[-2]
-    curr = rows[-1]
+
+
+    # 최신순으로 가져오기 때문에 역순 변경
+
+    rows.reverse()
+
+
+
+    prev = rows[0]
+
+    curr = rows[1]
+
+
 
     if (
+
         prev["ma20"] is None or
+
         prev["ma60"] is None or
+
         curr["ma20"] is None or
+
         curr["ma60"] is None
+
     ):
-        return "HOLD"
 
-    prev20 = float(prev["ma20"])
-    prev60 = float(prev["ma60"])
+        signal = "HOLD"
 
-    curr20 = float(curr["ma20"])
-    curr60 = float(curr["ma60"])
 
-    # ------------------------------
-    # Golden Cross
-    # ------------------------------
-    if prev20 <= prev60 and curr20 > curr60:
-        return "BUY"
 
-    # ------------------------------
-    # Dead Cross
-    # ------------------------------
-    if prev20 >= prev60 and curr20 < curr60:
-        return "SELL"
+    else:
 
-    return "HOLD"
-# ------------------------------------------------------------
-# Trading Signal
-# ------------------------------------------------------------
-def generate_signal():
 
-    # --------------------------------------------------------
-    # RSI 계산
-    # --------------------------------------------------------
+        prev20 = float(prev["ma20"])
 
-    rsi = calculate_rsi()
+        prev60 = float(prev["ma60"])
 
-    # --------------------------------------------------------
-    # 이동평균 계산
-    # --------------------------------------------------------
 
-    ma20 = calculate_ma(20)
+        curr20 = float(curr["ma20"])
 
-    ma60 = calculate_ma(60)
+        curr60 = float(curr["ma60"])
 
-    # --------------------------------------------------------
-    # 데이터가 부족하면 HOLD
-    # --------------------------------------------------------
 
-    if ma20 is None or ma60 is None:
 
-        return {
+        # ------------------------------------------------
+        # Golden Cross
+        # ------------------------------------------------
 
-            "signal": "HOLD",
+        if prev20 <= prev60 and curr20 > curr60:
 
-            "rsi": rsi,
 
-            "ma20": ma20,
+            signal = "BUY"
 
-            "ma60": ma60
 
-        }
+
+        # ------------------------------------------------
+        # Dead Cross
+        # ------------------------------------------------
+
+        elif prev20 >= prev60 and curr20 < curr60:
+
+
+            signal = "SELL"
+
+
+
+        else:
+
+
+            signal = "HOLD"
+
+
 
     # --------------------------------------------------------
-    # MA20 / MA60 교차 신호 계산
+    # Cache 저장
     # --------------------------------------------------------
 
-    signal = get_cross_signals()
+    CACHE["cross_signal"] = signal
 
-    # --------------------------------------------------------
-    # RSI 보강 판단
-    # --------------------------------------------------------
+    CACHE["cross_signal_time"] = now
 
-    if signal == "BUY":
 
-        if rsi is not None:
 
-            if rsi < 30:
-
-                signal = "STRONG BUY"
-
-    elif signal == "SELL":
-
-        if rsi is not None:
-
-            if rsi > 70:
-
-                signal = "STRONG SELL"
-
-    # --------------------------------------------------------
-    # 결과 반환
-    # --------------------------------------------------------
-
-    return {
-
-     "signal": signal,
-
-     "price": get_latest_price(),
-
-     "rsi": rsi,
-
-     "ma20": ma20,
-
-     "ma60": ma60
-
-   }
+    return signal
 # ------------------------------------------------------------
 # WDM Price
 # ETH 가격을 기준으로 계산
@@ -2528,6 +2818,48 @@ def auto_save_eth():
             CACHE["chart_data"] = None
 
             CACHE["chart_time"] = 0
+            # --------------------------------------------------------
+            # Indicator Cache 초기화
+            # 새로운 ETH 가격 반영
+            # RSI / MA / Cross Signal 초기화
+            # --------------------------------------------------------
+
+            # RSI Cache 초기화
+
+            CACHE["rsi"] = None
+            CACHE["rsi_time"] = 0
+
+
+
+            # 현재 MA Cache 초기화
+
+            CACHE["ma20"] = None
+            CACHE["ma20_time"] = 0
+
+
+            CACHE["ma60"] = None
+            CACHE["ma60_time"] = 0
+
+
+
+            # 이전 MA Cache 초기화
+            # Golden Cross / Dead Cross 계산용
+
+            CACHE["prev_ma20"] = None
+            CACHE["prev_ma20_time"] = 0
+
+
+            CACHE["prev_ma60"] = None
+            CACHE["prev_ma60_time"] = 0
+
+
+
+            # Cross Signal Cache 초기화
+            # BUY / SELL / HOLD 재계산
+
+            CACHE["cross_signal"] = None
+            CACHE["cross_signal_time"] = 0
+
             # ------------------------------------------------
             # WDM 가격 저장
             # ------------------------------------------------
