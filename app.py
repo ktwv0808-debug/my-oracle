@@ -64,6 +64,8 @@ CACHE = {
     "cross_signal_time": 0,
     "signal": None,
     "signal_time": 0,
+    "wdm_price": None,
+    "wdm_price_time": 0
 }
 
 
@@ -80,7 +82,8 @@ CACHE_TIME = {
     "prev_ma20": 30,
     "prev_ma60": 30,
     "cross_signal": 30,
-    "signal": 30
+    "signal": 30,
+    "wdm_price": 30
 }
 
 # ------------------------------------------------------------
@@ -1785,26 +1788,76 @@ def get_latest_price():
 # Latest WDM Price
 # ------------------------------------------------------------
 
+# DB 조회 최소화 (30초 Cache)
+# ------------------------------------------------------------
 def get_latest_wdm_price():
 
-    row = fetch_one("""
-    
+    import time
 
-        SELECT price
+    now = time.time()
 
-        FROM wdm_price
+    # --------------------------------------------------------
+    # Cache 확인
+    # --------------------------------------------------------
 
-        ORDER BY id DESC
+    if CACHE["wdm_price"] is not None:
 
-        LIMIT 1
+        if now - CACHE["wdm_price_time"] < CACHE_TIME["wdm_price"]:
 
-    """)
+            return CACHE["wdm_price"]
 
-    if row:
+    # --------------------------------------------------------
+    # DB 연결
+    # --------------------------------------------------------
 
-        return float(row["price"])
+    conn = get_db()
 
-    return 0.001
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+
+        # ----------------------------------------------------
+        # 최신 WDM 가격 조회
+        # ----------------------------------------------------
+
+        cur.execute("""
+
+            SELECT
+                price
+
+            FROM wdm_price
+
+            ORDER BY id DESC
+
+            LIMIT 1
+
+        """)
+
+        row = cur.fetchone()
+
+        if row is None:
+
+            price = 0.0
+
+        else:
+
+            price = float(row["price"])
+
+        # ----------------------------------------------------
+        # Cache 저장
+        # ----------------------------------------------------
+
+        CACHE["wdm_price"] = price
+
+        CACHE["wdm_price_time"] = now
+
+        return price
+
+    finally:
+
+        cur.close()
+
+        close_db(conn)
 # ============================================================
 # Save ETH Price
 # ============================================================
@@ -2978,6 +3031,13 @@ def auto_save_eth():
 
             CACHE["signal"] = None
             CACHE["signal_time"] = 0
+
+            # --------------------------------------------------------
+            # WDM Price Cache 초기화
+            # --------------------------------------------------------
+
+            CACHE["wdm_price"] = None
+            CACHE["wdm_price_time"] = 0
 
             # ------------------------------------------------
             # WDM 가격 저장
