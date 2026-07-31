@@ -21,6 +21,10 @@ import pandas as pd
 import base64
 from werkzeug.utils import secure_filename
 import psycopg2
+# ==========================================================
+# PostgreSQL Connection Pool
+# ==========================================================
+from psycopg2.pool import SimpleConnectionPool
 from psycopg2.extras import RealDictCursor
 from flask import send_file
 
@@ -153,68 +157,108 @@ def get_db():
     """
 
     database_url = os.environ.get("DATABASE_URL")
+# ==========================================================
+# PostgreSQL Connection Pool
+# ==========================================================
+
+db_pool = SimpleConnectionPool(
+
+    minconn=1,
+
+    maxconn=10,
+
+    dsn=DATABASE_URL
+
+)
 
     if not database_url:
         raise Exception("DATABASE_URL is not set.")
 
-    return psycopg2.connect(database_url)
+    return db_pool.getconn()
+# ==========================================================
+# Return Database Connection
+# Connection Pool 반환
+# ==========================================================
 
+def close_db(conn):
 
-# ------------------------------------------------------------
-# Execute SELECT (Multiple Rows)
-# ------------------------------------------------------------
+    if conn:
 
-def fetch_all(sql, params=None):
-
-    conn = get_db()
-
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-
-    cur.execute(sql, params)
-
-    rows = cur.fetchall()
-
-    cur.close()
-    conn.close()
-
-    return rows
-
-# ------------------------------------------------------------
-# Execute SELECT (Single Row)
-# ------------------------------------------------------------
-
-def fetch_one(sql, params=None):
-
-    conn = get_db()
-
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-
-    cur.execute(sql, params)
-
-    row = cur.fetchone()
-
-    cur.close()
-    conn.close()
-
-    return row
-
-
-# ------------------------------------------------------------
-# Execute INSERT / UPDATE / DELETE
-# ------------------------------------------------------------
+        db_pool.putconn(conn)
+# ==========================================================
+# Execute SQL
+# INSERT / UPDATE / DELETE
+# ==========================================================
 
 def execute(sql, params=None):
 
     conn = get_db()
 
-    cur = conn.cursor()
+    try:
 
-    cur.execute(sql, params)
+        cur = conn.cursor()
 
-    conn.commit()
+        cur.execute(sql, params)
 
-    cur.close()
-    conn.close() 
+        conn.commit()
+
+        cur.close()
+
+    finally:
+
+        close_db(conn)
+
+
+# ==========================================================
+# Fetch One Row
+# SELECT 1건 조회
+# ==========================================================
+
+def fetch_one(sql, params=None):
+
+    conn = get_db()
+
+    try:
+
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute(sql, params)
+
+        row = cur.fetchone()
+
+        cur.close()
+
+        return row
+
+    finally:
+
+        close_db(conn)
+
+
+# ==========================================================
+# Fetch All Rows
+# SELECT 여러건 조회
+# ==========================================================
+
+def fetch_all(sql, params=None):
+
+    conn = get_db()
+
+    try:
+
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute(sql, params)
+
+        rows = cur.fetchall()
+
+        cur.close()
+
+        return rows
+
+    finally:
+
+        close_db(conn)
 # ==========================================================
 # GitHub File Upload
 # ==========================================================
@@ -560,8 +604,7 @@ def keep_latest_rows(table_name, limit_count=10000):
     conn.commit()
 
     cur.close()
-    conn.close()
-
+    close_db(conn)
 # ============================================================
 # PART 3 : Database
 # ============================================================
@@ -916,8 +959,7 @@ def init_db():
     cur.close()
     
         
-    conn.close()
-
+    close_db(conn)
 
 # ------------------------------------------------------------
 # Update Old Database
@@ -1003,8 +1045,8 @@ def update_database():
     conn.commit()
 
     cur.close()
-    conn.close()
-
+    close_db(conn)
+    
     print("Database Updated")
 
 # ==========================================================
@@ -1258,8 +1300,7 @@ def insert_default_portfolio():
     conn.commit()
 
     cur.close()
-    conn.close()
-
+    close_db(conn)
 # ------------------------------------------------------------
 # Insert Default WDM Coin
 # ------------------------------------------------------------
@@ -1310,7 +1351,7 @@ def insert_default_meme():
 
     cur.close()
 
-    conn.close()
+    close_db(conn)
 
 # ------------------------------------------------------------
 # Insert Default Community
@@ -1366,7 +1407,7 @@ def insert_default_community():
 
     cur.close()
 
-    conn.close()
+    close_db(conn)
 # ------------------------------------------------------------
 # Insert Test Data
 # ------------------------------------------------------------
@@ -1513,7 +1554,7 @@ def insert_test_data():
     conn.commit()
 
     cur.close()
-    conn.close()
+    close_db(conn)
     
 # ============================================================
 # PART 4 : Indicator
@@ -1813,8 +1854,7 @@ def save_wdm_price():
     prices = cur.fetchall()
 
     cur.close()
-    conn.close()
-
+    close_db(conn)
     return render_template(
 
         "save_wdm_price.html",
@@ -1848,8 +1888,7 @@ def calculate_wdm_ma(period):
     rows = cur.fetchall()
 
     cur.close()
-    conn.close()
-
+    close_db(conn)
     # ------------------------------------------
     # 데이터 부족
     # ------------------------------------------
@@ -1884,7 +1923,7 @@ def calculate_previous_wdm_ma(period):
     rows = cur.fetchall()
 
     cur.close()
-    conn.close()
+    close_db(conn)
 
     # ------------------------------------------
     # 데이터 부족
@@ -1922,8 +1961,7 @@ def calculate_wdm_rsi(period=14):
     rows = cur.fetchall()
 
     cur.close()
-    conn.close()
-
+    close_db(conn)
     # ------------------------------------------------------
     # 데이터 부족
     # ------------------------------------------------------
@@ -2129,8 +2167,8 @@ def calculate_ma(period):
     rows = cur.fetchall()
 
     cur.close()
-    conn.close()
-
+    close_db(conn)
+    
     if len(rows) < period:
         return None
 
@@ -2160,8 +2198,8 @@ def calculate_previous_ma(period):
     rows = cur.fetchall()
 
     cur.close()
-    conn.close()
-
+    close_db(conn)
+    
     if len(rows) < period + 1:
         return None
 
@@ -2198,7 +2236,7 @@ def get_cross_signals():
     rows = cur.fetchall()
 
     cur.close()
-    conn.close()
+    close_db(conn)
 
     if len(rows) < 2:
         return "HOLD"
@@ -2446,8 +2484,8 @@ def auto_save_eth():
 
             cur.close()
 
-            conn.close()
-
+            close_db(conn)
+            
             print(
 
                 f"[AUTO] "
@@ -2590,7 +2628,7 @@ def calculate_portfolio():
         roi = 0
 
     cur.close()
-    conn.close()
+    close_db(conn)
 
     return {
 
@@ -2833,7 +2871,7 @@ def buy_eth(buy_percent=20):
 
         cur.close()
 
-        conn.close()
+        close_db(conn)
 # ------------------------------------------------------------
 # SELL ETH
 # Portfolio에서 보유 ETH 전량 매도
@@ -3050,7 +3088,7 @@ def sell_eth():
 
         cur.close()
 
-        conn.close()
+        close_db(conn)
 # ============================================================
 # PART 6-1 : ETH ↔ WDM Swap Engine
 # ============================================================
@@ -3272,8 +3310,8 @@ def auto_trade(signal_data=None):
 
         cur.close()
 
-        conn.close()
-
+        close_db(conn)
+        
         print("AUTO BUY SUCCESS")
 
         return True
@@ -3390,8 +3428,8 @@ def auto_trade(signal_data=None):
 
         cur.close()
 
-        conn.close()
-
+        close_db(conn)
+        
         print("AUTO SELL SUCCESS")
 
         return True
@@ -3497,8 +3535,8 @@ def auto_trade(signal_data=None):
 
         cur.close()
 
-        conn.close()
-
+        close_db(conn)
+        
         return False
 
     # --------------------------------------------------------
@@ -3575,7 +3613,7 @@ def home():
 
         cur.close()
 
-        conn.close()
+        close_db(conn)
 
         # --------------------------------------------------
         # Cache Save
@@ -3611,8 +3649,8 @@ def donation():
     donations = cur.fetchall()
 
     cur.close()
-    conn.close()
-
+    close_db(conn)
+    
     return render_template(
         "donation.html",
         donations=donations
@@ -3646,7 +3684,7 @@ def whitepaper():
     donations = cur.fetchall()
 
     cur.close()
-    conn.close()
+    close_db(conn)
 
     return render_template(
         "whitepaper.html",
@@ -3692,8 +3730,7 @@ def price():
 
     cur.close()
 
-    conn.close()
-
+    close_db(conn)
 
 
     return render_template(
@@ -3784,8 +3821,8 @@ def save_price():
     prices = cur.fetchall()
 
     cur.close()
-    conn.close()
-
+    close_db(conn)
+    
     return render_template(
 
     "save_price.html",
@@ -3818,8 +3855,8 @@ def history():
     prices = cur.fetchall()
 
     cur.close()
-    conn.close()
-
+    close_db(conn)
+    
     return render_template(
         "history.html",
         prices=prices
@@ -3879,8 +3916,8 @@ def trades():
     records = cur.fetchall()
 
     cur.close()
-    conn.close()
-
+    close_db(conn)
+    
     return render_template(
         "trades.html",
         records=records
@@ -5513,7 +5550,7 @@ def chart_data():
 
     rows = list(reversed(rows))
     cur.close()
-    conn.close()
+    close_db(conn)
 
     # --------------------------------------------------------
     # Chart Data
@@ -5698,7 +5735,7 @@ def wdm_chart_data():
 
         cur.close()
 
-        conn.close()
+        close_db(conn)
 
         # --------------------------------------------------
         # Chart 데이터 생성
