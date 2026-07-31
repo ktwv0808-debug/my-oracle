@@ -28,6 +28,32 @@ from psycopg2.pool import SimpleConnectionPool
 from psycopg2.extras import RealDictCursor
 from flask import send_file
 
+CACHE = {
+
+    "eth_price": None,
+    "eth_time": 0,
+
+    "chart_data": None,
+    "chart_time": 0,
+
+    "portfolio": None,
+    "portfolio_time": 0,
+
+    "statistics": None,
+    "statistics_time": 0
+}
+
+
+# 캐시 유지 시간(초)
+CACHE_TIME = {
+
+    "eth_price": 30,
+    "chart_data": 30,
+    "portfolio": 30,
+    "statistics": 60
+
+}
+
 # ------------------------------------------------------------
 # Flask
 # ------------------------------------------------------------
@@ -263,6 +289,64 @@ def fetch_all(sql, params=None):
     finally:
 
         close_db(conn)
+
+# ==========================================================
+# Portfolio 조회 캐시
+# DB 반복 조회 최소화
+# ==========================================================
+
+PORTFOLIO_CACHE = {
+
+    "data": None,
+    "time": 0
+
+}
+
+
+PORTFOLIO_CACHE_TIME = 30
+
+
+
+def get_cached_portfolio():
+
+    import time
+
+
+    now = time.time()
+
+
+
+    # -------------------------------
+    # 캐시 사용
+    # -------------------------------
+
+    if PORTFOLIO_CACHE["data"]:
+
+        if now - PORTFOLIO_CACHE["time"] < PORTFOLIO_CACHE_TIME:
+
+            return PORTFOLIO_CACHE["data"]
+
+
+
+    # -------------------------------
+    # DB 조회
+    # -------------------------------
+
+    row = fetch_one("""
+        SELECT *
+        FROM portfolio
+        LIMIT 1
+    """)
+
+
+
+    PORTFOLIO_CACHE["data"] = row
+
+    PORTFOLIO_CACHE["time"] = now
+
+
+
+    return row
 # ==========================================================
 # GitHub File Upload
 # ==========================================================
@@ -1583,83 +1667,67 @@ ETH_PRICE_CACHE = {
 ETH_CACHE_SECONDS = 30
 
 # ==========================================================
-# Get ETH Price
-# CoinGecko Price Cache (30 Seconds)
+# ETH 가격 조회
+# CoinGecko API + 메모리 캐시
 # ==========================================================
 
 def get_eth_price():
 
-    global ETH_PRICE_CACHE
+    import time
 
-    current_time = time.time()
 
-    # ------------------------------------------------------
-    # Cache
-    # ------------------------------------------------------
+    now = time.time()
 
-    if (
 
-        ETH_PRICE_CACHE["price"] is not None
+    # -------------------------------
+    # 캐시 데이터 사용
+    # -------------------------------
 
-        and
+    if CACHE["eth_price"]:
 
-        current_time - ETH_PRICE_CACHE["time"] < ETH_CACHE_SECONDS
+        if now - CACHE["eth_time"] < CACHE_TIME["eth_price"]:
 
-    ):
+            return CACHE["eth_price"]
 
-        return ETH_PRICE_CACHE["price"]
+
+
+    # -------------------------------
+    # 실제 API 호출
+    # -------------------------------
 
     try:
 
         response = requests.get(
-
             "https://api.coingecko.com/api/v3/simple/price",
-
             params={
-
-                "ids": "ethereum",
-
-                "vs_currencies": "usd"
-
+                "ids":"ethereum",
+                "vs_currencies":"usd"
             },
-
-            timeout=3
-
+            timeout=5
         )
+
 
         data = response.json()
 
-        price = float(data["ethereum"]["usd"])
+        price = data["ethereum"]["usd"]
 
-        # --------------------------------------------------
-        # Cache Save
-        # --------------------------------------------------
 
-        ETH_PRICE_CACHE["price"] = price
 
-        ETH_PRICE_CACHE["time"] = current_time
+        # 캐시 저장
+
+        CACHE["eth_price"] = price
+        CACHE["eth_time"] = now
+
 
         return price
 
+
+
     except Exception as e:
 
-        print(
+        print("ETH PRICE ERROR:", e)
 
-            "COINGECKO ERROR :",
-
-            e
-
-        )
-
-        # --------------------------------------------------
-        # API 실패 시 마지막 캐시 사용
-        # --------------------------------------------------
-
-        if ETH_PRICE_CACHE["price"] is not None:
-
-            return ETH_PRICE_CACHE["price"]
-
-        return None
+        return CACHE["eth_price"]
 # ------------------------------------------------------------
 # Latest Price (DB)
 # 팝업창 즉시 표시용
@@ -2562,41 +2630,45 @@ def auto_save_eth():
 # PART 6 : Portfolio
 # ==========================================================
 
+
 # --------------------------------------
 # Portfolio 조회
+# DB 조회 최소화 캐시 적용
 # --------------------------------------
+
 def calculate_portfolio():
 
+    import time
+
+
+    now = time.time()
+
+
+    # --------------------------------------------------------
+    # Portfolio 계산 결과 캐시 사용
+    # 30초 동안 DB 조회 생략
+    # --------------------------------------------------------
+
+    if CACHE["portfolio"]:
+
+        if now - CACHE["portfolio_time"] < CACHE_TIME["portfolio"]:
+
+            return CACHE["portfolio"]
+
+
+
     conn = get_db()
+
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    # Portfolio가 없으면 생성
-    cur.execute("""
-        SELECT *
-        FROM portfolio
-        LIMIT 1
-    """)
 
-    portfolio = cur.fetchone()
 
-    if portfolio is None:
+    try:
 
-        cur.execute("""
-            INSERT INTO portfolio
-            (
-                cash,
-                eth,
-                avg_price
-            )
-            VALUES
-            (
-                100000,
-                0,
-                0
-            )
-        """)
 
-        conn.commit()
+        # --------------------------------------------------------
+        # Portfolio 데이터 조회
+        # --------------------------------------------------------
 
         cur.execute("""
             SELECT *
@@ -2604,99 +2676,223 @@ def calculate_portfolio():
             LIMIT 1
         """)
 
+
         portfolio = cur.fetchone()
 
-    # 현재 ETH 가격
-    cur.execute("""
-        SELECT price
-        FROM eth_price
-        ORDER BY id DESC
-        LIMIT 1
-    """)
 
-    row = cur.fetchone()
 
-    current_price = 0
+        # --------------------------------------------------------
+        # Portfolio가 없으면 기본 생성
+        # --------------------------------------------------------
 
-    if row:
-        current_price = float(row["price"])
+        if portfolio is None:
 
-    # --------------------------------------------------------
-    # Portfolio 금액 계산
-    # --------------------------------------------------------
 
-    cash = float(portfolio["cash"])
-    eth = float(portfolio["eth"])
-    wdm = float(portfolio["wdm"])
-    avg_price = float(portfolio["avg_price"])
+            cur.execute("""
+                INSERT INTO portfolio
+                (
+                    cash,
+                    eth,
+                    wdm,
+                    avg_price
+                )
+                VALUES
+                (
+                    100000,
+                    0,
+                    0,
+                    0
+                )
+            """)
 
-    # --------------------------------------------------------
-    # ETH 자산 평가금액
-    # --------------------------------------------------------
 
-    asset_value = eth * current_price
+            conn.commit()
 
-    # --------------------------------------------------------
-    # WDM 현재가격 조회
-    # 반드시 먼저 계산해야 함
-    # --------------------------------------------------------
 
-    wdm_price = get_latest_wdm_price()
 
-    # --------------------------------------------------------
-    # WDM 평가금액
-    # --------------------------------------------------------
+            cur.execute("""
+                SELECT *
+                FROM portfolio
+                LIMIT 1
+            """)
 
-    wdm_value = wdm * wdm_price
 
-    # --------------------------------------------------------
-    # 총 자산
-    # --------------------------------------------------------
+            portfolio = cur.fetchone()
 
-    total_assets = cash + asset_value + wdm_value
-    # --------------------------------------------------------
-    # WDM 현재가격
-    # --------------------------------------------------------
 
-    
-    if eth > 0:
-        profit = asset_value - (eth * avg_price)
-    else:
-        profit = 0
 
-    if eth > 0 and avg_price > 0:
-        roi = ((current_price - avg_price) / avg_price) * 100
-    else:
-        roi = 0
+        # --------------------------------------------------------
+        # 최신 ETH 가격 조회
+        # --------------------------------------------------------
 
-    cur.close()
-    close_db(conn)
+        cur.execute("""
+            SELECT price
+            FROM eth_price
+            ORDER BY id DESC
+            LIMIT 1
+        """)
 
-    return {
 
-        "cash": round(cash, 2),
+        row = cur.fetchone()
 
-        "wdm": round(wdm,2),
 
-        "eth": round(eth, 8),
+        current_price = 0
 
-        "wdm_price": round(wdm_price,8),
 
-        "wdm_value": round(wdm_value,2),
+        if row:
 
-        "avg_price": round(avg_price, 2),
+            current_price = float(row["price"])
 
-        "current_price": round(current_price, 2),
 
-        "asset_value": round(asset_value, 2),
 
-        "total_assets": round(total_assets, 2),
+        # --------------------------------------------------------
+        # Portfolio 기본 값
+        # --------------------------------------------------------
 
-        "profit": round(profit, 2),
+        cash = float(portfolio["cash"])
 
-        "roi": round(roi, 2)
+        eth = float(portfolio["eth"])
 
-    }
+        wdm = float(portfolio["wdm"])
+
+        avg_price = float(portfolio["avg_price"])
+
+
+
+        # --------------------------------------------------------
+        # ETH 평가금액
+        # --------------------------------------------------------
+
+        asset_value = eth * current_price
+
+
+
+        # --------------------------------------------------------
+        # WDM 가격 조회
+        # --------------------------------------------------------
+
+        wdm_price = get_latest_wdm_price()
+
+
+
+        # --------------------------------------------------------
+        # WDM 평가금액
+        # --------------------------------------------------------
+
+        wdm_value = wdm * wdm_price
+
+
+
+        # --------------------------------------------------------
+        # 총 자산
+        # --------------------------------------------------------
+
+        total_assets = (
+            cash
+            + asset_value
+            + wdm_value
+        )
+
+
+
+        # --------------------------------------------------------
+        # 수익 계산
+        # --------------------------------------------------------
+
+        if eth > 0:
+
+            profit = (
+                asset_value
+                - (eth * avg_price)
+            )
+
+        else:
+
+            profit = 0
+
+
+
+        # --------------------------------------------------------
+        # ROI 계산
+        # --------------------------------------------------------
+
+        if eth > 0 and avg_price > 0:
+
+            roi = (
+                (current_price - avg_price)
+                /
+                avg_price
+            ) * 100
+
+        else:
+
+            roi = 0
+
+
+
+        # --------------------------------------------------------
+        # 결과 저장
+        # --------------------------------------------------------
+
+        result = {
+
+
+            "cash": round(cash, 2),
+
+
+            "wdm": round(wdm, 2),
+
+
+            "eth": round(eth, 8),
+
+
+            "wdm_price": round(wdm_price, 8),
+
+
+            "wdm_value": round(wdm_value, 2),
+
+
+            "avg_price": round(avg_price, 2),
+
+
+            "current_price": round(current_price, 2),
+
+
+            "asset_value": round(asset_value, 2),
+
+
+            "total_assets": round(total_assets, 2),
+
+
+            "profit": round(profit, 2),
+
+
+            "roi": round(roi, 2)
+
+        }
+
+
+
+        # --------------------------------------------------------
+        # Portfolio 캐시 저장
+        # --------------------------------------------------------
+
+        CACHE["portfolio"] = result
+
+        CACHE["portfolio_time"] = now
+
+
+
+        return result
+
+
+
+    finally:
+
+
+        cur.close()
+
+        close_db(conn)
 # ------------------------------------------------------------
 # BUY ETH
 # Portfolio에서 현금을 이용하여 ETH 매수
@@ -2860,6 +3056,8 @@ def buy_eth(buy_percent=20):
 
         conn.commit()
 
+        # Portfolio 캐시 초기화
+PORTFOLIO_CACHE["data"] = None
         # ----------------------------------------------------
         # Console 출력
         # ----------------------------------------------------
@@ -3074,6 +3272,9 @@ def sell_eth():
         ))
 
         conn.commit()
+
+        # Portfolio 캐시 초기화
+PORTFOLIO_CACHE["data"] = None
 
         # ----------------------------------------------------
         # Console 출력
