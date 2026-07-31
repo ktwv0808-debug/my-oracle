@@ -29,6 +29,22 @@ from flask import send_file
 # ------------------------------------------------------------
 
 app = Flask(__name__)
+# ==========================================================
+# Home Cache
+# 메인 페이지 캐시
+# ==========================================================
+
+import time
+
+HOME_CACHE = {
+
+    "data": None,
+
+    "time": 0
+
+}
+
+HOME_CACHE_SECONDS = 30
 # ============================================================
 # File Upload Setting
 # ============================================================
@@ -3510,29 +3526,72 @@ def admin_required():
 # PART 7  Routes
 # ==========================================================
 
-# -----------------------------
+# ==========================================================
 # Home
-# -----------------------------
+# Main Page (Cache)
+# ==========================================================
+
 @app.route("/")
 def home():
 
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    global HOME_CACHE
 
-    cur.execute("""
-        SELECT *
-        FROM donation_records
-        ORDER BY id DESC
-    """)
+    current_time = time.time()
 
-    donations = cur.fetchall()
+    # ------------------------------------------------------
+    # Home Cache
+    # 캐시가 살아있으면 DB 조회 안함
+    # ------------------------------------------------------
 
-    cur.close()
-    conn.close()
+    if (
+
+        HOME_CACHE["data"] is not None
+
+        and
+
+        current_time - HOME_CACHE["time"] < HOME_CACHE_SECONDS
+
+    ):
+
+        donations = HOME_CACHE["data"]
+
+    else:
+
+        conn = get_db()
+
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute("""
+
+            SELECT *
+
+            FROM donation_records
+
+            ORDER BY id DESC
+
+        """)
+
+        donations = cur.fetchall()
+
+        cur.close()
+
+        close_db(conn)
+
+        # --------------------------------------------------
+        # Cache Save
+        # 캐시에 저장
+        # --------------------------------------------------
+
+        HOME_CACHE["data"] = donations
+
+        HOME_CACHE["time"] = current_time
 
     return render_template(
+
         "donation.html",
+
         donations=donations
+
     )
 # ------------------------------------------------------------
 # Donation
