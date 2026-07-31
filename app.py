@@ -61,7 +61,9 @@ CACHE = {
     "prev_ma60": None,
     "prev_ma60_time": 0,
     "cross_signal": None,
-    "cross_signal_time": 0
+    "cross_signal_time": 0,
+    "signal": None,
+    "signal_time": 0,
 }
 
 
@@ -77,7 +79,8 @@ CACHE_TIME = {
     "ma60": 30,
     "prev_ma20": 30,
     "prev_ma60": 30,
-    "cross_signal": 30
+    "cross_signal": 30,
+    "signal": 30
 }
 
 # ------------------------------------------------------------
@@ -2755,7 +2758,25 @@ def get_cross_signals():
 # ------------------------------------------------------------
 # Trading Signal
 # ------------------------------------------------------------
+# ------------------------------------------------------------
+# Trading Signal
+# RSI / MA / Cross Signal 캐시 적용
+# ------------------------------------------------------------
 def generate_signal():
+
+    import time
+
+    now = time.time()
+
+    # --------------------------------------------------------
+    # Signal Cache
+    # --------------------------------------------------------
+
+    if CACHE["signal"] is not None:
+
+        if now - CACHE["signal_time"] < CACHE_TIME["signal"]:
+
+            return CACHE["signal"]
 
     # --------------------------------------------------------
     # RSI 계산
@@ -2772,14 +2793,16 @@ def generate_signal():
     ma60 = calculate_ma(60)
 
     # --------------------------------------------------------
-    # 데이터가 부족하면 HOLD
+    # 데이터 부족
     # --------------------------------------------------------
 
     if ma20 is None or ma60 is None:
 
-        return {
+        result = {
 
             "signal": "HOLD",
+
+            "price": get_latest_price(),
 
             "rsi": rsi,
 
@@ -2789,49 +2812,59 @@ def generate_signal():
 
         }
 
+        CACHE["signal"] = result
+        CACHE["signal_time"] = now
+
+        return result
+
     # --------------------------------------------------------
-    # MA20 / MA60 교차 신호 계산
+    # Cross Signal
     # --------------------------------------------------------
 
     signal = get_cross_signals()
 
     # --------------------------------------------------------
-    # RSI 보강 판단
+    # RSI 보강
     # --------------------------------------------------------
 
     if signal == "BUY":
 
-        if rsi is not None:
+        if rsi is not None and rsi < 30:
 
-            if rsi < 30:
-
-                signal = "STRONG BUY"
+            signal = "STRONG BUY"
 
     elif signal == "SELL":
 
-        if rsi is not None:
+        if rsi is not None and rsi > 70:
 
-            if rsi > 70:
-
-                signal = "STRONG SELL"
+            signal = "STRONG SELL"
 
     # --------------------------------------------------------
-    # 결과 반환
+    # 결과
     # --------------------------------------------------------
 
-    return {
+    result = {
 
-     "signal": signal,
+        "signal": signal,
 
-     "price": get_latest_price(),
+        "price": get_latest_price(),
 
-     "rsi": rsi,
+        "rsi": rsi,
 
-     "ma20": ma20,
+        "ma20": ma20,
 
-     "ma60": ma60
+        "ma60": ma60
 
-   }
+    }
+
+    # --------------------------------------------------------
+    # Cache 저장
+    # --------------------------------------------------------
+
+    CACHE["signal"] = result
+    CACHE["signal_time"] = now
+
+    return result
 # ------------------------------------------------------------
 # WDM Price
 # ETH 가격을 기준으로 계산
@@ -2940,6 +2973,11 @@ def auto_save_eth():
 
             CACHE["cross_signal"] = None
             CACHE["cross_signal_time"] = 0
+
+            # Signal Cache 초기화
+
+            CACHE["signal"] = None
+            CACHE["signal_time"] = 0
 
             # ------------------------------------------------
             # WDM 가격 저장
