@@ -2895,38 +2895,37 @@ def calculate_portfolio():
         close_db(conn)
 # ------------------------------------------------------------
 # BUY ETH
-# Portfolio에서 현금을 이용하여 ETH 매수
+# Portfolio 현금을 이용하여 ETH 매수
+# DB 조회 최소화 + Portfolio 캐시 초기화
 # ------------------------------------------------------------
+
 def buy_eth(buy_percent=20):
 
-    # --------------------------------------------------------
-    # DB 연결
-    # --------------------------------------------------------
 
     conn = get_db()
 
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
+
     try:
+
 
         # ----------------------------------------------------
         # Portfolio 조회
         # ----------------------------------------------------
 
         cur.execute("""
-
             SELECT
                 cash,
                 eth,
                 avg_price
-
             FROM portfolio
-
             LIMIT 1
-
         """)
 
+
         portfolio = cur.fetchone()
+
 
         if portfolio is None:
 
@@ -2934,14 +2933,18 @@ def buy_eth(buy_percent=20):
 
             return None
 
+
+
         cash = float(portfolio["cash"])
 
         eth = float(portfolio["eth"])
 
         avg_price = float(portfolio["avg_price"])
 
+
+
         # ----------------------------------------------------
-        # 이미 ETH 보유중이면 매수 안함
+        # ETH 보유중이면 매수 금지
         # ----------------------------------------------------
 
         if eth > 0:
@@ -2950,23 +2953,23 @@ def buy_eth(buy_percent=20):
 
             return None
 
+
+
         # ----------------------------------------------------
         # 현재 ETH 가격 조회
         # ----------------------------------------------------
 
         cur.execute("""
-
             SELECT price
-
             FROM eth_price
-
             ORDER BY id DESC
-
             LIMIT 1
-
         """)
 
+
         row = cur.fetchone()
+
+
 
         if row is None:
 
@@ -2974,29 +2977,35 @@ def buy_eth(buy_percent=20):
 
             return None
 
+
+
         current_price = float(row["price"])
 
+
+
         # ----------------------------------------------------
-        # 매수금액 계산
+        # 매수 금액 계산
         # ----------------------------------------------------
 
         trade_amount = round(
-
             cash * buy_percent / 100,
-
             2
-
         )
+
 
         if trade_amount <= 0:
 
             return None
 
+
+
         # ----------------------------------------------------
-        # 매수수량 계산
+        # ETH 수량 계산
         # ----------------------------------------------------
 
         quantity = trade_amount / current_price
+
+
 
         # ----------------------------------------------------
         # Portfolio 계산
@@ -3006,8 +3015,10 @@ def buy_eth(buy_percent=20):
 
         new_eth = eth + quantity
 
+
+
         # ----------------------------------------------------
-        # 평균단가 계산
+        # 평균 매수가
         # ----------------------------------------------------
 
         if eth == 0:
@@ -3026,41 +3037,48 @@ def buy_eth(buy_percent=20):
 
             ) / new_eth
 
+
+
         # ----------------------------------------------------
-        # Portfolio UPDATE
+        # Portfolio 업데이트
         # ----------------------------------------------------
 
         cur.execute("""
-
             UPDATE portfolio
 
             SET
-
                 cash=%s,
-
                 eth=%s,
-
                 avg_price=%s
-           
+
+            WHERE id = (
+                SELECT id
+                FROM portfolio
+                LIMIT 1
+            )
+
         """,
-
         (
-
             new_cash,
-
             new_eth,
-
             new_avg_price
-
         ))
+
+
 
         conn.commit()
 
+
+
+        # ----------------------------------------------------
         # Portfolio 캐시 초기화
-PORTFOLIO_CACHE["data"] = None
         # ----------------------------------------------------
-        # Console 출력
-        # ----------------------------------------------------
+
+        CACHE["portfolio"] = None
+
+        CACHE["portfolio_time"] = 0
+
+
 
         print("=================================")
 
@@ -3076,10 +3094,7 @@ PORTFOLIO_CACHE["data"] = None
 
         print("=================================")
 
-        # ----------------------------------------------------
-        # 거래정보 반환
-        # auto_trade()에서 사용
-        # ----------------------------------------------------
+
 
         return {
 
@@ -3099,7 +3114,10 @@ PORTFOLIO_CACHE["data"] = None
 
         }
 
+
+
     except Exception as e:
+
 
         conn.rollback()
 
@@ -3107,37 +3125,43 @@ PORTFOLIO_CACHE["data"] = None
 
         return None
 
+
+
     finally:
+
 
         cur.close()
 
         close_db(conn)
+
+
+
+
+
 # ------------------------------------------------------------
 # SELL ETH
-# Portfolio에서 보유 ETH 전량 매도
-# Portfolio 업데이트
+# Portfolio 보유 ETH 전량 매도
 # 실현손익 계산
-# ROI 계산
-# 거래정보 반환
+# DB 조회 최소화 + Portfolio 캐시 초기화
 # ------------------------------------------------------------
+
 def sell_eth():
 
-    # --------------------------------------------------------
-    # DB 연결
-    # --------------------------------------------------------
 
     conn = get_db()
 
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
+
+
     try:
+
 
         # ----------------------------------------------------
         # Portfolio 조회
         # ----------------------------------------------------
 
         cur.execute("""
-
             SELECT
                 cash,
                 eth,
@@ -3149,7 +3173,10 @@ def sell_eth():
 
         """)
 
+
         portfolio = cur.fetchone()
+
+
 
         if portfolio is None:
 
@@ -3157,14 +3184,18 @@ def sell_eth():
 
             return None
 
+
+
         cash = float(portfolio["cash"])
 
         eth = float(portfolio["eth"])
 
         avg_price = float(portfolio["avg_price"])
 
+
+
         # ----------------------------------------------------
-        # ETH가 없으면 매도 안함
+        # ETH 없으면 매도 불가
         # ----------------------------------------------------
 
         if eth <= 0:
@@ -3173,23 +3204,24 @@ def sell_eth():
 
             return None
 
+
+
         # ----------------------------------------------------
-        # 현재 ETH 가격 조회
+        # 현재 ETH 가격
         # ----------------------------------------------------
 
         cur.execute("""
-
             SELECT price
-
             FROM eth_price
-
             ORDER BY id DESC
-
             LIMIT 1
 
         """)
 
+
         row = cur.fetchone()
+
+
 
         if row is None:
 
@@ -3197,16 +3229,22 @@ def sell_eth():
 
             return None
 
+
+
         current_price = float(row["price"])
 
+
+
         # ----------------------------------------------------
-        # 매도금액 계산
+        # 매도 금액
         # ----------------------------------------------------
 
         trade_amount = eth * current_price
 
+
+
         # ----------------------------------------------------
-        # 실현손익 계산
+        # 손익 계산
         # ----------------------------------------------------
 
         profit = (
@@ -3214,6 +3252,8 @@ def sell_eth():
             current_price - avg_price
 
         ) * eth
+
+
 
         # ----------------------------------------------------
         # ROI 계산
@@ -3225,7 +3265,9 @@ def sell_eth():
 
                 (current_price - avg_price)
 
-                / avg_price
+                /
+
+                avg_price
 
             ) * 100
 
@@ -3233,8 +3275,10 @@ def sell_eth():
 
             roi = 0
 
+
+
         # ----------------------------------------------------
-        # Portfolio 계산
+        # Portfolio 변경
         # ----------------------------------------------------
 
         new_cash = cash + trade_amount
@@ -3243,12 +3287,13 @@ def sell_eth():
 
         new_avg_price = 0
 
+
+
         # ----------------------------------------------------
-        # Portfolio UPDATE
+        # Portfolio 업데이트
         # ----------------------------------------------------
 
         cur.execute("""
-
             UPDATE portfolio
 
             SET
@@ -3258,48 +3303,53 @@ def sell_eth():
                 eth=%s,
 
                 avg_price=%s
-           
+
+            WHERE id = (
+                SELECT id
+                FROM portfolio
+                LIMIT 1
+            )
+
         """,
-
         (
-
             new_cash,
-
             new_eth,
-
             new_avg_price
-
         ))
+
+
 
         conn.commit()
 
-        # Portfolio 캐시 초기화
-PORTFOLIO_CACHE["data"] = None
+
 
         # ----------------------------------------------------
-        # Console 출력
+        # Portfolio 캐시 초기화
         # ----------------------------------------------------
+
+        CACHE["portfolio"] = None
+
+        CACHE["portfolio_time"] = 0
+
+
 
         print("=================================")
 
         print("AUTO SELL COMPLETE")
 
-        print(f"SELL PRICE   : {current_price:.2f}")
+        print(f"SELL PRICE : {current_price:.2f}")
 
-        print(f"QUANTITY     : {eth:.8f}")
+        print(f"QUANTITY   : {eth:.8f}")
 
-        print(f"AMOUNT       : {trade_amount:.2f}")
+        print(f"AMOUNT     : {trade_amount:.2f}")
 
-        print(f"PROFIT       : {profit:.2f}")
+        print(f"PROFIT     : {profit:.2f}")
 
-        print(f"ROI          : {roi:.2f}%")
+        print(f"ROI        : {roi:.2f}%")
 
         print("=================================")
 
-        # ----------------------------------------------------
-        # 거래정보 반환
-        # auto_trade()에서 사용
-        # ----------------------------------------------------
+
 
         return {
 
@@ -3319,7 +3369,10 @@ PORTFOLIO_CACHE["data"] = None
 
         }
 
+
+
     except Exception as e:
+
 
         conn.rollback()
 
@@ -3327,7 +3380,10 @@ PORTFOLIO_CACHE["data"] = None
 
         return None
 
+
+
     finally:
+
 
         cur.close()
 
