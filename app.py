@@ -4,7 +4,7 @@
 
 from flask import (
     Flask,
-    render_template,
+    render_template, 
     request,
     redirect,
     session, 
@@ -2520,6 +2520,14 @@ def auto_save_eth():
             new_id = cur.fetchone()["id"]
 
             conn.commit()
+            # --------------------------------------------------------
+            # Chart Cache 초기화
+            # 새로운 ETH 데이터 반영
+            # --------------------------------------------------------
+
+            CACHE["chart_data"] = None
+
+            CACHE["chart_time"] = 0
             # ------------------------------------------------
             # WDM 가격 저장
             # ------------------------------------------------
@@ -5829,8 +5837,38 @@ def execute_swap():
 # PART 8 : Chart API
 # ==========================================================
 
+# ------------------------------------------------------------
+# ETH Chart Data
+# DB 조회 최소화 캐시 적용
+# Golden Cross / Dead Cross 유지
+# ------------------------------------------------------------
+
 @app.route("/chart-data")
 def chart_data():
+
+    import time
+
+
+    now = time.time()
+
+
+
+    # --------------------------------------------------------
+    # Chart Cache 확인
+    # 30초 이내 DB 조회 생략
+    # --------------------------------------------------------
+
+    if CACHE["chart_data"]:
+
+
+        if now - CACHE["chart_time"] < CACHE_TIME["chart_data"]:
+
+
+            return jsonify(
+                CACHE["chart_data"]
+            )
+
+
 
     # --------------------------------------------------------
     # DB 연결
@@ -5840,30 +5878,56 @@ def chart_data():
 
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    cur.execute("""
 
-    SELECT
 
-        created_at,
-        price,
-        ma20,
-        ma60
+    try:
 
-    FROM eth_price
 
-    ORDER BY id DESC
+        cur.execute("""
 
-    LIMIT 300
+            SELECT
 
-""")
+                created_at,
 
-    rows = cur.fetchall()
-    # 최신순으로 가져온 데이터를
-    # 차트 표시용 과거순으로 변경
+                price,
+
+                ma20,
+
+                ma60
+
+
+            FROM eth_price
+
+
+            ORDER BY id DESC
+
+
+            LIMIT 300
+
+
+        """)
+
+
+        rows = cur.fetchall()
+
+
+
+    finally:
+
+
+        cur.close()
+
+        close_db(conn)
+
+
+
+    # --------------------------------------------------------
+    # 최신순 → 과거순 변경
+    # --------------------------------------------------------
 
     rows = list(reversed(rows))
-    cur.close()
-    close_db(conn)
+
+
 
     # --------------------------------------------------------
     # Chart Data
@@ -5885,62 +5949,102 @@ def chart_data():
 
     dead = []
 
+
+
     # --------------------------------------------------------
     # 데이터 생성
     # --------------------------------------------------------
 
     for i, row in enumerate(rows):
 
+
         # 시간
+
         labels.append(
+
             row["created_at"].strftime("%H:%M:%S")
+
         )
 
+
+
         # 가격
+
         price = float(row["price"])
 
         prices.append(price)
 
+
+
         # 이동평균
+
         m20 = None
+
         m60 = None
 
+
+
         if row["ma20"] is not None:
+
             m20 = float(row["ma20"])
 
+
+
         if row["ma60"] is not None:
+
             m60 = float(row["ma60"])
 
+
+
         ma20.append(m20)
+
         ma60.append(m60)
 
+
+
         # 기본값
+
         buy.append(None)
+
         sell.append(None)
+
         golden.append(None)
+
         dead.append(None)
 
-        # ----------------------------------------------------
-        # 첫 번째 데이터는 비교 불가
-        # ----------------------------------------------------
+
+
+        # 첫 데이터 비교 불가
 
         if i == 0:
+
             continue
+
+
 
         prev20 = ma20[i - 1]
+
         prev60 = ma60[i - 1]
 
-        # ----------------------------------------------------
-        # 이동평균이 없으면 건너뜀
-        # ----------------------------------------------------
+
+
+        # 이동평균 데이터 부족
 
         if (
+
             prev20 is None or
+
             prev60 is None or
+
             m20 is None or
+
             m60 is None
+
         ):
+
             continue
+
+
 
         # ----------------------------------------------------
         # Golden Cross
@@ -5948,9 +6052,12 @@ def chart_data():
 
         if prev20 <= prev60 and m20 > m60:
 
+
             buy[i] = price
 
             golden[i] = price
+
+
 
         # ----------------------------------------------------
         # Dead Cross
@@ -5958,34 +6065,59 @@ def chart_data():
 
         elif prev20 >= prev60 and m20 < m60:
 
+
             sell[i] = price
 
             dead[i] = price
 
+
+
+
     # --------------------------------------------------------
-    # JSON 반환
+    # JSON 데이터 생성
     # --------------------------------------------------------
 
-    return jsonify({
+    result = {
+
 
         "labels": labels,
 
+
         "prices": prices,
+
 
         "ma20": ma20,
 
+
         "ma60": ma60,
+
 
         "buy": buy,
 
+
         "sell": sell,
+
 
         "golden": golden,
 
+
         "dead": dead
 
-    })
+    }
 
+
+
+    # --------------------------------------------------------
+    # Chart Cache 저장
+    # --------------------------------------------------------
+
+    CACHE["chart_data"] = result
+
+    CACHE["chart_time"] = now
+
+
+
+    return jsonify(result)
 # ============================================================
 # PART 8-1 : WDM Chart
 # ============================================================
