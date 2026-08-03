@@ -5452,46 +5452,47 @@ def admin_content():
         # ----------------------------------------------------
 
         elif action == "edit":
-    execute("""
-        UPDATE contents
 
-        SET
+            execute("""
+                UPDATE contents
 
-            title=%s,
+                SET
 
-            content=%s,
+                    title=%s,
 
-            image=%s,
+                    content=%s,
 
-            updated_at=CURRENT_TIMESTAMP
+                    image=%s,
 
-        WHERE id=%s
+                    updated_at=CURRENT_TIMESTAMP
 
-    """,
-    (
+                WHERE id=%s
 
-        request.form["title"],
+            """,
+            (
 
-        request.form["content"],
+                request.form["title"],
 
-        request.form.get("image"),
+                request.form["content"],
 
-        request.form["id"]
+                request.form.get("image"),
 
-    ))
+                request.form["id"]
 
-    # ----------------------------------------------------
-    # Content Cache Clear
-    # ----------------------------------------------------
+            ))
 
-    CACHE["content"] = None
+            # ----------------------------------------------------
+            # Content Cache Clear
+            # ----------------------------------------------------
 
-    CACHE["content_time"] = 0
+            CACHE["content"] = None
 
-return redirect(
-    "/admin3/content"
-)
+            CACHE["content_time"] = 0
 
+
+        return redirect(
+            "/admin3/content"
+        )
 
     # --------------------------------------------------------
     # Content List
