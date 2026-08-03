@@ -5487,14 +5487,14 @@ def admin_content():
             ))
 
 
-        # ----------------------------------------------------
-        # Content Cache Clear
-        # ----------------------------------------------------
+            # ----------------------------------------------------
+            # Content Cache Clear
+            # ----------------------------------------------------
 
-        CACHE["content"] = None
+            CACHE["content"] = None
 
-        CACHE["content_time"] = 0
-        
+            CACHE["content_time"] = 0
+            
         return redirect(
             "/admin3/content"
         )
