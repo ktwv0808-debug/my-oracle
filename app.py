@@ -5334,7 +5334,7 @@ def admin_content():
 
             if upload_file and upload_file.filename:
 
-                # -----------------------------------------------
+                # ----------------------------------------------- 
                 # Extension Check
                 # -----------------------------------------------
 
@@ -5447,7 +5447,11 @@ def admin_content():
 
             CACHE["content_time"] = 0
 
-         elif action == "edit":
+ # ----------------------------------------------------
+        # Edit Content
+        # ----------------------------------------------------
+
+        elif action == "edit":
 
             execute("""
                 UPDATE contents
@@ -5490,7 +5494,6 @@ def admin_content():
         return redirect(
             "/admin3/content"
         )
-
     # --------------------------------------------------------
     # Content List
     # --------------------------------------------------------
