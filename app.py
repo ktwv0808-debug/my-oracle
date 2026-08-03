@@ -86,7 +86,10 @@ CACHE = {
     # ==========================================================
 
     "content": None,
-    "content_time": 0
+    "content_time": 0,
+    
+    "whitepaper": None,
+    "whitepaper_time": 0
 }
 
 
@@ -121,7 +124,8 @@ CACHE_TIME = {
     # Content Cache Time
     # ==========================================================
 
-    "content": 300
+    "content": 300,
+    "whitepaper": 300
 }
 # ==========================================================
 # Access Log Cache
@@ -4678,26 +4682,45 @@ def trading():
 @app.route("/whitepaper")
 def whitepaper():
 
-    conn = get_db()
+    # --------------------------------------------------------
+    # Whitepaper Cache
+    # --------------------------------------------------------
 
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    if (
 
-    cur.execute("""
-        SELECT *
-        FROM donation_records
-        ORDER BY id DESC
-    """)
+        CACHE["whitepaper"] is None
 
-    donations = cur.fetchall()
+        or
 
-    cur.close()
-    close_db(conn)
+        time.time() - CACHE["whitepaper_time"] > CACHE_TIME["whitepaper"]
+
+    ):
+
+        conn = get_db()
+
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute("""
+            SELECT *
+            FROM donation_records
+            ORDER BY id DESC
+        """)
+
+        CACHE["whitepaper"] = cur.fetchall()
+
+        CACHE["whitepaper_time"] = time.time()
+
+        cur.close()
+
+        close_db(conn)
 
     return render_template(
-        "whitepaper.html",
-        donations=donations
-    )
 
+        "whitepaper.html",
+
+        donations=CACHE["whitepaper"]
+
+    )
 # -----------------------------
 # Poem
 # -----------------------------
@@ -6367,7 +6390,15 @@ def edit_donation(id):
 
     )
 
+    # --------------------------------------------------------
+    # Whitepaper Cache Clear
+    # --------------------------------------------------------
 
+    CACHE["whitepaper"] = None
+
+    CACHE["whitepaper_time"] = 0
+ 
+ 
     return redirect(
         "/admin/donation"
     )
