@@ -5412,34 +5412,33 @@ def admin_content():
 
                 file_path = github_url
 
-           execute("""
-        INSERT INTO contents
-        (
-            title,
-            content,
-            image,
-            file_name,
-            file_path
-        )
+         execute("""
+                INSERT INTO contents
+                (
+                    title,
+                    content,
+                    image,
+                    file_name,
+                    file_path
+                )
 
-        VALUES
-        (%s,%s,%s,%s,%s)
+                VALUES
+                (%s,%s,%s,%s,%s)
 
-    """,
-    (
+            """,
+            (
 
-        request.form["title"],
+                request.form["title"],
 
-        request.form["content"],
+                request.form["content"],
 
-        request.form.get("image"),
+                request.form.get("image"),
 
-        file_name,
+                file_name,
 
-        file_path
+                file_path
 
-    ))
-
+            ))
     # ----------------------------------------------------
     # Content Cache Clear
     # ----------------------------------------------------
