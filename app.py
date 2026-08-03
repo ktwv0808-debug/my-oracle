@@ -5412,7 +5412,17 @@ def admin_content():
 
                 file_path = github_url
 
-         execute("""
+          if action == "add":
+
+            upload_file = request.files.get("file")
+
+            file_name = None
+
+            file_path = None
+
+            ...
+
+            execute("""
                 INSERT INTO contents
                 (
                     title,
