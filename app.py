@@ -5409,18 +5409,7 @@ def admin_content():
                     random_name
                 )
 
-
                 file_path = github_url
-
-          if action == "add":
-
-            upload_file = request.files.get("file")
-
-            file_name = None
-
-            file_path = None
-
-            ...
 
             execute("""
                 INSERT INTO contents
@@ -5449,20 +5438,20 @@ def admin_content():
                 file_path
 
             ))
-    # ----------------------------------------------------
-    # Content Cache Clear
-    # ----------------------------------------------------
 
-    CACHE["content"] = None
+            # ----------------------------------------------------
+            # Content Cache Clear
+            # ----------------------------------------------------
 
-    CACHE["content_time"] = 0
+            CACHE["content"] = None
 
-# ----------------------------------------------------
-# Edit Content
-# ----------------------------------------------------
+            CACHE["content_time"] = 0
 
-elif action == "edit":
+        # ----------------------------------------------------
+        # Edit Content
+        # ----------------------------------------------------
 
+        elif action == "edit":
     execute("""
         UPDATE contents
 
