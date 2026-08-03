@@ -12,7 +12,7 @@ from flask import (
 )
 import uuid
 import os 
-import threading
+import threading 
 import time
 from datetime import datetime
 import traceback
@@ -5412,91 +5412,87 @@ def admin_content():
 
                 file_path = github_url
 
-            execute("""
-                INSERT INTO contents
-                (
-                    title,
-                    content,
-                    image,
-                    file_name,
-                    file_path
-                )
-
-                VALUES
-                (%s,%s,%s,%s,%s)
-
-            """,
-            (
-
-                request.form["title"],
-
-                request.form["content"],
-
-                request.form.get("image"),
-
-                file_name,
-
-                file_path
-
-            ))
-
-        # ----------------------------------------------------
-        # Content Cache Clear
-        # ----------------------------------------------------
-
-        CACHE["content"] = None
-
-        CACHE["content_time"] = 0
-
-        # ----------------------------------------------------
-        # Edit Content
-        # ----------------------------------------------------
-
-        elif action == "edit":
-
-
-            execute("""
-                UPDATE contents
-
-                SET
-
-                title=%s,
-
-                content=%s,
-
-                image=%s,
-
-                updated_at=CURRENT_TIMESTAMP
-
-
-                WHERE id=%s
-
-            """,
-            (
-
-                request.form["title"],
-
-                request.form["content"],
-
-                request.form.get("image"),
-
-                request.form["id"]
-
-            ))
-
-        # ----------------------------------------------------
-        # Content Cache Clear
-        # ----------------------------------------------------
-
-        CACHE["content"] = None
-
-        CACHE["content_time"] = 0
-
-
-        return redirect(
-            "/admin3/content"
+           execute("""
+        INSERT INTO contents
+        (
+            title,
+            content,
+            image,
+            file_name,
+            file_path
         )
 
+        VALUES
+        (%s,%s,%s,%s,%s)
+
+    """,
+    (
+
+        request.form["title"],
+
+        request.form["content"],
+
+        request.form.get("image"),
+
+        file_name,
+
+        file_path
+
+    ))
+
+    # ----------------------------------------------------
+    # Content Cache Clear
+    # ----------------------------------------------------
+
+    CACHE["content"] = None
+
+    CACHE["content_time"] = 0
+
+# ----------------------------------------------------
+# Edit Content
+# ----------------------------------------------------
+
+elif action == "edit":
+
+    execute("""
+        UPDATE contents
+
+        SET
+
+            title=%s,
+
+            content=%s,
+
+            image=%s,
+
+            updated_at=CURRENT_TIMESTAMP
+
+        WHERE id=%s
+
+    """,
+    (
+
+        request.form["title"],
+
+        request.form["content"],
+
+        request.form.get("image"),
+
+        request.form["id"]
+
+    ))
+
+    # ----------------------------------------------------
+    # Content Cache Clear
+    # ----------------------------------------------------
+
+    CACHE["content"] = None
+
+    CACHE["content_time"] = 0
+
+return redirect(
+    "/admin3/content"
+)
 
 
     # --------------------------------------------------------
