@@ -5306,9 +5306,7 @@ def admin_content():
 
     if request.method == "POST":
 
-
         action = request.form.get("action")
-
 
 
         # ----------------------------------------------------
@@ -5325,7 +5323,7 @@ def admin_content():
 
             file_path = None
 
-          
+
 
             # ------------------------------------------------
             # File Upload
@@ -5334,7 +5332,8 @@ def admin_content():
 
             if upload_file and upload_file.filename:
 
-                # ----------------------------------------------- 
+
+                # -----------------------------------------------
                 # Extension Check
                 # -----------------------------------------------
 
@@ -5342,27 +5341,28 @@ def admin_content():
 
                     return """
                     <h3>
-
                     Upload Failed
-
                     <br><br>
-
                     File type is not allowed.
-
                     </h3>
                     """
 
+
                 # ----------------------------------------------------
-                # Original File Name (한글 유지)
+                # Original File Name
                 # ----------------------------------------------------
 
                 original_name = upload_file.filename
 
+
                 # ----------------------------------------------------
-                # Safe File Name (서버 저장용)
+                # Extension
                 # ----------------------------------------------------
 
-                ext = os.path.splitext(upload_file.filename)[1]
+                ext = os.path.splitext(
+                    upload_file.filename
+                )[1]
+
 
                 # ----------------------------------------------------
                 # File Name Length Limit
@@ -5372,7 +5372,7 @@ def admin_content():
 
                     original_name = original_name[:100]
 
-              
+
 
                 # ----------------------------------------------------
                 # Random File Name
@@ -5384,22 +5384,16 @@ def admin_content():
                     ext
                 )
 
-                # ----------------------------------------------------
-                # Save Path
-                # ----------------------------------------------------
 
-                file_path = os.path.join(
-                    UPLOAD_FOLDER,
-                    random_name
-                )
 
                 # ----------------------------------------------------
-                # 화면 표시용 파일명 (한글 유지)
+                # Display File Name
                 # ----------------------------------------------------
 
                 file_name = original_name
 
-                
+
+
                 # ----------------------------------------------------
                 # GitHub Upload
                 # ----------------------------------------------------
@@ -5409,7 +5403,14 @@ def admin_content():
                     random_name
                 )
 
+
                 file_path = github_url
+
+
+
+            # ----------------------------------------------------
+            # Insert Content
+            # ----------------------------------------------------
 
             execute("""
                 INSERT INTO contents
@@ -5439,6 +5440,8 @@ def admin_content():
 
             ))
 
+
+
             # ----------------------------------------------------
             # Content Cache Clear
             # ----------------------------------------------------
@@ -5447,11 +5450,14 @@ def admin_content():
 
             CACHE["content_time"] = 0
 
- # ----------------------------------------------------
+
+
+        # ----------------------------------------------------
         # Edit Content
         # ----------------------------------------------------
 
         elif action == "edit":
+
 
             execute("""
                 UPDATE contents
@@ -5482,6 +5488,7 @@ def admin_content():
             ))
 
 
+
             # ----------------------------------------------------
             # Content Cache Clear
             # ----------------------------------------------------
@@ -5489,6 +5496,7 @@ def admin_content():
             CACHE["content"] = None
 
             CACHE["content_time"] = 0
+
 
 
         return redirect(
