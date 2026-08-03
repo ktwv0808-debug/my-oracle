@@ -27,6 +27,7 @@ import psycopg2
 from psycopg2.pool import SimpleConnectionPool
 from psycopg2.extras import RealDictCursor
 from flask import send_file
+from flask_compress import Compress
 
 CACHE = {
 
@@ -98,7 +99,46 @@ ACCESS_LOG_CACHE_SECONDS = 30
 # Flask
 # ------------------------------------------------------------
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    static_folder="static",
+    static_url_path="/static"
+)
+
+# ==========================================================
+# Static File Cache
+# ==========================================================
+
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 86400
+# ==========================================================
+# Gzip Compression
+# ==========================================================
+
+Compress(app)
+
+# ==========================================================
+# Compress MIME Types
+# ==========================================================
+
+app.config["COMPRESS_MIMETYPES"] = [
+    "text/html",
+    "text/css",
+    "text/xml",
+    "application/json",
+    "application/javascript",
+]
+
+# ==========================================================
+# Compression Level
+# ==========================================================
+
+app.config["COMPRESS_LEVEL"] = 6
+
+# ==========================================================
+# Minimum Size (Bytes)
+# ==========================================================
+
+app.config["COMPRESS_MIN_SIZE"] = 500
 # ==========================================================
 # Home Cache
 # 메인 페이지 캐시
@@ -6864,6 +6904,32 @@ def wdm_chart_data():
             "error": str(e)
 
         }),500
+
+@app.after_request
+def add_cache_headers(response):
+
+    if request.path.startswith("/static/"):
+
+        response.cache_control.public = True
+
+        response.cache_control.max_age = 86400
+
+    return response
+
+@app.after_request
+def add_headers(response):
+
+    if request.path.startswith("/static/"):
+
+        response.cache_control.public = True
+
+        response.cache_control.max_age = 86400
+
+    else:
+
+        response.cache_control.no_cache = True
+
+    return response
 # ============================================================
 # Database Initialize
 # ============================================================
