@@ -66,7 +66,27 @@ CACHE = {
     "signal": None,
     "signal_time": 0,
     "wdm_price": None,
-    "wdm_price_time": 0
+    "wdm_price_time": 0,
+    # ==========================================================
+    # FAQ Cache
+    # ==========================================================
+
+    "faq": None,
+    "faq_time": 0,
+
+    # ==========================================================
+    # Announcement Cache
+    # ==========================================================
+
+    "announcement": None,
+    "announcement_time": 0,
+
+    # ==========================================================
+    # Content Cache
+    # ==========================================================
+
+    "content": None,
+    "content_time": 0
 }
 
 
@@ -84,7 +104,24 @@ CACHE_TIME = {
     "prev_ma60": 30,
     "cross_signal": 30,
     "signal": 30,
-    "wdm_price": 30
+    "wdm_price": 30,
+    # ==========================================================
+    # FAQ Cache Time
+    # ==========================================================
+
+    "faq": 300,
+
+    # ==========================================================
+    # Announcement Cache Time
+    # ==========================================================
+
+    "announcement": 300,
+
+    # ==========================================================
+    # Content Cache Time
+    # ==========================================================
+
+    "content": 300
 }
 # ==========================================================
 # Access Log Cache
@@ -640,20 +677,41 @@ def load_wdm_history():
 # Announcement Helper Functions
 # ==========================================================
 
+# ==========================================================
+# Announcement Helper Functions
+# ==========================================================
+
+import time
+
+
 # ----------------------------------------------------------
-# 공지 전체 조회
+# 공지 전체 조회 (Cache)
 # ----------------------------------------------------------
 def fetch_announcements():
 
-    return fetch_all("""
+    if (
 
-        SELECT *
+        CACHE["announcement"] is None
 
-        FROM announcements
+        or
 
-        ORDER BY created_at DESC
+        time.time() - CACHE["announcement_time"] > CACHE_TIME["announcement"]
 
-    """)
+    ):
+
+        CACHE["announcement"] = fetch_all("""
+
+            SELECT *
+
+            FROM announcements
+
+            ORDER BY created_at DESC
+
+        """)
+
+        CACHE["announcement_time"] = time.time()
+
+    return CACHE["announcement"]
 
 
 # ----------------------------------------------------------
@@ -669,7 +727,10 @@ def get_announcement(id):
 
         WHERE id=%s
 
-    """, (id,))
+    """,
+    (
+        id,
+    ))
 
 
 # ----------------------------------------------------------
@@ -679,7 +740,8 @@ def add_announcement(title, content):
 
     execute("""
 
-        INSERT INTO announcements(
+        INSERT INTO announcements
+        (
 
             title,
 
@@ -687,7 +749,8 @@ def add_announcement(title, content):
 
         )
 
-        VALUES(
+        VALUES
+        (
 
             %s,
 
@@ -695,13 +758,19 @@ def add_announcement(title, content):
 
         )
 
-    """, (
-
+    """,
+    (
         title,
-
         content
-
     ))
+
+    # ------------------------------------------------------
+    # Announcement Cache Clear
+    # ------------------------------------------------------
+
+    CACHE["announcement"] = None
+
+    CACHE["announcement_time"] = 0
 
 
 # ----------------------------------------------------------
@@ -723,15 +792,20 @@ def update_announcement(id, title, content):
 
         WHERE id=%s
 
-    """, (
-
+    """,
+    (
         title,
-
         content,
-
         id
-
     ))
+
+    # ------------------------------------------------------
+    # Announcement Cache Clear
+    # ------------------------------------------------------
+
+    CACHE["announcement"] = None
+
+    CACHE["announcement_time"] = 0
 
 
 # ----------------------------------------------------------
@@ -747,7 +821,18 @@ def delete_announcement(id):
 
         WHERE id=%s
 
-    """, (id,))
+    """,
+    (
+        id,
+    ))
+
+    # ------------------------------------------------------
+    # Announcement Cache Clear
+    # ------------------------------------------------------
+
+    CACHE["announcement"] = None
+
+    CACHE["announcement_time"] = 0
 # ------------------------------------------------------------
 # Keep Latest Rows
 # ------------------------------------------------------------
@@ -5201,7 +5286,13 @@ def admin_content():
             delete_id,
         ))
 
+        # ----------------------------------------------------
+        # Content Cache Clear
+        # ----------------------------------------------------
 
+        CACHE["content"] = None
+
+        CACHE["content_time"] = 0
 
         return redirect(
             "/admin3/content"
@@ -5349,7 +5440,13 @@ def admin_content():
 
             ))
 
+        # ----------------------------------------------------
+        # Content Cache Clear
+        # ----------------------------------------------------
 
+        CACHE["content"] = None
+
+        CACHE["content_time"] = 0
 
         # ----------------------------------------------------
         # Edit Content
@@ -5387,6 +5484,13 @@ def admin_content():
 
             ))
 
+        # ----------------------------------------------------
+        # Content Cache Clear
+        # ----------------------------------------------------
+
+        CACHE["content"] = None
+
+        CACHE["content_time"] = 0
 
 
         return redirect(
@@ -5464,32 +5568,59 @@ def admin3_content_detail(content_id):
         "admin3_content_detail.html",
         row=row
     )
-# ============================================================
-# Public Content List
-# 사용자 콘텐츠 목록 페이지
-# ============================================================
-
 @app.route("/content")
 def content():
 
-    rows = fetch_all("""
-        SELECT
-            id,
-            title,
-            image,
-            file_name,
-            file_path,
-            views,
-            created_at
+    # --------------------------------------------------------
+    # Content Cache
+    # --------------------------------------------------------
 
-        FROM contents
+    if (
 
-        ORDER BY id DESC
-    """)
+        CACHE["content"] is None
+
+        or
+
+        time.time() - CACHE["content_time"] > CACHE_TIME["content"]
+
+    ):
+
+        CACHE["content"] = fetch_all("""
+
+            SELECT
+
+                id,
+
+                title,
+
+                image,
+
+                file_name,
+
+                file_path,
+
+                views,
+
+                created_at
+
+            FROM contents
+
+            ORDER BY id DESC
+
+        """)
+
+        CACHE["content_time"] = time.time()
+
+
+    rows = CACHE["content"]
+
 
     return render_template(
+
         "content.html",
+
         rows=rows
+
     )
 
 # ============================================================
@@ -5544,7 +5675,13 @@ def content_detail(id):
         id,
     ))
 
+   # --------------------------------------------------------
+   # Content Cache Clear
+   # --------------------------------------------------------
 
+   CACHE["content"] = None
+
+   CACHE["content_time"] = 0
 
     # --------------------------------------------------------
     # 상세 페이지 출력
@@ -5612,12 +5749,17 @@ def download_content(content_id):
 # Public FAQ Page
 # ==========================================================
 
+# ==========================================================
+# FAQ
+# Public FAQ Page
+# ==========================================================
+
 @app.route("/faq", methods=["GET", "POST"])
 def faq():
 
-    # -----------------------------
-    # 질문 등록
-    # -----------------------------
+    # ------------------------------------------------------
+    # Question Registration
+    # ------------------------------------------------------
     if request.method == "POST":
 
         execute("""
@@ -5637,20 +5779,43 @@ def faq():
             request.form["question"]
         ))
 
+        # --------------------------------------------------
+        # FAQ Cache Clear
+        # --------------------------------------------------
+
+        CACHE["faq"] = None
+
+        CACHE["faq_time"] = 0
+
         return redirect("/faq")
 
-    # -----------------------------
-    # FAQ 목록
-    # -----------------------------
-    faqs = fetch_all("""
+    # ------------------------------------------------------
+    # FAQ Cache
+    # ------------------------------------------------------
 
-        SELECT *
+    if (
 
-        FROM faq
+        CACHE["faq"] is None
 
-        ORDER BY id DESC
+        or
 
-    """)
+        time.time() - CACHE["faq_time"] > CACHE_TIME["faq"]
+
+    ):
+
+        CACHE["faq"] = fetch_all("""
+
+            SELECT *
+
+            FROM faq
+
+            ORDER BY id DESC
+
+        """)
+
+        CACHE["faq_time"] = time.time()
+
+    faqs = CACHE["faq"]
 
     return render_template(
 
@@ -5698,7 +5863,13 @@ def admin_faq():
                 answer
             ))
 
+            # ------------------------------------------------------
+            # FAQ Cache Clear
+            # ------------------------------------------------------
 
+            CACHE["faq"] = None
+
+            CACHE["faq_time"] = 0
   
         # ------------------------------------------------------
         # FAQ Answer
@@ -5726,6 +5897,13 @@ def admin_faq():
                 answer,
                 request.form.get("id")
             ))
+            # ------------------------------------------------------
+            # FAQ Cache Clear
+            # ------------------------------------------------------
+
+            CACHE["faq"] = None
+
+            CACHE["faq_time"] = 0
         return redirect("/admin/faq")
 
     # ------------------------------------------------------
@@ -5777,7 +5955,13 @@ def admin_delete_faq(id):
     (
         id,
     ))
+    # ------------------------------------------------------
+    # FAQ Cache Clear
+    # ------------------------------------------------------
 
+    CACHE["faq"] = None
+
+    CACHE["faq_time"] = 0
     return redirect("/admin/faq")
 
 
