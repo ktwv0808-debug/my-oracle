@@ -5447,11 +5447,7 @@ def admin_content():
 
             CACHE["content_time"] = 0
 
-        # ----------------------------------------------------
-        # Edit Content
-        # ----------------------------------------------------
-
-        elif action == "edit":
+         elif action == "edit":
 
             execute("""
                 UPDATE contents
@@ -5480,6 +5476,7 @@ def admin_content():
                 request.form["id"]
 
             ))
+
 
             # ----------------------------------------------------
             # Content Cache Clear
