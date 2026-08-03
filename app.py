@@ -5458,7 +5458,6 @@ def admin_content():
 
         elif action == "edit":
 
-
             execute("""
                 UPDATE contents
 
@@ -5488,14 +5487,13 @@ def admin_content():
             ))
 
 
-
             # ----------------------------------------------------
             # Content Cache Clear
             # ----------------------------------------------------
+
             CACHE["content"] = None
 
             CACHE["content_time"] = 0
-
 
 
         return redirect(
