@@ -5492,7 +5492,6 @@ def admin_content():
             # ----------------------------------------------------
             # Content Cache Clear
             # ----------------------------------------------------
-
             CACHE["content"] = None
 
             CACHE["content_time"] = 0
