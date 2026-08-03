@@ -5552,26 +5552,42 @@ def admin3_content_detail(content_id):
 
         return redirect("/admin/login")
 
+
     row = fetch_one("""
         SELECT *
         FROM contents
         WHERE id=%s
-    """, (
+
+    """,
+    (
         content_id,
     ))
 
+
     if not row:
+
         return "Content Not Found"
+
 
     return render_template(
         "admin3_content_detail.html",
         row=row
     )
+
+
+
+# ============================================================
+# Public Content List
+# 사용자 콘텐츠 목록
+# Cache 적용
+# ============================================================
+
 @app.route("/content")
 def content():
 
+
     # --------------------------------------------------------
-    # Content Cache
+    # Content Cache Check
     # --------------------------------------------------------
 
     if (
@@ -5580,9 +5596,11 @@ def content():
 
         or
 
-        time.time() - CACHE["content_time"] > CACHE_TIME["content"]
+        time.time() - CACHE["content_time"]
+        > CACHE_TIME["content"]
 
     ):
+
 
         CACHE["content"] = fetch_all("""
 
@@ -5608,10 +5626,13 @@ def content():
 
         """)
 
+
         CACHE["content_time"] = time.time()
 
 
+
     rows = CACHE["content"]
+
 
 
     return render_template(
@@ -5622,10 +5643,12 @@ def content():
 
     )
 
+
+
 # ============================================================
 # Content Detail
 # 콘텐츠 상세보기
-# 조회수 증가 + 파일 다운로드
+# 조회수 증가 + Cache 초기화
 # ============================================================
 
 @app.route("/content/<int:id>")
@@ -5637,8 +5660,11 @@ def content_detail(id):
     # --------------------------------------------------------
 
     row = fetch_one("""
+
         SELECT *
+
         FROM contents
+
         WHERE id=%s
 
     """,
@@ -5663,6 +5689,7 @@ def content_detail(id):
     # --------------------------------------------------------
 
     execute("""
+
         UPDATE contents
 
         SET views = views + 1
@@ -5674,26 +5701,29 @@ def content_detail(id):
         id,
     ))
 
-   # --------------------------------------------------------
-   # Content Cache Clear
-   # --------------------------------------------------------
 
-   CACHE["content"] = None
 
-   CACHE["content_time"] = 0
+    # --------------------------------------------------------
+    # Content Cache Clear
+    # --------------------------------------------------------
+
+    CACHE["content"] = None
+
+    CACHE["content_time"] = 0
+
+
 
     # --------------------------------------------------------
     # 상세 페이지 출력
     # --------------------------------------------------------
 
     return render_template(
+
         "content_detail.html",
 
         row=row
 
     )
-
-
 # ------------------------------------------------------------
 # Content Download (GitHub)
 # ------------------------------------------------------------
