@@ -377,7 +377,24 @@ def fetch_one(sql, params=None):
 
         cur = conn.cursor(cursor_factory=RealDictCursor)
 
-        cur.execute(sql, params)
+        try:
+
+            cur.execute(sql, params)
+
+        except psycopg2.OperationalError:
+
+            # ----------------------------------------------
+            # Dead Connection
+            # 연결이 끊어졌으면 다시 연결
+            # ----------------------------------------------
+
+            close_db(conn)
+
+            conn = get_db()
+
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+
+            cur.execute(sql, params)
 
         row = cur.fetchone()
 
@@ -388,7 +405,6 @@ def fetch_one(sql, params=None):
     finally:
 
         close_db(conn)
-
 
 # ==========================================================
 # Fetch All Rows
@@ -401,19 +417,31 @@ def fetch_all(sql, params=None):
 
     try:
 
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur = conn.cursor(
+            cursor_factory=RealDictCursor
+        )
 
-        cur.execute(sql, params)
+
+        cur.execute(
+            sql,
+            params
+        )
+
 
         rows = cur.fetchall()
 
+
         cur.close()
 
+
         return rows
+
 
     finally:
 
         close_db(conn)
+
+
 
 # ==========================================================
 # Portfolio 조회 캐시
@@ -423,14 +451,25 @@ def fetch_all(sql, params=None):
 PORTFOLIO_CACHE = {
 
     "data": None,
+
     "time": 0
 
 }
 
 
+# ==========================================================
+# Portfolio Cache 유지 시간
+# seconds
+# ==========================================================
+
 PORTFOLIO_CACHE_TIME = 30
 
 
+
+# ==========================================================
+# Portfolio 조회
+# Cache 적용
+# ==========================================================
 
 def get_cached_portfolio():
 
@@ -441,37 +480,70 @@ def get_cached_portfolio():
 
 
 
-    # -------------------------------
-    # 캐시 사용
-    # -------------------------------
+    # ======================================================
+    # Cache 사용
+    # ======================================================
 
-    if PORTFOLIO_CACHE["data"]:
+    if PORTFOLIO_CACHE["data"] is not None:
 
-        if now - PORTFOLIO_CACHE["time"] < PORTFOLIO_CACHE_TIME:
+
+        if (
+
+            now - PORTFOLIO_CACHE["time"]
+
+            <
+
+            PORTFOLIO_CACHE_TIME
+
+        ):
+
 
             return PORTFOLIO_CACHE["data"]
 
 
 
-    # -------------------------------
-    # DB 조회
-    # -------------------------------
+    # ======================================================
+    # Cache 만료
+    # DB 조회 실행
+    # ======================================================
 
     row = fetch_one("""
         SELECT *
         FROM portfolio
+        ORDER BY id
         LIMIT 1
     """)
 
 
 
+    # ======================================================
+    # Cache 저장
+    # ======================================================
+
     PORTFOLIO_CACHE["data"] = row
+
 
     PORTFOLIO_CACHE["time"] = now
 
 
 
     return row
+
+
+
+
+# ==========================================================
+# Portfolio Cache Clear
+# 매수/매도 후 실행
+# ==========================================================
+
+def clear_portfolio_cache():
+
+
+    PORTFOLIO_CACHE["data"] = None
+
+
+    PORTFOLIO_CACHE["time"] = 0
 # ==========================================================
 # GitHub File Upload
 # ==========================================================
@@ -1087,6 +1159,58 @@ def init_db():
     SET DEFAULT CURRENT_TIMESTAMP;
 
     """)
+
+    # ==========================================================
+    # Site Statistics Table
+    # 누적 방문자 통계
+    # ==========================================================
+
+    execute(
+
+        """
+
+        CREATE TABLE IF NOT EXISTS site_statistics
+        (
+
+            id INTEGER PRIMARY KEY,
+
+            total_visits BIGINT DEFAULT 0
+
+        )
+
+        """
+
+    )
+
+    execute(
+
+        """
+
+        INSERT INTO site_statistics
+        (
+
+            id,
+
+            total_visits
+
+        )
+
+        VALUES
+        (
+
+            1,
+
+            0
+
+        )
+
+        ON CONFLICT (id)
+
+        DO NOTHING
+
+        """
+
+    )
     # ==========================================================
     # Site Statistics Table
     # 누적 방문자 통계
