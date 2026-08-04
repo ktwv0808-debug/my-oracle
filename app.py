@@ -1197,9 +1197,7 @@ def init_db():
 
     )
 
-    execute(
-
-        """
+   
 
     # ==========================================================
     # Insert Default Site Statistics
