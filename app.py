@@ -1224,15 +1224,10 @@ def init_db():
             CURRENT_DATE
         )
 
-    """)
-
         ON CONFLICT (id)
-
         DO NOTHING
 
-        """
-
-    )
+    """)
     # ==========================================================
     # Site Statistics Table
     # 누적 방문자 통계
