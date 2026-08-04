@@ -6303,27 +6303,18 @@ def admin_statistics():
 
         SELECT
 
-            total_visits
+            COUNT(*) AS cnt
 
         FROM
 
-            site_statistics
-
-        WHERE
-
-            id = 1
+            access_logs
 
         """
 
     )
 
-    if total:
 
-        total = total["total_visits"]
-
-    else:
-
-        total = 0
+    total = total["cnt"]
 
 
     # ==========================================================
