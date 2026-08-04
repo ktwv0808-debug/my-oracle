@@ -1161,6 +1161,21 @@ def init_db():
     """)
 
     # ==========================================================
+    # site_statistics 컬럼 추가
+    # 오늘 방문자 관리
+    # ==========================================================
+
+    execute("""
+        ALTER TABLE site_statistics
+        ADD COLUMN IF NOT EXISTS today_visits INTEGER DEFAULT 0
+    """)
+
+
+    execute("""
+        ALTER TABLE site_statistics
+        ADD COLUMN IF NOT EXISTS visit_date DATE DEFAULT CURRENT_DATE
+    """)
+    # ==========================================================
     # Site Statistics Table
     # 누적 방문자 통계
     # ==========================================================
@@ -1186,23 +1201,30 @@ def init_db():
 
         """
 
+    # ==========================================================
+    # Insert Default Site Statistics
+    # 기본 방문자 통계 데이터 생성
+    # ==========================================================
+
+    execute("""
+
         INSERT INTO site_statistics
         (
-
             id,
-
-            total_visits
-
+            total_visits,
+            today_visits,
+            visit_date
         )
 
         VALUES
         (
-
             1,
-
-            0
-
+            0,
+            0,
+            CURRENT_DATE
         )
+
+    """)
 
         ON CONFLICT (id)
 
