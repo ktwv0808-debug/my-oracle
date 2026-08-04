@@ -6300,21 +6300,24 @@ def admin_statistics():
     total = fetch_one(
 
         """
-
         SELECT
 
-            COUNT(*) AS cnt
+            total_visits
 
         FROM
 
-            access_logs
+            site_statistics
+
+        WHERE
+
+            id = 1
 
         """
 
     )
 
 
-    total = total["cnt"]
+    total = total["total_visits"]
 
 
     # ==========================================================
