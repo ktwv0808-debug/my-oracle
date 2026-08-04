@@ -28,6 +28,7 @@ from psycopg2.pool import SimpleConnectionPool
 from psycopg2.extras import RealDictCursor
 from flask import send_file
 from flask_compress import Compress
+from psycopg2 import OperationalError
 
 CACHE = {
 
@@ -343,26 +344,62 @@ def close_db(conn):
 # ==========================================================
 # Execute SQL
 # INSERT / UPDATE / DELETE
+# SSL 연결 종료 시 1회 자동 재시도
 # ==========================================================
 
 def execute(sql, params=None):
 
-    conn = get_db()
+    for attempt in range(2):
 
-    try:
+        conn = None
 
-        cur = conn.cursor()
+        try:
 
-        cur.execute(sql, params)
+            conn = get_db()
 
-        conn.commit()
+            cur = conn.cursor()
 
-        cur.close()
+            cur.execute(sql, params)
 
-    finally:
+            conn.commit()
 
-        close_db(conn)
+            cur.close()
 
+            return
+
+
+        except OperationalError:
+
+            if conn:
+
+                try:
+
+                    conn.rollback()
+                except:
+                    pass
+
+                try:
+
+                    close_db(conn)
+                except:
+                    pass
+
+            if attempt == 0:
+
+                continue
+
+            raise
+
+
+        finally:
+
+            if conn:
+
+                try:
+
+                    close_db(conn)
+                except:
+                    pass
 
 # ==========================================================
 # Fetch One Row
