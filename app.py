@@ -311,9 +311,13 @@ db_pool = SimpleConnectionPool(
 
     minconn=1,
 
-    maxconn=10,
+    maxconn=5,
 
-    dsn=DATABASE_URL
+    dsn=DATABASE_URL,
+
+    connect_timeout=5,
+
+    sslmode="require"
 
 )
 
@@ -333,7 +337,7 @@ def get_db():
 
 def close_db(conn):
 
-    if conn:
+    if conn is not None:
 
         db_pool.putconn(conn)
 # ==========================================================
