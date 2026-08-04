@@ -1639,7 +1639,37 @@ def save_access_log():
         #
         #     country = "Unknown"
 
+        # ==========================================================
+        # Today Visitor Count 증가
+        # 오늘 방문자 증가
+        # ==========================================================
 
+        execute("""
+            UPDATE site_statistics
+
+            SET today_visits = today_visits + 1
+
+            WHERE id = 1
+        """)
+
+        # ==========================================================
+        # 날짜 변경 확인
+        # 오늘 날짜 변경 시 초기화
+        # ==========================================================
+
+        execute("""
+            UPDATE site_statistics
+
+            SET
+                today_visits = 0,
+                visit_date = CURRENT_DATE
+
+            WHERE
+                id = 1
+
+            AND
+                visit_date <> CURRENT_DATE
+        """)
         # ==========================================================
         # Insert Access Log
         # 방문 기록 저장
@@ -1668,6 +1698,7 @@ def save_access_log():
 
         )
 
+        
         # ==========================================================
         # Total Visitor Count
         # 누적 방문자 수 증가
@@ -6331,22 +6362,22 @@ def admin_statistics():
 
         SELECT
 
-            COUNT(*) AS cnt
+            today_visits
 
         FROM
 
-            access_logs
+            site_statistics
 
         WHERE
 
-            created_at::date = CURRENT_DATE
+            id = 1
 
         """
 
     )
 
-    today = today["cnt"]
 
+    today = today["today_visits"]
 
     # ==========================================================
     # Top Pages
