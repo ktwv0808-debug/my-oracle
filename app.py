@@ -1083,7 +1083,43 @@ def init_db():
     SET DEFAULT CURRENT_TIMESTAMP;
 
     """)
+    # ==========================================================
+    # Site Statistics Table
+    # 누적 방문자 통계
+    # ==========================================================
 
+    cur.execute("""
+
+        CREATE TABLE IF NOT EXISTS site_statistics
+        (
+
+            id INTEGER PRIMARY KEY,
+
+            total_visits BIGINT DEFAULT 0
+
+        )
+
+    """)
+
+    cur.execute("""
+
+        INSERT INTO site_statistics
+        (
+            id,
+            total_visits
+        )
+
+        VALUES
+        (
+            1,
+            0
+        )
+
+        ON CONFLICT (id)
+
+        DO NOTHING
+
+    """)
   
 # ==========================================================
 # Access Statistics Table
@@ -1504,7 +1540,27 @@ def save_access_log():
 
         )
 
+        # ==========================================================
+        # Total Visitor Count
+        # 누적 방문자 수 증가
+        # ==========================================================
 
+        execute(
+
+            """
+
+            UPDATE site_statistics
+
+            SET
+
+                total_visits = total_visits + 1
+
+            WHERE id = 1
+
+            """
+
+        )
+             
         # ==========================================================
         # Keep Latest 1000 Logs
         # 최근 방문 기록 1000개 유지
@@ -6108,152 +6164,248 @@ def admin_statistics():
         return redirect("/admin/login")
 
 
+    # ==========================================================
+    # Total Visitors
+    # 누적 방문자 수
+    # ==========================================================
+
     total = fetch_one(
+
         """
-        SELECT COUNT(*) AS cnt
-        FROM access_logs
+
+        SELECT
+
+            total_visits
+
+        FROM
+
+            site_statistics
+
+        WHERE
+
+            id = 1
+
         """
+
     )
 
+    if total:
+
+        total = total["total_visits"]
+
+    else:
+
+        total = 0
+
+
+    # ==========================================================
+    # Today Visitors
+    # 오늘 방문자 수
+    # ==========================================================
 
     today = fetch_one(
+
         """
-        SELECT COUNT(*) AS cnt
-        FROM access_logs
-        WHERE created_at::date =
-        CURRENT_DATE
+
+        SELECT
+
+            COUNT(*) AS cnt
+
+        FROM
+
+            access_logs
+
+        WHERE
+
+            created_at::date = CURRENT_DATE
+
         """
+
     )
 
+    today = today["cnt"]
+
+
+    # ==========================================================
+    # Top Pages
+    # 많이 방문한 페이지
+    # ==========================================================
 
     pages = fetch_all(
+
         """
+
         SELECT
-        path,
-        COUNT(*) AS cnt
 
-        FROM access_logs
+            path,
 
-        GROUP BY path
+            COUNT(*) AS cnt
 
-        ORDER BY cnt DESC
+        FROM
+
+            access_logs
+
+        GROUP BY
+
+            path
+
+        ORDER BY
+
+            cnt DESC
 
         LIMIT 10
+
         """
+
     )
 
 
-# ==========================================================
-# Daily Visitor Statistics
-# 일별 방문 통계
-# ==========================================================
+    # ==========================================================
+    # Daily Visitor Statistics
+    # 일별 방문 통계
+    # ==========================================================
 
     daily_stats = fetch_all(
+
         """
+
         SELECT
 
-        created_at::date AS day,
+            created_at::date AS day,
 
-        COUNT(DISTINCT ip) AS visitors
+            COUNT(DISTINCT ip) AS visitors
 
+        FROM
 
-        FROM access_logs
+            access_logs
 
+        GROUP BY
 
-        GROUP BY day
+            day
 
+        ORDER BY
 
-        ORDER BY day DESC
-
+            day DESC
 
         LIMIT 7
 
         """
+
     )
 
-# ==========================================================
-# Monthly Visitor Statistics
-# 월별 방문 통계
-# ==========================================================
+
+    # ==========================================================
+    # Monthly Visitor Statistics
+    # 월별 방문 통계
+    # ==========================================================
 
     monthly_stats = fetch_all(
+
         """
+
         SELECT
 
-        TO_CHAR(created_at,'YYYY-MM') AS month,
+            TO_CHAR(created_at,'YYYY-MM') AS month,
 
-        COUNT(DISTINCT ip) AS visitors
+            COUNT(DISTINCT ip) AS visitors
 
+        FROM
 
-        FROM access_logs
+            access_logs
 
+        GROUP BY
 
-        GROUP BY month
+            month
 
+        ORDER BY
 
-        ORDER BY month DESC
-
+            month DESC
 
         LIMIT 12
 
         """
+
     )
 
-# ==========================================================
-# Country Visitor Statistics
-# 국가별 방문 통계
-# ==========================================================
+
+    # ==========================================================
+    # Country Visitor Statistics
+    # 국가별 방문 통계
+    # ==========================================================
 
     country_stats = fetch_all(
+
         """
+
         SELECT
 
-        country,
+            country,
 
-        COUNT(DISTINCT ip) AS visitors
+            COUNT(DISTINCT ip) AS visitors
 
+        FROM
 
-        FROM access_logs
+            access_logs
 
+        WHERE
 
-        WHERE country IS NOT NULL
+            country IS NOT NULL
 
+        GROUP BY
 
-        GROUP BY country
+            country
 
+        ORDER BY
 
-        ORDER BY visitors DESC
-
+            visitors DESC
 
         LIMIT 10
 
         """
+
     )
+
+
     logs = fetch_all(
+
         """
+
         SELECT *
+
         FROM access_logs
 
         ORDER BY id DESC
 
         LIMIT 20
+
         """
+
     )
 
-# ==========================================================
-# Render Access Statistics Page
-# 접속통계 페이지 출력
-# ==========================================================
+
+    # ==========================================================
+    # Render Access Statistics Page
+    # 접속통계 페이지 출력
+    # ==========================================================
 
     return render_template(
+
         "admin_statistics.html",
+
         total=total,
+
         today=today,
+
         pages=pages,
+
         daily_stats=daily_stats,
+
         monthly_stats=monthly_stats,
+
         country_stats=country_stats,
+
         logs=logs
+
     )
 # ------------------------------------------------------------
 # Donation Management
