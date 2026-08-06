@@ -30,6 +30,15 @@ from flask import send_file
 from flask_compress import Compress
 from psycopg2 import OperationalError
 
+# ==========================================================
+# Admin Account (Environment Variables)
+# 관리자 계정 (환경변수)
+# ==========================================================
+
+ADMIN_ID = os.environ.get("ADMIN_ID")
+
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
+
 CACHE = {
 
     "eth_price": None,
@@ -252,29 +261,7 @@ os.makedirs(
 # Session 암호키
 # ------------------------------------------------------------
 app.secret_key = "WDM_ADMIN_SECRET_KEY_2026"
-# ==========================================================
-# Admin Login
-# ==========================================================
 
-ADMIN_ID = "admin"
-ADMIN_PASSWORD = "1234"
-# ==========================================================
-# Announcement Admin Account
-# 공지사항 관리자 계정
-# 붙여넣기 위치 :
-# app.secret_key 바로 아래
-# ==========================================================
-
-ADMIN2_ID = "admin"
-
-ADMIN2_PASSWORD = "1234"
-# ============================================================
-# Content Admin Account
-# ============================================================
-
-ADMIN3_ID = "admin"
-
-ADMIN3_PASSWORD = "1234"
 # ============================================================
 # PART 2 : PostgreSQL
 # ============================================================
@@ -5254,7 +5241,6 @@ def admin_login():
         password = request.form["password"]
 
         if username == ADMIN_ID and password == ADMIN_PASSWORD:
-
             session["admin"] = True
 
             return redirect("/admin/dashboard")
