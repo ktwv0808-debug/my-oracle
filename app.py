@@ -5255,15 +5255,29 @@ def admin_login():
 
 # ==========================================================
 # Admin Dashboard
+# 관리자 통합 대시보드
 # ==========================================================
 
 @app.route("/admin/dashboard")
 def admin_dashboard():
 
+    # ------------------------------------------------------
+    # Admin Login Check
+    # 관리자 로그인 여부 확인
+    # ------------------------------------------------------
+
     if not session.get("admin"):
+
         return redirect("/admin/login")
 
-    return render_template("admin_dashboard.html")
+    # ------------------------------------------------------
+    # Admin Dashboard
+    # 관리자 대시보드 출력
+    # ------------------------------------------------------
+
+    return render_template(
+        "admin_dashboard.html"
+    )
 
 # ==========================================================
 # Admin Logout
