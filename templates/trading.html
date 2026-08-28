@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 
 <title>
-Automatic Trading System
+WDM Market Information
 </title>
 
 <script src="/static/language.js"></script>
@@ -22,21 +22,7 @@ body{
     text-align:center;
 
 }
-<!-- --------------------------------------------------------- -->
-<!-- Close Button -->
-<!-- --------------------------------------------------------- -->
 
-<div style="margin-bottom:20px;">
-
-    <button
-        class="btn btn-danger"
-        onclick="window.close();">
-
-        ✖ CLOSE
-
-    </button>
-
-</div>
 .box{
 
     width:700px;
@@ -85,7 +71,9 @@ button:hover{
 
 }
 
-/* Swap 버튼 */
+/* ==========================================================
+   Swap Button
+========================================================== */
 
 .swap{
 
@@ -98,6 +86,26 @@ button:hover{
     background:#1f7d35;
 
 }
+
+/* ==========================================================
+   WDM Chart Button
+========================================================== */
+
+.wdm-chart{
+
+    background:#0066cc;
+
+}
+
+.wdm-chart:hover{
+
+    background:#003b80;
+
+}
+
+/* ==========================================================
+   Close Button
+========================================================== */
 
 .close{
 
@@ -151,6 +159,10 @@ function closeTrading(){
 
 <div class="box">
 
+<!-- ==========================================================
+     Language
+========================================================== -->
+
 <div align="right">
 
 Language :
@@ -177,15 +189,25 @@ English
 
 </div>
 
+
+<!-- ==========================================================
+     Page Title
+========================================================== -->
+
 <h1
 
-data-en="Automatic Trading System"
+data-en="WDM Market Information"
 
-data-ko="자동매매 시스템">
+data-ko="WDM 마켓 정보">
 
-Automatic Trading System
+WDM Market Information
 
 </h1>
+
+
+<!-- ==========================================================
+     ETH Price
+========================================================== -->
 
 <button
 
@@ -199,6 +221,11 @@ ETH Price
 
 </button>
 
+
+<!-- ==========================================================
+     Save ETH Price
+========================================================== -->
+
 <button
 
 data-en="Save ETH Price"
@@ -210,6 +237,11 @@ onclick="popup('/save-price')">
 Save ETH Price
 
 </button>
+
+
+<!-- ==========================================================
+     Price History
+========================================================== -->
 
 <button
 
@@ -223,6 +255,12 @@ Price History
 
 </button>
 
+
+<!-- ==========================================================
+     Auto Trading Signal
+     ETH market information service
+========================================================== -->
+
 <button
 
 data-en="Auto Trading Signal"
@@ -234,6 +272,12 @@ onclick="popup('/trade-check')">
 Auto Trading Signal
 
 </button>
+
+
+<!-- ==========================================================
+     Trading Records
+     ETH market information service
+========================================================== -->
 
 <button
 
@@ -247,21 +291,30 @@ Trading Records
 
 </button>
 
+
+<!-- ==========================================================
+     WDM Price Chart
+========================================================== -->
+
 <button
 
-data-en="Portfolio"
+class="wdm-chart"
 
-data-ko="포트폴리오"
+data-en="WDM Chart"
 
-onclick="popup('/portfolio')">
+data-ko="WDM 차트"
 
-💰 Portfolio
+onclick="popup('/wdm-chart')">
+
+📈 WDM Chart
 
 </button>
 
-<!-- ================================================= -->
-<!-- ETH ↔ WDM Swap -->
-<!-- ================================================= -->
+
+<!-- ==========================================================
+     ETH ↔ WDM Swap
+     Price conversion / reference
+========================================================== -->
 
 <button
 
@@ -277,6 +330,11 @@ onclick="popup('/swap')">
 
 </button>
 
+
+<!-- ==========================================================
+     Close
+========================================================== -->
+
 <button
 
 class="close"
@@ -285,11 +343,12 @@ data-en="Close"
 
 data-ko="닫기"
 
-onclick="window.close()">
+onclick="closeTrading()">
 
 Close
 
 </button>
+
 
 </div>
 
