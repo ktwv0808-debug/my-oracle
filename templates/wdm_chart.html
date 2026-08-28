@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ko">
 
@@ -5,7 +6,7 @@
 
 <meta charset="UTF-8">
 
-<title>WDM Trading Chart</title>
+<title>WDM Market Chart</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -51,7 +52,7 @@ canvas{
 
 <h2 align="center">
 
-📈 WDM Trading Chart
+📈 WDM Market Chart
 
 </h2>
 
@@ -59,320 +60,140 @@ canvas{
 
 </div>
 
+
 <script>
 
 let chart = null;
 
+
 async function loadChart(){
 
-    const res = await fetch("/wdm-chart-data");
+    try{
 
-    const data = await res.json();
+        const res = await fetch("/wdm-chart-data");
 
-    if(chart){
+        const data = await res.json();
 
-        chart.destroy();
 
-    }
+        if(chart){
 
-    chart = new Chart(
+            chart.destroy();
 
-        document.getElementById("chart"),
+        }
 
-        {
 
-            type:"line",
+        chart = new Chart(
 
-            data:{
+            document.getElementById("chart"),
 
-                labels:data.labels,
+            {
 
-                datasets:[
+                type:"line",
 
-                //--------------------------------------------------
-                // WDM PRICE
-                //--------------------------------------------------
-                {
 
-                    label:"WDM",
+                data:{
 
-                    data:data.prices,
+                    labels:data.labels,
 
-                    borderColor:"white",
 
-                    backgroundColor:"white",
+                    datasets:[
 
-                    borderWidth:2,
+                    //--------------------------------------------------
+                    // WDM PRICE
+                    //--------------------------------------------------
 
-                    pointRadius:0,
+                    {
 
-                    tension:0.2,
+                        label:"WDM",
 
-                    spanGaps:false
+                        data:data.prices,
 
-                },
+                        borderColor:"white",
 
-                //--------------------------------------------------
-                // MA20
-                //--------------------------------------------------
-                {
+                        backgroundColor:"white",
 
-                    label:"MA20",
+                        borderWidth:2,
 
-                    data:data.ma20,
+                        pointRadius:0,
 
-                    borderColor:"deepskyblue",
+                        tension:0.2,
 
-                    backgroundColor:"deepskyblue",
-
-                    borderWidth:2,
-
-                    pointRadius:0,
-
-                    tension:0.2,
-
-                    spanGaps:false
-
-                },
-
-                //--------------------------------------------------
-                // MA60
-                //--------------------------------------------------
-                {
-
-                    label:"MA60",
-
-                    data:data.ma60,
-
-                    borderColor:"red",
-
-                    backgroundColor:"red",
-
-                    borderWidth:2,
-
-                    pointRadius:0,
-
-                    tension:0.2,
-
-                    spanGaps:false
-
-                },
-
-                //--------------------------------------------------
-                // BUY
-                //--------------------------------------------------
-                {
-
-                    type:"scatter",
-
-                    label:"BUY",
-
-                    data:data.buy
-                    .map((v,i)=>{
-
-                        if(v==null) return null;
-
-                        return{
-
-                            x:data.labels[i],
-
-                            y:v
-
-                        };
-
-                    })
-                    .filter(v=>v!=null),
-
-                    pointRadius:8,
-
-                    pointStyle:"triangle",
-
-                    backgroundColor:"lime",
-
-                    borderColor:"lime",
-
-                    showLine:false
-
-                },
-
-                //--------------------------------------------------
-                // SELL
-                //--------------------------------------------------
-                {
-
-                    type:"scatter",
-
-                    label:"SELL",
-
-                    data:data.sell
-                    .map((v,i)=>{
-
-                        if(v==null) return null;
-
-                        return{
-
-                            x:data.labels[i],
-
-                            y:v
-
-                        };
-
-                    })
-                    .filter(v=>v!=null),
-
-                    pointRadius:8,
-
-                    pointStyle:"triangle",
-
-                    rotation:180,
-
-                    backgroundColor:"red",
-
-                    borderColor:"red",
-
-                    showLine:false
-
-                },
-
-                //--------------------------------------------------
-                // GOLDEN CROSS
-                //--------------------------------------------------
-                {
-
-                    type:"scatter",
-
-                    label:"Golden Cross",
-
-                    data:data.golden
-                    .map((v,i)=>{
-
-                        if(v==null) return null;
-
-                        return{
-
-                            x:data.labels[i],
-
-                            y:v
-
-                        };
-
-                    })
-                    .filter(v=>v!=null),
-
-                    pointRadius:12,
-
-                    pointStyle:"star",
-
-                    backgroundColor:"yellow",
-
-                    borderColor:"yellow",
-
-                    showLine:false
-
-                },
-
-                //--------------------------------------------------
-                // DEAD CROSS
-                //--------------------------------------------------
-                {
-
-                    type:"scatter",
-
-                    label:"Dead Cross",
-
-                    data:data.dead
-                    .map((v,i)=>{
-
-                        if(v==null) return null;
-
-                        return{
-
-                            x:data.labels[i],
-
-                            y:v
-
-                        };
-
-                    })
-                    .filter(v=>v!=null),
-
-                    pointRadius:12,
-
-                    pointStyle:"star",
-
-                    backgroundColor:"purple",
-
-                    borderColor:"purple",
-
-                    showLine:false
-
-                }
-
-                ]
-
-            },
-
-            options:{
-
-                responsive:true,
-
-                animation:false,
-
-                interaction:{
-
-                    intersect:false,
-
-                    mode:"index"
-
-                },
-
-                plugins:{
-
-                    legend:{
-
-                        labels:{
-
-                            color:"white"
-
-                        }
+                        spanGaps:false
 
                     }
 
+                    ]
+
                 },
 
-                scales:{
 
-                    x:{
+                options:{
 
-                        ticks:{
+                    responsive:true,
 
-                            color:"white",
+                    animation:false,
 
-                            maxTicksLimit:10
 
-                        },
+                    interaction:{
 
-                        grid:{
+                        intersect:false,
 
-                            color:"#444"
+                        mode:"index"
+
+                    },
+
+
+                    plugins:{
+
+                        legend:{
+
+                            labels:{
+
+                                color:"white"
+
+                            }
 
                         }
 
                     },
 
-                    y:{
 
-                        beginAtZero:false,
+                    scales:{
 
-                        ticks:{
+                        x:{
 
-                            color:"white"
+                            ticks:{
+
+                                color:"white",
+
+                                maxTicksLimit:10
+
+                            },
+
+                            grid:{
+
+                                color:"#444"
+
+                            }
 
                         },
 
-                        grid:{
 
-                            color:"#444"
+                        y:{
+
+                            beginAtZero:false,
+
+                            ticks:{
+
+                                color:"white"
+
+                            },
+
+                            grid:{
+
+                                color:"#444"
+
+                            }
 
                         }
 
@@ -382,18 +203,43 @@ async function loadChart(){
 
             }
 
-        }
+        );
 
-    );
+    }
+
+    catch(error){
+
+        console.error(
+
+            "WDM Market Chart Error:",
+
+            error
+
+        );
+
+    }
 
 }
 
+
 loadChart();
 
-setInterval(loadChart,5000);
+
+// ------------------------------------------------------------
+// Refresh WDM market data every 5 seconds
+// ------------------------------------------------------------
+
+setInterval(
+
+    loadChart,
+
+    5000
+
+);
 
 </script>
 
 </body>
 
 </html>
+```
