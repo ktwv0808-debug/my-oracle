@@ -2,21 +2,7 @@
 <html lang="ko">
 
 <head>
-<!-- --------------------------------------------------------- -->
-<!-- Close Button -->
-<!-- --------------------------------------------------------- -->
 
-<div style="margin-bottom:20px;">
-
-    <button
-        class="btn btn-danger"
-        onclick="window.close();">
-
-        ✖ CLOSE
-
-    </button>
-
-</div>
 <meta charset="UTF-8">
 
 <meta name="viewport"
@@ -131,6 +117,18 @@ label{
 
 <div class="card p-4">
 
+<div style="margin-bottom:20px;">
+
+    <button
+        class="btn btn-danger"
+        onclick="window.close();">
+
+        ✖ CLOSE
+
+    </button>
+
+</div>
+
 <h2 class="text-center text-warning mb-4">
 
 ETH ↔ WDM Conversion
@@ -203,7 +201,7 @@ Current ETH Price
 
 <h5 class="value" id="eth_price">
 
-Loading...
+$ 0.00
 
 </h5>
 
@@ -219,7 +217,7 @@ Current WDM Price
 
 <h5 class="value" id="wdm_price">
 
-Loading...
+$ 0.00000000
 
 </h5>
 
@@ -255,105 +253,260 @@ Calculate Conversion
 
 <script>
 
+/* =========================================================
+   Price Variables
+========================================================= */
+
 let ethPrice = 0;
 
 let wdmPrice = 0;
+
+
+/* =========================================================
+   Load Latest Price
+========================================================= */
 
 async function loadPrice(){
 
     try{
 
-        const response = await fetch("/swap-api");
+        const response = await fetch(
+            "/swap-api",
+            {
+                cache:"no-store"
+            }
+        );
+
+        if(!response.ok){
+
+            throw new Error(
+                "HTTP Error: " + response.status
+            );
+
+        }
 
         const data = await response.json();
 
-        ethPrice = Number(data.eth_price);
 
-        wdmPrice = Number(data.wdm_price);
+        /* -------------------------------------------------
+           ETH Price
+        ------------------------------------------------- */
 
-        document.getElementById("eth_price").innerHTML =
-            "$ " + ethPrice.toFixed(2);
+        const newEthPrice =
+            Number(data.eth_price);
 
-        document.getElementById("wdm_price").innerHTML =
-            "$ " + wdmPrice.toFixed(8);
+
+        /* -------------------------------------------------
+           WDM Price
+        ------------------------------------------------- */
+
+        const newWdmPrice =
+            Number(data.wdm_price);
+
+
+        /* -------------------------------------------------
+           유효한 ETH 가격이면 즉시 갱신
+        ------------------------------------------------- */
+
+        if(
+            Number.isFinite(newEthPrice) &&
+            newEthPrice > 0
+        ){
+
+            ethPrice = newEthPrice;
+
+            document.getElementById(
+                "eth_price"
+            ).innerHTML =
+                "$ " + ethPrice.toFixed(2);
+
+        }
+
+
+        /* -------------------------------------------------
+           유효한 WDM 가격이면 즉시 갱신
+        ------------------------------------------------- */
+
+        if(
+            Number.isFinite(newWdmPrice) &&
+            newWdmPrice > 0
+        ){
+
+            wdmPrice = newWdmPrice;
+
+            document.getElementById(
+                "wdm_price"
+            ).innerHTML =
+                "$ " + wdmPrice.toFixed(8);
+
+        }
+
+
+        /* -------------------------------------------------
+           최신 가격으로 즉시 계산
+        ------------------------------------------------- */
+
+        calculateSwap();
+
 
     }
 
     catch(e){
 
-        console.log(e);
+        console.log(
+            "Price update error:",
+            e
+        );
+
+        /*
+         * API가 잠시 늦거나 실패해도
+         * 기존 가격을 그대로 유지합니다.
+         */
 
     }
 
 }
+
+
+/* =========================================================
+   Calculate Conversion
+========================================================= */
 
 function calculateSwap(){
 
     let amount =
         parseFloat(
-            document.getElementById("amount").value
+            document.getElementById(
+                "amount"
+            ).value
         );
 
-    if(isNaN(amount) || amount<=0){
 
-        document.getElementById("result").innerHTML="0";
+    if(
+        isNaN(amount) ||
+        amount <= 0 ||
+        ethPrice <= 0 ||
+        wdmPrice <= 0
+    ){
+
+        document.getElementById(
+            "result"
+        ).innerHTML = "0";
 
         return;
 
     }
 
+
     let direction =
-        document.getElementById("direction").value;
+        document.getElementById(
+            "direction"
+        ).value;
+
 
     let receive = 0;
 
-    if(direction==="ETH_TO_WDM"){
 
-        receive=(amount*ethPrice)/wdmPrice;
+    /* -------------------------------------------------
+       ETH → WDM
+    ------------------------------------------------- */
 
-        document.getElementById("result").innerHTML=
+    if(
+        direction === "ETH_TO_WDM"
+    ){
 
-            receive.toFixed(2)+" WDM";
+        receive =
+            (amount * ethPrice)
+            / wdmPrice;
+
+
+        document.getElementById(
+            "result"
+        ).innerHTML =
+            receive.toFixed(2)
+            + " WDM";
 
     }
 
+
+    /* -------------------------------------------------
+       WDM → ETH
+    ------------------------------------------------- */
+
     else{
 
-        receive=(amount*wdmPrice)/ethPrice;
+        receive =
+            (amount * wdmPrice)
+            / ethPrice;
 
-        document.getElementById("result").innerHTML=
 
-            receive.toFixed(8)+" ETH";
+        document.getElementById(
+            "result"
+        ).innerHTML =
+            receive.toFixed(8)
+            + " ETH";
 
     }
 
 }
 
-document.getElementById("amount").addEventListener(
 
-"input",
+/* =========================================================
+   Amount 변경
+========================================================= */
 
-calculateSwap
+document.getElementById(
+    "amount"
+).addEventListener(
+
+    "input",
+
+    calculateSwap
 
 );
 
-document.getElementById("direction").addEventListener(
 
-"change",
+/* =========================================================
+   방향 변경
+========================================================= */
 
-calculateSwap
+document.getElementById(
+    "direction"
+).addEventListener(
+
+    "change",
+
+    calculateSwap
 
 );
+
+
+/* =========================================================
+   최초 실행
+========================================================= */
+
+/*
+ * 화면에는 처음부터 0.00 / 0.00000000이 표시됩니다.
+ *
+ * 동시에 실제 API 요청을 시작합니다.
+ *
+ * API가 응답하면 즉시 실제 가격으로 교체됩니다.
+ */
 
 loadPrice();
 
-setInterval(function(){
 
-    loadPrice();
+/* =========================================================
+   5초마다 최신 가격 갱신
+========================================================= */
 
-    calculateSwap();
+setInterval(
 
-},5000);
+    loadPrice,
+
+    5000
+
+);
 
 </script>
 
