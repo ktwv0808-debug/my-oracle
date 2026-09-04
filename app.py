@@ -7109,13 +7109,34 @@ def chart():
 @app.route("/swap-api")
 def swap_api():
 
+    try:
+
+        eth_price = get_latest_price()
+
+    except Exception as e:
+
+        print("ETH price error:", e)
+
+        eth_price = 0.0
+
+
+    try:
+
+        wdm_price = get_latest_wdm_price()
+
+    except Exception as e:
+
+        print("WDM price error:", e)
+
+        wdm_price = 0.0
+
+
     return jsonify({
 
-        "eth_price": get_latest_price(),
+        "eth_price": eth_price,
 
-        "wdm_price": get_latest_wdm_price()
-     
-       
+        "wdm_price": wdm_price
+
     })
 # ------------------------------------------------------------
 # Execute Swap
