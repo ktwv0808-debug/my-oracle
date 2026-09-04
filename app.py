@@ -2241,15 +2241,16 @@ def get_latest_wdm_price():
             return CACHE["wdm_price"]
 
     # ------------------------------------------------------
+    # 먼저 DB의 마지막 가격 확보
+    # ------------------------------------------------------
+
+    db_price = get_last_wdm_db_price()
+
+    # ------------------------------------------------------
     # WDM Base Mainnet Contract
     # ------------------------------------------------------
 
     WDM_CONTRACT = "0x4C154CaF238efD0811e15D9b30d074358F6468D1"
-
-    # ------------------------------------------------------
-    # DexScreener API
-    # Base Mainnet
-    # ------------------------------------------------------
 
     url = (
         "https://api.dexscreener.com/token-pairs/v1/base/"
@@ -2260,7 +2261,7 @@ def get_latest_wdm_price():
 
         response = requests.get(
             url,
-            timeout=5
+            timeout=3
         )
 
         response.raise_for_status()
@@ -2275,10 +2276,10 @@ def get_latest_wdm_price():
 
             print("WDM DexScreener: No pairs found")
 
-            return 0.0
+            return db_price if db_price is not None else 0.0
 
         # --------------------------------------------------
-        # 유동성이 가장 높은 페어 선택
+        # 유효한 페어 찾기
         # --------------------------------------------------
 
         valid_pairs = []
@@ -2287,9 +2288,15 @@ def get_latest_wdm_price():
 
             price_usd = pair.get("priceUsd")
 
-            liquidity = pair.get("liquidity", {})
+            liquidity = pair.get(
+                "liquidity",
+                {}
+            )
 
-            liquidity_usd = liquidity.get("usd", 0)
+            liquidity_usd = liquidity.get(
+                "usd",
+                0
+            )
 
             if price_usd is None:
 
@@ -2319,7 +2326,7 @@ def get_latest_wdm_price():
             )
 
         # --------------------------------------------------
-        # 유효한 페어가 없는 경우
+        # 유효한 가격이 없으면 DB 가격 사용
         # --------------------------------------------------
 
         if not valid_pairs:
@@ -2329,7 +2336,7 @@ def get_latest_wdm_price():
                 "No valid price found"
             )
 
-            return 0.0
+            return db_price if db_price is not None else 0.0
 
         # --------------------------------------------------
         # 유동성이 가장 높은 페어 선택
@@ -2367,11 +2374,8 @@ def get_latest_wdm_price():
             e
         )
 
-        # --------------------------------------------------
-        # API 실패 시 기존 DB 가격 사용
-        # --------------------------------------------------
-
-        return get_last_wdm_db_price()
+        # API가 늦거나 실패해도 기존 DB 가격 사용
+        return db_price if db_price is not None else 0.0
 
     except Exception as e:
 
@@ -2380,7 +2384,7 @@ def get_latest_wdm_price():
             e
         )
 
-        return get_last_wdm_db_price()
+        return db_price if db_price is not None else 0.0
 
 
 # ============================================================
