@@ -2386,7 +2386,31 @@ def get_latest_wdm_price():
 
         return db_price if db_price is not None else 0.0
 
+def get_last_wdm_db_price():
 
+    try:
+
+        row = fetch_one("""
+            SELECT price
+            FROM wdm_price
+            ORDER BY id DESC
+            LIMIT 1
+        """)
+
+        if row:
+
+            return float(row["price"])
+
+        return 0.0
+
+    except Exception as e:
+
+        print(
+            "WDM DB Price Error:",
+            e
+        )
+
+        return 0.0
 # ============================================================
 # Save ETH Price
 # ============================================================
