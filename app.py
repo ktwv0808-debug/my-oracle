@@ -2216,6 +2216,32 @@ def get_latest_price():
         return float(row["price"])
 
     return None
+    
+def get_last_wdm_db_price():
+
+    try:
+
+        row = fetch_one("""
+            SELECT price
+            FROM wdm_price
+            ORDER BY id DESC
+            LIMIT 1
+        """)
+
+        if row and row["price"] is not None:
+
+            return float(row["price"])
+
+        return 0.0
+
+    except Exception as e:
+
+        print(
+            "WDM DB Price Error:",
+            e
+        )
+
+        return 0.0
 
 # ==========================================================
 # WDM Latest Price
