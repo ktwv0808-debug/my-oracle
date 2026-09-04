@@ -2217,21 +2217,22 @@ def get_latest_price():
 
     return None
 
-# ------------------------------------------------------------
-# Latest WDM Price
-# ------------------------------------------------------------
+# ==========================================================
+# WDM Latest Price
+# DexScreener API
+# Base Mainnet
+# ==========================================================
 
-# DB 조회 최소화 (30초 Cache)
-# ------------------------------------------------------------
 def get_latest_wdm_price():
 
     import time
+    import requests
 
     now = time.time()
 
-    # --------------------------------------------------------
+    # ------------------------------------------------------
     # Cache 확인
-    # --------------------------------------------------------
+    # ------------------------------------------------------
 
     if CACHE["wdm_price"] is not None:
 
@@ -2239,58 +2240,147 @@ def get_latest_wdm_price():
 
             return CACHE["wdm_price"]
 
-    # --------------------------------------------------------
-    # DB 연결
-    # --------------------------------------------------------
+    # ------------------------------------------------------
+    # WDM Base Mainnet Contract
+    # ------------------------------------------------------
 
-    conn = get_db()
+    WDM_CONTRACT = "0x4C154CaF238efD0811e15D9b30d074358F6468D1"
 
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    # ------------------------------------------------------
+    # DexScreener API
+    # Base Mainnet
+    # ------------------------------------------------------
+
+    url = (
+        "https://api.dexscreener.com/token-pairs/v1/base/"
+        + WDM_CONTRACT
+    )
 
     try:
 
-        # ----------------------------------------------------
-        # 최신 WDM 가격 조회
-        # ----------------------------------------------------
+        response = requests.get(
+            url,
+            timeout=5
+        )
 
-        cur.execute("""
+        response.raise_for_status()
 
-            SELECT
-                price
+        data = response.json()
 
-            FROM wdm_price
+        # --------------------------------------------------
+        # 거래 페어가 없는 경우
+        # --------------------------------------------------
 
-            ORDER BY id DESC
+        if not data:
 
-            LIMIT 1
+            print("WDM DexScreener: No pairs found")
 
-        """)
+            return 0.0
 
-        row = cur.fetchone()
+        # --------------------------------------------------
+        # 유동성이 가장 높은 페어 선택
+        # --------------------------------------------------
 
-        if row is None:
+        valid_pairs = []
 
-            price = 0.0
+        for pair in data:
 
-        else:
+            price_usd = pair.get("priceUsd")
 
-            price = float(row["price"])
+            liquidity = pair.get("liquidity", {})
 
-        # ----------------------------------------------------
+            liquidity_usd = liquidity.get("usd", 0)
+
+            if price_usd is None:
+
+                continue
+
+            try:
+
+                price = float(price_usd)
+
+                liquidity_value = float(
+                    liquidity_usd or 0
+                )
+
+            except (TypeError, ValueError):
+
+                continue
+
+            if price <= 0:
+
+                continue
+
+            valid_pairs.append(
+                (
+                    liquidity_value,
+                    price
+                )
+            )
+
+        # --------------------------------------------------
+        # 유효한 페어가 없는 경우
+        # --------------------------------------------------
+
+        if not valid_pairs:
+
+            print(
+                "WDM DexScreener: "
+                "No valid price found"
+            )
+
+            return 0.0
+
+        # --------------------------------------------------
+        # 유동성이 가장 높은 페어 선택
+        # --------------------------------------------------
+
+        valid_pairs.sort(
+            key=lambda x: x[0],
+            reverse=True
+        )
+
+        price = valid_pairs[0][1]
+
+        # --------------------------------------------------
         # Cache 저장
-        # ----------------------------------------------------
+        # --------------------------------------------------
 
         CACHE["wdm_price"] = price
 
         CACHE["wdm_price_time"] = now
 
+        print(
+            f"WDM DEX Price: ${price:.12f}"
+        )
+
         return price
 
-    finally:
+    # ------------------------------------------------------
+    # API 오류
+    # ------------------------------------------------------
 
-        cur.close()
+    except requests.exceptions.RequestException as e:
 
-        close_db(conn)
+        print(
+            "WDM DexScreener API Error:",
+            e
+        )
+
+        # --------------------------------------------------
+        # API 실패 시 기존 DB 가격 사용
+        # --------------------------------------------------
+
+        return get_last_wdm_db_price()
+
+    except Exception as e:
+
+        print(
+            "WDM Price Error:",
+            e
+        )
+
+        return get_last_wdm_db_price()
 # ============================================================
 # Save ETH Price
 # ============================================================
