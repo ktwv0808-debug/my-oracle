@@ -2271,12 +2271,10 @@ def get_latest_wdm_price():
                 "Rate Limit (429)"
             )
 
-            # 기존 캐시가 있으면 사용
             if CACHE["wdm_price"] is not None:
 
                 return CACHE["wdm_price"]
 
-            # 캐시가 없으면 DB 마지막 가격
             return get_last_wdm_db_price()
 
 
@@ -2387,6 +2385,25 @@ def get_latest_wdm_price():
 
 
         # --------------------------------------------------
+        # 실제 DEX 가격 DB 저장
+        # --------------------------------------------------
+
+        try:
+
+            execute("""
+                INSERT INTO wdm_price(price)
+                VALUES(%s)
+            """, (price,))
+
+        except Exception as e:
+
+            print(
+                "WDM Price DB Save Error:",
+                e
+            )
+
+
+        # --------------------------------------------------
         # Cache 저장
         # --------------------------------------------------
 
@@ -2410,9 +2427,6 @@ def get_latest_wdm_price():
             e
         )
 
-        # --------------------------------------------------
-        # API 실패 → 기존 가격 유지
-        # --------------------------------------------------
 
         if CACHE["wdm_price"] is not None:
 
@@ -2428,6 +2442,7 @@ def get_latest_wdm_price():
             "WDM Price Error:",
             e
         )
+
 
         if CACHE["wdm_price"] is not None:
 
