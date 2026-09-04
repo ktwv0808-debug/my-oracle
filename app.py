@@ -2382,49 +2382,7 @@ def get_latest_wdm_price():
 
         return get_last_wdm_db_price()
 
-# ==========================================================
-# WDM Last DB Price
-# ==========================================================
 
-def get_last_wdm_db_price():
-
-    conn = get_db()
-
-    cur = conn.cursor(
-        cursor_factory=RealDictCursor
-    )
-
-    try:
-
-        cur.execute("""
-            SELECT price
-            FROM wdm_price
-            ORDER BY id DESC
-            LIMIT 1
-        """)
-
-        row = cur.fetchone()
-
-        if row is None:
-
-            return 0.0
-
-        return float(row["price"])
-
-    except Exception as e:
-
-        print(
-            "WDM DB Price Error:",
-            e
-        )
-
-        return 0.0
-
-    finally:
-
-        cur.close()
-
-        close_db(conn)
 # ============================================================
 # Save ETH Price
 # ============================================================
