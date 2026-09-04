@@ -2231,7 +2231,7 @@ def get_latest_wdm_price():
     now = time.time()
 
     # ------------------------------------------------------
-    # Cache 확인
+    # Cache가 있으면 즉시 반환
     # ------------------------------------------------------
 
     if CACHE["wdm_price"] is not None:
@@ -2240,11 +2240,6 @@ def get_latest_wdm_price():
 
             return CACHE["wdm_price"]
 
-    # ------------------------------------------------------
-    # 먼저 DB의 마지막 가격 확보
-    # ------------------------------------------------------
-
-    db_price = get_last_wdm_db_price()
 
     # ------------------------------------------------------
     # WDM Base Mainnet Contract
@@ -2257,6 +2252,7 @@ def get_latest_wdm_price():
         + WDM_CONTRACT
     )
 
+
     try:
 
         response = requests.get(
@@ -2264,19 +2260,44 @@ def get_latest_wdm_price():
             timeout=3
         )
 
+        # --------------------------------------------------
+        # 429 처리
+        # --------------------------------------------------
+
+        if response.status_code == 429:
+
+            print(
+                "WDM DexScreener: "
+                "Rate Limit (429)"
+            )
+
+            # 기존 캐시가 있으면 사용
+            if CACHE["wdm_price"] is not None:
+
+                return CACHE["wdm_price"]
+
+            # 캐시가 없으면 DB 마지막 가격
+            return get_last_wdm_db_price()
+
+
         response.raise_for_status()
 
         data = response.json()
 
+
         # --------------------------------------------------
-        # 거래 페어가 없는 경우
+        # 거래 페어 없음
         # --------------------------------------------------
 
         if not data:
 
-            print("WDM DexScreener: No pairs found")
+            print(
+                "WDM DexScreener: "
+                "No pairs found"
+            )
 
-            return db_price if db_price is not None else 0.0
+            return get_last_wdm_db_price()
+
 
         # --------------------------------------------------
         # 유효한 페어 찾기
@@ -2284,9 +2305,12 @@ def get_latest_wdm_price():
 
         valid_pairs = []
 
+
         for pair in data:
 
-            price_usd = pair.get("priceUsd")
+            price_usd = pair.get(
+                "priceUsd"
+            )
 
             liquidity = pair.get(
                 "liquidity",
@@ -2298,25 +2322,34 @@ def get_latest_wdm_price():
                 0
             )
 
+
             if price_usd is None:
 
                 continue
 
+
             try:
 
-                price = float(price_usd)
+                price = float(
+                    price_usd
+                )
 
                 liquidity_value = float(
                     liquidity_usd or 0
                 )
 
-            except (TypeError, ValueError):
+            except (
+                TypeError,
+                ValueError
+            ):
 
                 continue
+
 
             if price <= 0:
 
                 continue
+
 
             valid_pairs.append(
                 (
@@ -2325,8 +2358,9 @@ def get_latest_wdm_price():
                 )
             )
 
+
         # --------------------------------------------------
-        # 유효한 가격이 없으면 DB 가격 사용
+        # 유효한 가격 없음
         # --------------------------------------------------
 
         if not valid_pairs:
@@ -2336,7 +2370,8 @@ def get_latest_wdm_price():
                 "No valid price found"
             )
 
-            return db_price if db_price is not None else 0.0
+            return get_last_wdm_db_price()
+
 
         # --------------------------------------------------
         # 유동성이 가장 높은 페어 선택
@@ -2347,7 +2382,9 @@ def get_latest_wdm_price():
             reverse=True
         )
 
+
         price = valid_pairs[0][1]
+
 
         # --------------------------------------------------
         # Cache 저장
@@ -2357,15 +2394,14 @@ def get_latest_wdm_price():
 
         CACHE["wdm_price_time"] = now
 
+
         print(
             f"WDM DEX Price: ${price:.12f}"
         )
 
+
         return price
 
-    # ------------------------------------------------------
-    # API 오류
-    # ------------------------------------------------------
 
     except requests.exceptions.RequestException as e:
 
@@ -2374,8 +2410,17 @@ def get_latest_wdm_price():
             e
         )
 
-        # API가 늦거나 실패해도 기존 DB 가격 사용
-        return db_price if db_price is not None else 0.0
+        # --------------------------------------------------
+        # API 실패 → 기존 가격 유지
+        # --------------------------------------------------
+
+        if CACHE["wdm_price"] is not None:
+
+            return CACHE["wdm_price"]
+
+
+        return get_last_wdm_db_price()
+
 
     except Exception as e:
 
@@ -2384,33 +2429,12 @@ def get_latest_wdm_price():
             e
         )
 
-        return db_price if db_price is not None else 0.0
+        if CACHE["wdm_price"] is not None:
 
-def get_last_wdm_db_price():
+            return CACHE["wdm_price"]
 
-    try:
 
-        row = fetch_one("""
-            SELECT price
-            FROM wdm_price
-            ORDER BY id DESC
-            LIMIT 1
-        """)
-
-        if row:
-
-            return float(row["price"])
-
-        return 0.0
-
-    except Exception as e:
-
-        print(
-            "WDM DB Price Error:",
-            e
-        )
-
-        return 0.0
+        return get_last_wdm_db_price()
 # ============================================================
 # Save ETH Price
 # ============================================================
