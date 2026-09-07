@@ -3547,23 +3547,7 @@ def generate_signal():
     CACHE["signal_time"] = now
 
     return result
-# ------------------------------------------------------------
-# WDM Price
-# ETH 가격을 기준으로 계산
-# ------------------------------------------------------------
 
-def calculate_wdm_price():
-
-    eth = get_latest_price()
-
-    if eth is None:
-
-        return 0.001
-
-    # ETH 가격의 1/2,000,000
-    price = eth / 2000000
-
-    return round(price, 8)   
 # ============================================================
 # PART 5 : Auto Save
 # ============================================================
@@ -3668,26 +3652,7 @@ def auto_save_eth():
             CACHE["wdm_price"] = None
             CACHE["wdm_price_time"] = 0
 
-            # ------------------------------------------------
-            # WDM 가격 저장
-            # ------------------------------------------------
-
-            wdm_price = calculate_wdm_price()
-
-            cur.execute("""
-
-                INSERT INTO wdm_price
-                (
-                    price
-                )
-
-                VALUES
-                (
-                    %s
-                )
-
-            """,(wdm_price,))
-
+          
             # ------------------------------------------------
             # 이동평균 계산
             # ------------------------------------------------
