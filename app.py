@@ -29,7 +29,6 @@ from psycopg2.extras import RealDictCursor
 from flask import send_file
 from flask_compress import Compress
 from psycopg2 import OperationalError
-from web3 import Web3
 
 # ==========================================================
 # Admin Account (Environment Variables)
@@ -2217,54 +2216,143 @@ def get_latest_price():
         return float(row["price"])
 
     return None
-# ==========================================================
+# ============================================================
 # WDM Latest Price
-# Uniswap v4 / Base Mainnet
-# WDM / ETH 실제 풀 가격 조회
-# ==========================================================
+# DexScreener API
+# Base Mainnet
+# ============================================================
 
 def get_latest_wdm_price():
 
     import time
-   
+    import requests
 
     now = time.time()
 
-    # ------------------------------------------------------
+    # --------------------------------------------------------
     # 1. Cache
-    # ------------------------------------------------------
+    # --------------------------------------------------------
 
     cached_price = CACHE.get("wdm_price")
     cached_time = CACHE.get("wdm_price_time", 0)
 
+    cache_seconds = CACHE_TIME.get("wdm_price", 30)
+
     if cached_price is not None:
-
-        if now - cached_time < CACHE_TIME["wdm_price"]:
-
+        if now - cached_time < cache_seconds:
             return float(cached_price)
 
-    # ------------------------------------------------------
-    # 2. Base Mainnet RPC
-    # ------------------------------------------------------
+    # --------------------------------------------------------
+    # 2. WDM Contract
+    # --------------------------------------------------------
 
-    RPC_URL = os.environ.get(
-        "BASE_RPC_URL",
-        "https://mainnet.base.org"
+    WDM_ADDRESS = "0x4C154CaF238efD0811e15D9b30d074358F6468D1"
+
+    # --------------------------------------------------------
+    # 3. DexScreener API
+    # --------------------------------------------------------
+
+    url = (
+        "https://api.dexscreener.com/latest/dex/tokens/"
+        + WDM_ADDRESS
     )
 
     try:
 
-        w3 = Web3(
-            Web3.HTTPProvider(
-                RPC_URL,
-                request_kwargs={"timeout": 5}
-            )
+        response = requests.get(
+            url,
+            timeout=5
         )
 
-        if not w3.is_connected():
+        response.raise_for_status()
+
+        data = response.json()
+
+        # ----------------------------------------------------
+        # 4. Pair 확인
+        # ----------------------------------------------------
+
+        pairs = data.get("pairs", [])
+
+        if not pairs:
+
+            print("WDM DexScreener: No pairs found")
+
+            if cached_price is not None:
+                return float(cached_price)
+
+            return 0.0
+
+        # ----------------------------------------------------
+        # 5. Base Mainnet + WDM pair 선택
+        # ----------------------------------------------------
+
+        valid_pairs = []
+
+        for pair in pairs:
+
+            if pair.get("chainId") != "base":
+                continue
+
+            base_token = pair.get("baseToken", {})
+            quote_token = pair.get("quoteToken", {})
+
+            base_address = (
+                base_token.get("address", "").lower()
+            )
+
+            quote_address = (
+                quote_token.get("address", "").lower()
+            )
+
+            if (
+                base_address == WDM_ADDRESS.lower()
+                or
+                quote_address == WDM_ADDRESS.lower()
+            ):
+                valid_pairs.append(pair)
+
+        if not valid_pairs:
+
+            print("WDM DexScreener: No Base pair found")
+
+            if cached_price is not None:
+                return float(cached_price)
+
+            return 0.0
+
+        # ----------------------------------------------------
+        # 6. 가장 유동성이 큰 풀 선택
+        # ----------------------------------------------------
+
+        def liquidity_value(pair):
+
+            liquidity = pair.get("liquidity") or {}
+
+            try:
+                return float(
+                    liquidity.get("usd", 0) or 0
+                )
+            except Exception:
+                return 0.0
+
+        valid_pairs.sort(
+            key=liquidity_value,
+            reverse=True
+        )
+
+        pair = valid_pairs[0]
+
+        # ----------------------------------------------------
+        # 7. USD 가격
+        # ----------------------------------------------------
+
+        price_usd = pair.get("priceUsd")
+
+        if price_usd is None:
 
             print(
-                "WDM Uniswap: Base RPC connection failed"
+                "WDM DexScreener: priceUsd unavailable"
             )
 
             if cached_price is not None:
@@ -2272,199 +2360,44 @@ def get_latest_wdm_price():
 
             return 0.0
 
-    except Exception as e:
-
-        print(
-            "WDM Uniswap: RPC connection error:",
-            e
-        )
-
-        if cached_price is not None:
-            return float(cached_price)
-
-        return 0.0
-
-    # ------------------------------------------------------
-    # 3. Addresses
-    # ------------------------------------------------------
-
-    WETH = Web3.to_checksum_address(
-        "0x4200000000000000000000000000000000000006"
-    )
-
-    WDM = Web3.to_checksum_address(
-        "0x4C154CaF238efD0811e15D9b30d074358F6468D1"
-    )
-
-    STATE_VIEW = Web3.to_checksum_address(
-        "0xa3c0c9b65bad0b08107aa264b0f3db444b867a71"
-    )
-
-    # ------------------------------------------------------
-    # 4. Pool ID
-    # ------------------------------------------------------
-
-    POOL_ID = bytes.fromhex(
-        "afec098c87adeb3e12f802df698c83759d8247b79a3852404d457bf5b5802599"
-    )
-
-    # ------------------------------------------------------
-    # 5. StateView ABI
-    # ------------------------------------------------------
-
-    STATE_VIEW_ABI = [
-        {
-            "inputs": [
-                {
-                    "internalType": "bytes32",
-                    "name": "poolId",
-                    "type": "bytes32"
-                }
-            ],
-            "name": "getSlot0",
-            "outputs": [
-                {
-                    "internalType": "uint160",
-                    "name": "sqrtPriceX96",
-                    "type": "uint160"
-                },
-                {
-                    "internalType": "int24",
-                    "name": "tick",
-                    "type": "int24"
-                },
-                {
-                    "internalType": "uint24",
-                    "name": "protocolFee",
-                    "type": "uint24"
-                },
-                {
-                    "internalType": "uint24",
-                    "name": "lpFee",
-                    "type": "uint24"
-                }
-            ],
-            "stateMutability": "view",
-            "type": "function"
-        }
-    ]
-
-    try:
-
-        state_view = w3.eth.contract(
-            address=STATE_VIEW,
-            abi=STATE_VIEW_ABI
-        )
-
-        # --------------------------------------------------
-        # 6. Read Pool State
-        # --------------------------------------------------
-
-        slot0 = state_view.functions.getSlot0(
-            POOL_ID
-        ).call()
-
-        print(
-            "WDM DEBUG slot0:",
-            slot0
-        )
-
-        sqrt_price_x96 = int(slot0[0])
-        tick = int(slot0[1])
-
-        # --------------------------------------------------
-        # 7. Validate sqrtPriceX96
-        # --------------------------------------------------
-
-        if sqrt_price_x96 <= 0:
-
-            print(
-                "WDM Uniswap: Invalid sqrtPriceX96:",
-                sqrt_price_x96
-            )
-
-            if cached_price is not None:
-                return float(cached_price)
-
-            return 0.0
-
-        # --------------------------------------------------
-        # 8. Calculate WDM per ETH
-        # --------------------------------------------------
-
-        price_ratio = (
-            float(sqrt_price_x96)
-            * float(sqrt_price_x96)
-            / float(2 ** 192)
-        )
-
-        if price_ratio <= 0:
-
-            print(
-                "WDM Uniswap: Invalid price ratio"
-            )
-
-            if cached_price is not None:
-                return float(cached_price)
-
-            return 0.0
-
-        # --------------------------------------------------
-        # 9. ETH USD
-        # --------------------------------------------------
-
-        eth_price = get_latest_price()
-
-        if eth_price is None:
-
-            print(
-                "WDM Uniswap: ETH price unavailable"
-            )
-
-            if cached_price is not None:
-                return float(cached_price)
-
-            return 0.0
-
-        eth_price = float(eth_price)
-
-        if eth_price <= 0:
-
-            if cached_price is not None:
-                return float(cached_price)
-
-            return 0.0
-
-        # --------------------------------------------------
-        # 10. WDM USD
-        # --------------------------------------------------
-
-        wdm_price = eth_price / price_ratio
+        wdm_price = float(price_usd)
 
         if wdm_price <= 0:
 
+            print(
+                "WDM DexScreener: Invalid price:",
+                wdm_price
+            )
+
             if cached_price is not None:
                 return float(cached_price)
 
             return 0.0
 
-        # --------------------------------------------------
-        # 11. Cache
-        # --------------------------------------------------
+        # ----------------------------------------------------
+        # 8. Cache 저장
+        # ----------------------------------------------------
 
         CACHE["wdm_price"] = wdm_price
         CACHE["wdm_price_time"] = now
 
+        # ----------------------------------------------------
+        # 9. 로그
+        # ----------------------------------------------------
+
         print(
-            f"WDM Uniswap v4 Price: ${wdm_price:.12f}"
+            f"WDM DexScreener Price: "
+            f"${wdm_price:.12f}"
         )
 
         print(
-            f"WDM per ETH: {price_ratio:.8f}"
+            f"WDM Pair: "
+            f"{pair.get('pairAddress')}"
         )
 
         print(
-            f"Current Tick: {tick}"
+            f"WDM Liquidity: "
+            f"${liquidity_value(pair):,.2f}"
         )
 
         return wdm_price
@@ -2472,9 +2405,13 @@ def get_latest_wdm_price():
     except Exception as e:
 
         print(
-            "WDM Uniswap Price Error:",
+            "WDM DexScreener Price Error:",
             e
         )
+
+        # ----------------------------------------------------
+        # 오류 발생 시 마지막 정상 가격 사용
+        # ----------------------------------------------------
 
         if cached_price is not None:
             return float(cached_price)
