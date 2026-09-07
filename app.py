@@ -117,7 +117,7 @@ CACHE_TIME = {
     "prev_ma60": 30,
     "cross_signal": 30,
     "signal": 30,
-    "wdm_price": 60,
+    "wdm_price": 30,
     # ==========================================================
     # FAQ Cache Time
     # ==========================================================
@@ -2225,7 +2225,6 @@ def get_latest_price():
 def get_latest_wdm_price():
 
     import time
-    import requests
     from web3 import Web3
 
     now = time.time()
@@ -2238,7 +2237,9 @@ def get_latest_wdm_price():
     cached_time = CACHE.get("wdm_price_time", 0)
 
     if cached_price is not None:
+
         if now - cached_time < CACHE_TIME["wdm_price"]:
+
             return float(cached_price)
 
     # ------------------------------------------------------
@@ -2250,16 +2251,32 @@ def get_latest_wdm_price():
         "https://mainnet.base.org"
     )
 
-    w3 = Web3(
-        Web3.HTTPProvider(
-            RPC_URL,
-            request_kwargs={"timeout": 5}
+    try:
+
+        w3 = Web3(
+            Web3.HTTPProvider(
+                RPC_URL,
+                request_kwargs={"timeout": 5}
+            )
         )
-    )
 
-    if not w3.is_connected():
+        if not w3.is_connected():
 
-        print("WDM Uniswap: Base RPC connection failed")
+            print(
+                "WDM Uniswap: Base RPC connection failed"
+            )
+
+            if cached_price is not None:
+                return float(cached_price)
+
+            return 0.0
+
+    except Exception as e:
+
+        print(
+            "WDM Uniswap: RPC connection error:",
+            e
+        )
 
         if cached_price is not None:
             return float(cached_price)
@@ -2267,7 +2284,7 @@ def get_latest_wdm_price():
         return 0.0
 
     # ------------------------------------------------------
-    # 3. Token
+    # 3. Addresses
     # ------------------------------------------------------
 
     WETH = Web3.to_checksum_address(
@@ -2278,24 +2295,12 @@ def get_latest_wdm_price():
         "0x4C154CaF238efD0811e15D9b30d074358F6468D1"
     )
 
-    # ------------------------------------------------------
-    # 4. Uniswap v4 StateView
-    # ------------------------------------------------------
-
     STATE_VIEW = Web3.to_checksum_address(
         "0xa3c0c9b65bad0b08107aa264b0f3db444b867a71"
     )
 
     # ------------------------------------------------------
-    # 5. WDM / ETH Pool
-    #
-    # currency0 = WETH
-    # currency1 = WDM
-    #
-    # Fee       = 0.25%
-    # Fee value = 2500
-    # TickSpace = 50
-    # Hook      = address(0)
+    # 4. Pool ID
     # ------------------------------------------------------
 
     POOL_ID = bytes.fromhex(
@@ -2303,7 +2308,7 @@ def get_latest_wdm_price():
     )
 
     # ------------------------------------------------------
-    # 6. StateView.getSlot0(bytes32)
+    # 5. StateView ABI
     # ------------------------------------------------------
 
     STATE_VIEW_ABI = [
@@ -2351,20 +2356,30 @@ def get_latest_wdm_price():
         )
 
         # --------------------------------------------------
-        # 실제 Pool 상태 조회
+        # 6. Read Pool State
         # --------------------------------------------------
 
         slot0 = state_view.functions.getSlot0(
             POOL_ID
         ).call()
 
+        print(
+            "WDM DEBUG slot0:",
+            slot0
+        )
+
         sqrt_price_x96 = int(slot0[0])
         tick = int(slot0[1])
+
+        # --------------------------------------------------
+        # 7. Validate sqrtPriceX96
+        # --------------------------------------------------
 
         if sqrt_price_x96 <= 0:
 
             print(
-                "WDM Uniswap: Invalid sqrtPriceX96"
+                "WDM Uniswap: Invalid sqrtPriceX96:",
+                sqrt_price_x96
             )
 
             if cached_price is not None:
@@ -2373,37 +2388,19 @@ def get_latest_wdm_price():
             return 0.0
 
         # --------------------------------------------------
-        # sqrtPriceX96 → WDM / ETH
-        #
-        # currency0 = WETH
-        # currency1 = WDM
-        #
-        # 가격 = (sqrtPriceX96 / 2^96)^2
+        # 8. Calculate WDM per ETH
         # --------------------------------------------------
 
-        wdm_per_eth = (
+        price_ratio = (
             float(sqrt_price_x96)
             * float(sqrt_price_x96)
             / float(2 ** 192)
         )
 
-        if wdm_per_eth <= 0:
-
-            if cached_price is not None:
-                return float(cached_price)
-
-            return 0.0
-
-        # --------------------------------------------------
-        # ETH USD 가격
-        # --------------------------------------------------
-
-        eth_price = get_latest_price()
-
-        if eth_price is None or float(eth_price) <= 0:
+        if price_ratio <= 0:
 
             print(
-                "WDM Uniswap: ETH USD price unavailable"
+                "WDM Uniswap: Invalid price ratio"
             )
 
             if cached_price is not None:
@@ -2412,18 +2409,36 @@ def get_latest_wdm_price():
             return 0.0
 
         # --------------------------------------------------
-        # WDM USD 가격
-        #
-        # ETH 1개 = WDM 여러 개
-        #
-        # WDM 1개 가격 =
-        # ETH USD 가격 / WDM per ETH
+        # 9. ETH USD
         # --------------------------------------------------
 
-        wdm_price = (
-            float(eth_price)
-            / wdm_per_eth
-        )
+        eth_price = get_latest_price()
+
+        if eth_price is None:
+
+            print(
+                "WDM Uniswap: ETH price unavailable"
+            )
+
+            if cached_price is not None:
+                return float(cached_price)
+
+            return 0.0
+
+        eth_price = float(eth_price)
+
+        if eth_price <= 0:
+
+            if cached_price is not None:
+                return float(cached_price)
+
+            return 0.0
+
+        # --------------------------------------------------
+        # 10. WDM USD
+        # --------------------------------------------------
+
+        wdm_price = eth_price / price_ratio
 
         if wdm_price <= 0:
 
@@ -2433,20 +2448,18 @@ def get_latest_wdm_price():
             return 0.0
 
         # --------------------------------------------------
-        # Cache 저장
+        # 11. Cache
         # --------------------------------------------------
 
         CACHE["wdm_price"] = wdm_price
         CACHE["wdm_price_time"] = now
 
         print(
-            f"WDM Uniswap v4 Price: "
-            f"${wdm_price:.12f}"
+            f"WDM Uniswap v4 Price: ${wdm_price:.12f}"
         )
 
         print(
-            f"WDM per ETH: "
-            f"{wdm_per_eth:.8f}"
+            f"WDM per ETH: {price_ratio:.8f}"
         )
 
         print(
@@ -2462,14 +2475,10 @@ def get_latest_wdm_price():
             e
         )
 
-        # 기존 DB 가격으로 돌아가지 않습니다.
-        # 이전 랜덤/시뮬레이션 가격이 환산에 사용되는 것을 방지합니다.
-
         if cached_price is not None:
             return float(cached_price)
 
         return 0.0
-
 # ============================================================
 # Save ETH Price
 # ============================================================
