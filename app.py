@@ -2469,24 +2469,7 @@ def get_latest_wdm_price():
             return float(cached_price)
 
         return 0.0
-# ------------------------------------------------------------
-# Latest WDM Price
-# PostgreSQL DB에서 가장 최근 WDM 가격 조회
-# ------------------------------------------------------------
 
-def get_latest_wdm_price():
-
-    row = fetch_one("""
-        SELECT price
-        FROM wdm_price
-        ORDER BY id DESC
-        LIMIT 1
-    """)
-
-    if row:
-        return float(row["price"])
-
-    return 0.001
 # ============================================================
 # Save ETH Price
 # ============================================================
