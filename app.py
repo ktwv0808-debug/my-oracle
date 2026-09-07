@@ -775,7 +775,30 @@ def load_wdm_history():
         """
 
     )
+# ============================================================
+# Save WDM Chart Price
+# WDM 차트 전용 가격 저장
+# ============================================================
 
+def save_wdm_chart_price(price):
+
+    try:
+
+        execute(
+            """
+            INSERT INTO wdm_price_history(price)
+            VALUES(%s)
+            """,
+            (price,)
+        )
+
+        return True
+
+    except Exception as e:
+
+        traceback.print_exc()
+
+        return False
 
 # ==========================================================
 # Announcement Helper Functions
@@ -7652,163 +7675,41 @@ def wdm_chart():
 # 기존 wdm_chart_data() 함수 전체 삭제 후 붙여넣기
 # ==========================================================
 
+# ============================================================
+# WDM CHART DATA
+# 차트 전용 데이터
+# ============================================================
+
 @app.route("/wdm-chart-data")
 def wdm_chart_data():
 
     try:
 
-        # --------------------------------------------------
-        # PostgreSQL 연결
-        # --------------------------------------------------
-        conn = get_db()
+        rows = load_wdm_history()
 
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-
-        # --------------------------------------------------
-        # 최근 200개 가격 조회
-        # --------------------------------------------------
-        cur.execute("""
-
-            SELECT
-
-                id,
-
-                price,
-
-                ma20,
-
-                ma60,
-
-                signal,
-
-                created_at
-
-            FROM wdm_price
-
-            ORDER BY id ASC
-
-            LIMIT 200
-
-        """)
-
-        rows = cur.fetchall()
-
-        cur.close()
-
-        close_db(conn)
-
-        # --------------------------------------------------
-        # Chart 데이터 생성
-        # --------------------------------------------------
         labels = []
-
         prices = []
 
-        ma20 = []
-
-        ma60 = []
-
-        buy = []
-
-        sell = []
-
-        golden = []
-
-        dead = []
-
-        # --------------------------------------------------
-        # 데이터 변환
-        # --------------------------------------------------
         for row in rows:
 
-            # 시간
-            labels.append(str(row["created_at"]))
+            labels.append(
+                str(row["created_at"])
+            )
 
-            # 가격
             prices.append(
                 float(row["price"])
                 if row["price"] is not None
                 else None
             )
 
-            # MA20
-            ma20.append(
-                float(row["ma20"])
-                if row["ma20"] is not None
-                else None
-            )
-
-            # MA60
-            ma60.append(
-                float(row["ma60"])
-                if row["ma60"] is not None
-                else None
-            )
-
-            signal = row["signal"]
-
-            # BUY
-            if signal == "BUY":
-
-                buy.append(float(row["price"]))
-
-            else:
-
-                buy.append(None)
-
-            # SELL
-            if signal == "SELL":
-
-                sell.append(float(row["price"]))
-
-            else:
-
-                sell.append(None)
-
-            # GOLDEN
-            if signal == "BUY":
-
-                golden.append(float(row["price"]))
-
-            else:
-
-                golden.append(None)
-
-            # DEAD
-            if signal == "SELL":
-
-                dead.append(float(row["price"]))
-
-            else:
-
-                dead.append(None)
-
-        # --------------------------------------------------
-        # JSON 반환
-        # --------------------------------------------------
         return jsonify({
 
             "labels": labels,
 
-            "prices": prices,
-
-            "ma20": ma20,
-
-            "ma60": ma60,
-
-            "buy": buy,
-
-            "sell": sell,
-
-            "golden": golden,
-
-            "dead": dead
+            "prices": prices
 
         })
 
-    # ------------------------------------------------------
-    # 오류 확인용
-    # ------------------------------------------------------
     except Exception as e:
 
         traceback.print_exc()
@@ -7817,7 +7718,7 @@ def wdm_chart_data():
 
             "error": str(e)
 
-        }),500
+        }), 500
 
 @app.after_request
 def add_cache_headers(response):
