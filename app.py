@@ -2243,7 +2243,6 @@ def get_latest_wdm_price():
 
     # --------------------------------------------------------
     # Error cooldown
-    # RPC가 계속 호출되는 것을 방지
     # --------------------------------------------------------
 
     error_time = CACHE.get("wdm_price_error_time", 0)
@@ -2264,7 +2263,7 @@ def get_latest_wdm_price():
     RPC_URL = "https://base-rpc.publicnode.com"
 
     # --------------------------------------------------------
-    # Uniswap V4 StateView - Base
+    # Uniswap V4 StateView - Base Mainnet
     # --------------------------------------------------------
 
     STATE_VIEW = (
@@ -2280,10 +2279,15 @@ def get_latest_wdm_price():
     )
 
     # --------------------------------------------------------
+    # Uniswap V4
+    #
     # getSlot0(bytes32)
+    #
+    # IMPORTANT:
+    # This is NOT the Uniswap V3 slot0() selector.
     # --------------------------------------------------------
 
-    selector = "0x3850c7bd"
+    selector = "0xc815641c"
 
     data = selector + POOL_ID[2:]
 
@@ -2303,13 +2307,12 @@ def get_latest_wdm_price():
     try:
 
         # ----------------------------------------------------
-        # Session
-        #
-        # trust_env=False
-        # Render netrc 문제 방지
+        # requests Session
+        # Render netrc timeout 방지
         # ----------------------------------------------------
 
         session = requests.Session()
+
         session.trust_env = False
 
         response = session.post(
@@ -2344,7 +2347,7 @@ def get_latest_wdm_price():
         result = response.json()
 
         # ----------------------------------------------------
-        # JSON-RPC Error
+        # JSON RPC Error
         # ----------------------------------------------------
 
         if "error" in result:
@@ -2381,16 +2384,14 @@ def get_latest_wdm_price():
             return 0.0
 
         # ----------------------------------------------------
-        # Decode result
+        # ABI decode
         #
-        # getSlot0 returns:
+        # getSlot0 returns 4 values
         #
-        # sqrtPriceX96
-        # tick
-        # protocolFee
-        # lpFee
-        #
-        # each ABI encoded into 32 bytes
+        # 1. sqrtPriceX96
+        # 2. tick
+        # 3. protocolFee
+        # 4. lpFee
         # ----------------------------------------------------
 
         raw_data = raw[2:]
@@ -2428,6 +2429,7 @@ def get_latest_wdm_price():
         )
 
         # int24 signed conversion
+
         if tick_raw >= 2 ** 23:
             tick = tick_raw - 2 ** 24
         else:
@@ -2442,7 +2444,7 @@ def get_latest_wdm_price():
             CACHE["wdm_price_error_time"] = now
 
             print(
-                "WDM StateView: Pool sqrtPriceX96 = 0"
+                "WDM StateView: sqrtPriceX96 = 0"
             )
 
             if cached_price is not None:
@@ -2451,7 +2453,9 @@ def get_latest_wdm_price():
             return 0.0
 
         # ----------------------------------------------------
-        # sqrtPriceX96 -> token1/token0
+        # sqrtPriceX96
+        #
+        # price = (sqrtPriceX96 / 2^96)^2
         # ----------------------------------------------------
 
         price_token1_per_token0 = (
@@ -2472,7 +2476,7 @@ def get_latest_wdm_price():
             return 0.0
 
         # ----------------------------------------------------
-        # Pool token order
+        # Token order
         #
         # WETH:
         # 0x4200000000000000000000000000000000000006
@@ -2480,22 +2484,18 @@ def get_latest_wdm_price():
         # WDM:
         # 0x4C154CaF238efD0811e15D9b30d074358F6468D1
         #
-        # WETH address < WDM address
+        # WETH < WDM
         #
         # Therefore:
         #
         # currency0 = WETH
         # currency1 = WDM
-        #
-        # Both are 18 decimals.
         # ----------------------------------------------------
 
         wdm_per_eth = price_token1_per_token0
 
         # ----------------------------------------------------
         # ETH/USD
-        #
-        # 기존 프로젝트의 ETH 가격 함수 사용
         # ----------------------------------------------------
 
         try:
@@ -2533,7 +2533,7 @@ def get_latest_wdm_price():
         )
 
         # ----------------------------------------------------
-        # Safety check
+        # Safety
         # ----------------------------------------------------
 
         if wdm_price <= 0:
@@ -2551,7 +2551,7 @@ def get_latest_wdm_price():
             return 0.0
 
         # ----------------------------------------------------
-        # Save cache
+        # Cache save
         # ----------------------------------------------------
 
         CACHE["wdm_price"] = float(wdm_price)
