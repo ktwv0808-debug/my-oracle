@@ -2242,19 +2242,44 @@ def get_latest_wdm_price():
             return float(cached_price)
 
     # --------------------------------------------------------
-    # Base Mainnet
+    # Error cooldown
+    # RPC가 계속 호출되는 것을 방지
     # --------------------------------------------------------
 
-    RPC_URL = "https://mainnet.base.org"
+    error_time = CACHE.get("wdm_price_error_time", 0)
 
-    STATE_VIEW = "0xa3c0c9b65bad0b08107aa264b0f3db444b867a71"
+    if error_time:
+
+        if now - error_time < 60:
+
+            if cached_price is not None:
+                return float(cached_price)
+
+            return 0.0
+
+    # --------------------------------------------------------
+    # Base Mainnet RPC
+    # --------------------------------------------------------
+
+    RPC_URL = "https://base-rpc.publicnode.com"
+
+    # --------------------------------------------------------
+    # Uniswap V4 StateView - Base
+    # --------------------------------------------------------
+
+    STATE_VIEW = (
+        "0xa3c0c9b65bad0b08107aa264b0f3db444b867a71"
+    )
+
+    # --------------------------------------------------------
+    # WDM / ETH Pool ID
+    # --------------------------------------------------------
 
     POOL_ID = (
         "0x2cf89bddedee86c8d81609a5866d4086ce8464975142bf37d8b648c4cd2fd24b"
     )
 
     # --------------------------------------------------------
-    # Uniswap V4 StateView
     # getSlot0(bytes32)
     # --------------------------------------------------------
 
@@ -2277,25 +2302,54 @@ def get_latest_wdm_price():
 
     try:
 
-        response = requests.post(
+        # ----------------------------------------------------
+        # Session
+        #
+        # trust_env=False
+        # Render netrc 문제 방지
+        # ----------------------------------------------------
+
+        session = requests.Session()
+        session.trust_env = False
+
+        response = session.post(
             RPC_URL,
             json=payload,
-            timeout=8,
+            timeout=(3, 8),
             headers={
                 "Content-Type": "application/json",
                 "User-Agent": "W-donation-WDM/1.0"
             }
         )
 
+        # ----------------------------------------------------
+        # HTTP 429
+        # ----------------------------------------------------
+
+        if response.status_code == 429:
+
+            CACHE["wdm_price_error_time"] = now
+
+            print(
+                "WDM StateView RPC: 429 Too Many Requests"
+            )
+
+            if cached_price is not None:
+                return float(cached_price)
+
+            return 0.0
+
         response.raise_for_status()
 
         result = response.json()
 
         # ----------------------------------------------------
-        # RPC Error
+        # JSON-RPC Error
         # ----------------------------------------------------
 
         if "error" in result:
+
+            CACHE["wdm_price_error_time"] = now
 
             print(
                 "WDM StateView RPC Error:",
@@ -2309,28 +2363,16 @@ def get_latest_wdm_price():
 
         raw = result.get("result")
 
+        # ----------------------------------------------------
+        # Empty result
+        # ----------------------------------------------------
+
         if not raw or raw == "0x":
 
-            print("WDM StateView: Empty result")
-
-            if cached_price is not None:
-                return float(cached_price)
-
-            return 0.0
-
-        # ----------------------------------------------------
-        # Decode getSlot0 result
-        #
-        # sqrtPriceX96 = first 32 bytes
-        # ----------------------------------------------------
-
-        raw = raw[2:]
-
-        if len(raw) < 128:
+            CACHE["wdm_price_error_time"] = now
 
             print(
-                "WDM StateView: Invalid result length:",
-                len(raw)
+                "WDM StateView: Empty result"
             )
 
             if cached_price is not None:
@@ -2338,24 +2380,69 @@ def get_latest_wdm_price():
 
             return 0.0
 
-        sqrt_price_x96 = int(
-            raw[0:64],
-            16
-        )
+        # ----------------------------------------------------
+        # Decode result
+        #
+        # getSlot0 returns:
+        #
+        # sqrtPriceX96
+        # tick
+        # protocolFee
+        # lpFee
+        #
+        # each ABI encoded into 32 bytes
+        # ----------------------------------------------------
 
-        tick = int(
-            raw[64:128],
+        raw_data = raw[2:]
+
+        if len(raw_data) < 128:
+
+            CACHE["wdm_price_error_time"] = now
+
+            print(
+                "WDM StateView: Invalid result length:",
+                len(raw_data)
+            )
+
+            if cached_price is not None:
+                return float(cached_price)
+
+            return 0.0
+
+        # ----------------------------------------------------
+        # sqrtPriceX96
+        # ----------------------------------------------------
+
+        sqrt_price_x96 = int(
+            raw_data[0:64],
             16
         )
 
         # ----------------------------------------------------
-        # Pool not initialized
+        # tick
+        # ----------------------------------------------------
+
+        tick_raw = int(
+            raw_data[64:128],
+            16
+        )
+
+        # int24 signed conversion
+        if tick_raw >= 2 ** 23:
+            tick = tick_raw - 2 ** 24
+        else:
+            tick = tick_raw
+
+        # ----------------------------------------------------
+        # Pool initialization check
         # ----------------------------------------------------
 
         if sqrt_price_x96 <= 0:
 
+            CACHE["wdm_price_error_time"] = now
+
             print(
-                "WDM StateView: sqrtPriceX96 is zero"
+                "WDM StateView: Pool sqrtPriceX96 = 0"
             )
 
             if cached_price is not None:
@@ -2364,38 +2451,69 @@ def get_latest_wdm_price():
             return 0.0
 
         # ----------------------------------------------------
-        # sqrtPriceX96 -> WDM per WETH
+        # sqrtPriceX96 -> token1/token0
+        # ----------------------------------------------------
+
+        price_token1_per_token0 = (
+            (sqrt_price_x96 / (2 ** 96)) ** 2
+        )
+
+        if price_token1_per_token0 <= 0:
+
+            CACHE["wdm_price_error_time"] = now
+
+            print(
+                "WDM StateView: Invalid pool price"
+            )
+
+            if cached_price is not None:
+                return float(cached_price)
+
+            return 0.0
+
+        # ----------------------------------------------------
+        # Pool token order
+        #
+        # WETH:
+        # 0x4200000000000000000000000000000000000006
+        #
+        # WDM:
+        # 0x4C154CaF238efD0811e15D9b30d074358F6468D1
+        #
+        # WETH address < WDM address
+        #
+        # Therefore:
         #
         # currency0 = WETH
         # currency1 = WDM
         #
-        # Both have 18 decimals.
+        # Both are 18 decimals.
         # ----------------------------------------------------
 
-        price_wdm_per_eth = (
-            (sqrt_price_x96 / (2 ** 96)) ** 2
-        )
+        wdm_per_eth = price_token1_per_token0
 
-        if price_wdm_per_eth <= 0:
+        # ----------------------------------------------------
+        # ETH/USD
+        #
+        # 기존 프로젝트의 ETH 가격 함수 사용
+        # ----------------------------------------------------
+
+        try:
+
+            eth_price = get_latest_price()
+
+        except Exception as e:
 
             print(
-                "WDM StateView: Invalid pool price:",
-                price_wdm_per_eth
+                "WDM ETH Price Error:",
+                e
             )
 
-            if cached_price is not None:
-                return float(cached_price)
+            eth_price = 0.0
 
-            return 0.0
+        if not eth_price or float(eth_price) <= 0:
 
-        # ----------------------------------------------------
-        # ETH USD price
-        # Existing ETH price function
-        # ----------------------------------------------------
-
-        eth_price = get_eth_price()
-
-        if not eth_price or eth_price <= 0:
+            CACHE["wdm_price_error_time"] = now
 
             print(
                 "WDM StateView: ETH price unavailable"
@@ -2407,17 +2525,23 @@ def get_latest_wdm_price():
             return 0.0
 
         # ----------------------------------------------------
-        # WDM USD price
+        # WDM/USD
         # ----------------------------------------------------
 
         wdm_price = (
-            price_wdm_per_eth * float(eth_price)
+            wdm_per_eth * float(eth_price)
         )
+
+        # ----------------------------------------------------
+        # Safety check
+        # ----------------------------------------------------
 
         if wdm_price <= 0:
 
+            CACHE["wdm_price_error_time"] = now
+
             print(
-                "WDM StateView: Invalid WDM USD price:",
+                "WDM StateView: Invalid WDM price:",
                 wdm_price
             )
 
@@ -2433,6 +2557,12 @@ def get_latest_wdm_price():
         CACHE["wdm_price"] = float(wdm_price)
         CACHE["wdm_price_time"] = now
 
+        CACHE["wdm_price_error_time"] = 0
+
+        # ----------------------------------------------------
+        # Log
+        # ----------------------------------------------------
+
         print(
             f"WDM Uniswap V4 Price: "
             f"${wdm_price:.12f}"
@@ -2440,16 +2570,23 @@ def get_latest_wdm_price():
 
         print(
             f"WDM per ETH: "
-            f"{price_wdm_per_eth:,.6f}"
+            f"{wdm_per_eth:,.6f}"
         )
 
         print(
             f"WDM Tick: {tick}"
         )
 
+        print(
+            f"ETH Price: "
+            f"${float(eth_price):,.2f}"
+        )
+
         return float(wdm_price)
 
     except Exception as e:
+
+        CACHE["wdm_price_error_time"] = now
 
         print(
             "WDM Uniswap V4 Price Error:",
