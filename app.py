@@ -1335,7 +1335,23 @@ def init_db():
 
     """)
 
-     
+    # --------------------------------------------------------
+    # WDM PRICE HISTORY TABLE
+    # --------------------------------------------------------
+
+    cur.execute("""
+
+        CREATE TABLE IF NOT EXISTS wdm_price_history(
+
+            id SERIAL PRIMARY KEY,
+
+            price NUMERIC(18,8),
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+        )
+
+    """)
     
     # ==========================================================
     # WDM PRICE TABLE
