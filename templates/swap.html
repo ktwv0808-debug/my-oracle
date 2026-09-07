@@ -455,15 +455,13 @@ function calculateSwap(){
    Amount 변경
 ========================================================= */
 
-document.getElementById(
-    "amount"
-).addEventListener(
+document.getElementById("amount").addEventListener("input", function () {
+    calculateSwap();
+});
 
-    "input",
-
-    calculateSwap
-
-);
+document.getElementById("amount").addEventListener("change", function () {
+    calculateSwap();
+});
 
 
 /* =========================================================
