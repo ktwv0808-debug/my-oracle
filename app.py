@@ -2218,8 +2218,7 @@ def get_latest_price():
     return None
 # ============================================================
 # WDM Latest Price
-# DexScreener API
-# Base Mainnet
+# Uniswap V4 / Base Mainnet
 # ============================================================
 
 def get_latest_wdm_price():
@@ -2230,7 +2229,7 @@ def get_latest_wdm_price():
     now = time.time()
 
     # --------------------------------------------------------
-    # 1. Cache
+    # Cache
     # --------------------------------------------------------
 
     cached_price = CACHE.get("wdm_price")
@@ -2238,90 +2237,69 @@ def get_latest_wdm_price():
 
     cache_seconds = CACHE_TIME.get("wdm_price", 30)
 
-    # 정상 가격이 캐시에 있으면 사용
     if cached_price is not None:
-
         if now - cached_time < cache_seconds:
             return float(cached_price)
 
     # --------------------------------------------------------
-    # 2. 429 / API 오류 재요청 차단
+    # Base Mainnet
     # --------------------------------------------------------
 
-    error_time = CACHE.get("wdm_price_error_time", 0)
+    RPC_URL = "https://mainnet.base.org"
 
-    # 오류 발생 후 120초 동안 DexScreener 호출하지 않음
-    if error_time:
+    STATE_VIEW = "0xa3c0c9b65bad0b08107aa264b0f3db444b867a71"
 
-        if now - error_time < 120:
-
-            if cached_price is not None:
-                return float(cached_price)
-
-            return 0.0
-
-    # --------------------------------------------------------
-    # 3. WDM Contract
-    # --------------------------------------------------------
-
-    WDM_ADDRESS = "0x4C154CaF238efD0811e15D9b30d074358F6468D1"
-
-    # --------------------------------------------------------
-    # 4. DexScreener API
-    # --------------------------------------------------------
-
-    url = (
-        "https://api.dexscreener.com/latest/dex/tokens/"
-        + WDM_ADDRESS
+    POOL_ID = (
+        "0x2cf89bddedee86c8d81609a5866d4086ce8464975142bf37d8b648c4cd2fd24b"
     )
+
+    # --------------------------------------------------------
+    # Uniswap V4 StateView
+    # getSlot0(bytes32)
+    # --------------------------------------------------------
+
+    selector = "0x3850c7bd"
+
+    data = selector + POOL_ID[2:]
+
+    payload = {
+        "jsonrpc": "2.0",
+        "method": "eth_call",
+        "params": [
+            {
+                "to": STATE_VIEW,
+                "data": data
+            },
+            "latest"
+        ],
+        "id": 1
+    }
 
     try:
 
-        response = requests.get(
-            url,
-            timeout=5,
+        response = requests.post(
+            RPC_URL,
+            json=payload,
+            timeout=8,
             headers={
+                "Content-Type": "application/json",
                 "User-Agent": "W-donation-WDM/1.0"
             }
         )
 
-        # ----------------------------------------------------
-        # 5. 429 처리
-        # ----------------------------------------------------
-
-        if response.status_code == 429:
-
-            CACHE["wdm_price_error_time"] = now
-
-            print(
-                "WDM DexScreener: 429 Too Many Requests"
-            )
-            print(
-                "WDM DexScreener: API call paused for 120 seconds"
-            )
-
-            if cached_price is not None:
-                return float(cached_price)
-
-            return 0.0
-
         response.raise_for_status()
 
-        data = response.json()
-
-        # 정상 응답을 받았으므로 오류 차단 해제
-        CACHE["wdm_price_error_time"] = 0
+        result = response.json()
 
         # ----------------------------------------------------
-        # 6. Pair 확인
+        # RPC Error
         # ----------------------------------------------------
 
-        pairs = data.get("pairs", [])
-
-        if not pairs:
+        if "error" in result:
 
             print(
-                "WDM DexScreener: No pairs found"
+                "WDM StateView RPC Error:",
+                result["error"]
             )
 
             if cached_price is not None:
@@ -2329,40 +2307,11 @@ def get_latest_wdm_price():
 
             return 0.0
 
-        # ----------------------------------------------------
-        # 7. Base Mainnet + WDM pair 선택
-        # ----------------------------------------------------
+        raw = result.get("result")
 
-        valid_pairs = []
+        if not raw or raw == "0x":
 
-        for pair in pairs:
-
-            if pair.get("chainId") != "base":
-                continue
-
-            base_token = pair.get("baseToken", {})
-            quote_token = pair.get("quoteToken", {})
-
-            base_address = (
-                base_token.get("address", "").lower()
-            )
-
-            quote_address = (
-                quote_token.get("address", "").lower()
-            )
-
-            if (
-                base_address == WDM_ADDRESS.lower()
-                or
-                quote_address == WDM_ADDRESS.lower()
-            ):
-                valid_pairs.append(pair)
-
-        if not valid_pairs:
-
-            print(
-                "WDM DexScreener: No Base pair found"
-            )
+            print("WDM StateView: Empty result")
 
             if cached_price is not None:
                 return float(cached_price)
@@ -2370,37 +2319,43 @@ def get_latest_wdm_price():
             return 0.0
 
         # ----------------------------------------------------
-        # 8. 가장 유동성이 큰 풀 선택
+        # Decode getSlot0 result
+        #
+        # sqrtPriceX96 = first 32 bytes
         # ----------------------------------------------------
 
-        def liquidity_value(pair):
+        raw = raw[2:]
 
-            liquidity = pair.get("liquidity") or {}
+        if len(raw) < 128:
 
-            try:
-                return float(
-                    liquidity.get("usd", 0) or 0
-                )
-            except Exception:
-                return 0.0
+            print(
+                "WDM StateView: Invalid result length:",
+                len(raw)
+            )
 
-        valid_pairs.sort(
-            key=liquidity_value,
-            reverse=True
+            if cached_price is not None:
+                return float(cached_price)
+
+            return 0.0
+
+        sqrt_price_x96 = int(
+            raw[0:64],
+            16
         )
 
-        pair = valid_pairs[0]
+        tick = int(
+            raw[64:128],
+            16
+        )
 
         # ----------------------------------------------------
-        # 9. USD 가격
+        # Pool not initialized
         # ----------------------------------------------------
 
-        price_usd = pair.get("priceUsd")
-
-        if price_usd is None:
+        if sqrt_price_x96 <= 0:
 
             print(
-                "WDM DexScreener: priceUsd unavailable"
+                "WDM StateView: sqrtPriceX96 is zero"
             )
 
             if cached_price is not None:
@@ -2408,12 +2363,61 @@ def get_latest_wdm_price():
 
             return 0.0
 
-        wdm_price = float(price_usd)
+        # ----------------------------------------------------
+        # sqrtPriceX96 -> WDM per WETH
+        #
+        # currency0 = WETH
+        # currency1 = WDM
+        #
+        # Both have 18 decimals.
+        # ----------------------------------------------------
+
+        price_wdm_per_eth = (
+            (sqrt_price_x96 / (2 ** 96)) ** 2
+        )
+
+        if price_wdm_per_eth <= 0:
+
+            print(
+                "WDM StateView: Invalid pool price:",
+                price_wdm_per_eth
+            )
+
+            if cached_price is not None:
+                return float(cached_price)
+
+            return 0.0
+
+        # ----------------------------------------------------
+        # ETH USD price
+        # Existing ETH price function
+        # ----------------------------------------------------
+
+        eth_price = get_eth_price()
+
+        if not eth_price or eth_price <= 0:
+
+            print(
+                "WDM StateView: ETH price unavailable"
+            )
+
+            if cached_price is not None:
+                return float(cached_price)
+
+            return 0.0
+
+        # ----------------------------------------------------
+        # WDM USD price
+        # ----------------------------------------------------
+
+        wdm_price = (
+            price_wdm_per_eth * float(eth_price)
+        )
 
         if wdm_price <= 0:
 
             print(
-                "WDM DexScreener: Invalid price:",
+                "WDM StateView: Invalid WDM USD price:",
                 wdm_price
             )
 
@@ -2423,51 +2427,35 @@ def get_latest_wdm_price():
             return 0.0
 
         # ----------------------------------------------------
-        # 10. 정상 가격 Cache 저장
+        # Save cache
         # ----------------------------------------------------
 
-        CACHE["wdm_price"] = wdm_price
+        CACHE["wdm_price"] = float(wdm_price)
         CACHE["wdm_price_time"] = now
 
-        # ----------------------------------------------------
-        # 11. 로그
-        # ----------------------------------------------------
-
         print(
-            f"WDM DexScreener Price: "
+            f"WDM Uniswap V4 Price: "
             f"${wdm_price:.12f}"
         )
 
         print(
-            f"WDM Pair: "
-            f"{pair.get('pairAddress')}"
+            f"WDM per ETH: "
+            f"{price_wdm_per_eth:,.6f}"
         )
 
         print(
-            f"WDM Liquidity: "
-            f"${liquidity_value(pair):,.2f}"
+            f"WDM Tick: {tick}"
         )
 
-        return wdm_price
+        return float(wdm_price)
 
     except Exception as e:
 
-        # ----------------------------------------------------
-        # 12. API 오류 발생 시 120초 재요청 차단
-        # ----------------------------------------------------
-
-        CACHE["wdm_price_error_time"] = now
-
         print(
-            "WDM DexScreener Price Error:",
+            "WDM Uniswap V4 Price Error:",
             e
         )
 
-        print(
-            "WDM DexScreener: API call paused for 120 seconds"
-        )
-
-        # 마지막 정상 가격이 있으면 사용
         if cached_price is not None:
             return float(cached_price)
 
