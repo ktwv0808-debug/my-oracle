@@ -2216,7 +2216,36 @@ def get_latest_price():
         return float(row["price"])
 
     return None
+# ==========================================================
+# WDM DB 가격 Fallback
+# DexScreener 장애 / Rate Limit 발생 시 사용
+# ==========================================================
 
+def get_last_wdm_db_price():
+
+    try:
+
+        row = fetch_one("""
+            SELECT price
+            FROM wdm_price
+            ORDER BY id DESC
+            LIMIT 1
+        """)
+
+        if row and row["price"] is not None:
+
+            return float(row["price"])
+
+        return 0.001
+
+    except Exception as e:
+
+        print(
+            "WDM DB Price Error:",
+            e
+        )
+
+        return 0.001
 # ==========================================================
 # WDM Latest Price
 # DexScreener API
