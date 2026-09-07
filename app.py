@@ -2226,7 +2226,7 @@ def get_latest_price():
 def get_latest_wdm_price():
 
     import time
-    from web3 import Web3
+   
 
     now = time.time()
 
