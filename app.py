@@ -800,6 +800,8 @@ def save_wdm_chart_price(price):
 
         return False
 
+
+
 # ==========================================================
 # Announcement Helper Functions
 # ==========================================================
@@ -2977,7 +2979,32 @@ def calculate_wdm_rsi(period=14):
     rsi = 100 - (100 / (1 + rs))
 
     return round(rsi, 2)
+# ==========================================================
+# WDM Price History
+# WDM 차트용 가격 이력 조회
+# ==========================================================
 
+def get_wdm_price_history(limit=100):
+
+    conn = get_db()
+
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT
+            price,
+            created_at
+        FROM wdm_price_history
+        ORDER BY id DESC
+        LIMIT %s
+    """, (limit,))
+
+    rows = cur.fetchall()
+
+    cur.close()
+    close_db(conn)
+
+    return rows
 # ==========================================================
 # WDM Trading Signal
 # ETH generate_signal()과 동일한 구조
@@ -3737,6 +3764,10 @@ def auto_save_eth():
             """,(price,))
 
             new_id = cur.fetchone()["id"]
+            # ----------------------------------------------
+            # WDM 차트 가격 이력 저장
+            # ----------------------------------------------
+            save_wdm_chart_price(price)
 
             conn.commit()
             # --------------------------------------------------------
