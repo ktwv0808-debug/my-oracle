@@ -29,7 +29,7 @@ from psycopg2.extras import RealDictCursor
 from flask import send_file
 from flask_compress import Compress
 from psycopg2 import OperationalError
-
+from web3 import Web3
 # ==========================================================
 # Admin Account (Environment Variables)
 # 관리자 계정 (환경변수)
