@@ -2529,7 +2529,7 @@ def get_latest_wdm_price():
         # ----------------------------------------------------
 
         wdm_price = (
-            wdm_per_eth * float(eth_price)
+            float(eth_price) / wdm_per_eth
         )
 
         # ----------------------------------------------------
