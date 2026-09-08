@@ -7638,7 +7638,7 @@ def calculate_conversion():
             "message": "Conversion calculation failed"
 
         })
-```
+
 
 # ------------------------------------------------------------
 # Execute Swap
