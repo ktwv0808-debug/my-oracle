@@ -4,442 +4,11 @@
 
 <head>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>W-donation Whitepaper</title>
 
-<style>
-
-* {
-    box-sizing: border-box;
-}
-
-body {
-    font-family: Arial, Helvetica, sans-serif;
-    background: #f4f7fb;
-    margin: 0;
-    padding: 0;
-    color: #1f2937;
-    line-height: 1.7;
-}
-
-.box {
-    width: 92%;
-    max-width: 1050px;
-    margin: 40px auto;
-    background: white;
-    padding: 45px;
-    border-radius: 20px;
-    box-shadow: 0 10px 35px rgba(0,0,0,0.08);
-    position: relative;
-}
-
-
-/* ==========================================================
-   TOP CONTROLS
-========================================================== */
-
-.top-controls {
-    position: absolute;
-    top: 20px;
-    right: 25px;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    z-index: 100;
-}
-
-.language {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.language label {
-    font-size: 13px;
-    font-weight: bold;
-    color: #555;
-}
-
-select {
-    padding: 8px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 7px;
-    background: white;
-    cursor: pointer;
-    font-size: 13px;
-}
-
-.close-button {
-    padding: 9px 17px;
-    border: none;
-    border-radius: 8px;
-    background: #111827;
-    color: white;
-    font-size: 13px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.close-button:hover {
-    background: #374151;
-    transform: translateY(-1px);
-}
-
-
-/* ==========================================================
-   LANGUAGE
-========================================================== */
-
-body.lang-en .ko {
-    display: none !important;
-}
-
-body.lang-ko .en {
-    display: none !important;
-}
-
-
-/* ==========================================================
-   HEADER
-========================================================== */
-
-.header {
-    text-align: center;
-    padding-top: 55px;
-    padding-bottom: 30px;
-    margin-bottom: 35px;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.logo {
-    width: 180px;
-    max-width: 70%;
-    height: auto;
-    margin-bottom: 20px;
-}
-
-h1 {
-    text-align: center;
-    color: #111827;
-    font-size: 38px;
-    margin: 0 0 15px 0;
-}
-
-h2 {
-    color: #2563eb;
-    margin-top: 40px;
-    margin-bottom: 18px;
-    border-bottom: 2px solid #e5e7eb;
-    padding-bottom: 8px;
-    font-size: 27px;
-}
-
-p {
-    font-size: 16px;
-    line-height: 1.8;
-    color: #374151;
-}
-
-.header-slogan {
-    font-size: 23px;
-    font-weight: bold;
-    color: #2563eb;
-    margin-top: 15px;
-}
-
-.header-quote {
-    max-width: 800px;
-    margin: 15px auto;
-    font-size: 17px;
-    font-style: italic;
-    color: #6b7280;
-}
-
-.header-keywords {
-    font-size: 15px;
-    font-weight: bold;
-    color: #2563eb;
-    margin-top: 15px;
-}
-
-
-/* ==========================================================
-   TOKEN INFORMATION
-========================================================== */
-
-.token-box {
-    background: #f8fafc;
-    padding: 25px;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    margin-top: 20px;
-}
-
-.token-name {
-    font-size: 22px;
-    font-weight: bold;
-    color: #111827;
-    margin-bottom: 15px;
-}
-
-.token-row {
-    margin: 8px 0;
-}
-
-.contract {
-    margin-top: 10px;
-    padding: 14px;
-    background: #eef2ff;
-    border-radius: 8px;
-    font-family: monospace;
-    color: #3730a3;
-    word-break: break-all;
-}
-
-
-/* ==========================================================
-   TOKEN ALLOCATION
-========================================================== */
-
-.table-wrapper {
-    width: 100%;
-    overflow-x: auto;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-th,
-td {
-    border: 1px solid #d1d5db;
-    padding: 13px;
-    text-align: center;
-}
-
-th {
-    background: #f3f4f6;
-    color: #111827;
-    font-weight: bold;
-}
-
-td {
-    background: white;
-}
-
-tr:nth-child(even) td {
-    background: #fafafa;
-}
-
-.total-row td {
-    background: #eef2ff !important;
-    font-weight: bold;
-}
-
-
-/* ==========================================================
-   VIRTUOUS CYCLE
-========================================================== */
-
-.cycle-intro {
-    text-align: center;
-    margin: 25px 0;
-    padding: 18px;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 12px;
-    font-size: 18px;
-    font-weight: bold;
-    color: #1d4ed8;
-}
-
-.cycle-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    margin: 25px 0;
-}
-
-.cycle-item {
-    padding: 12px 16px;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 10px;
-    font-weight: bold;
-    color: #1e40af;
-    text-align: center;
-}
-
-.cycle-arrow {
-    font-size: 21px;
-    font-weight: bold;
-    color: #6b7280;
-}
-
-.cycle-description {
-    padding: 20px;
-    background: #f8fafc;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-}
-
-
-/* ==========================================================
-   ECOSYSTEM
-========================================================== */
-
-.ecosystem-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-    margin-top: 20px;
-}
-
-.ecosystem-item {
-    padding: 18px;
-    background: #f8fafc;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    font-weight: bold;
-}
-
-
-/* ==========================================================
-   DONATION
-========================================================== */
-
-.donation-box {
-    padding: 25px;
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 14px;
-}
-
-.donation-highlight {
-    margin: 20px 0;
-    padding: 18px;
-    text-align: center;
-    background: #dcfce7;
-    border-radius: 10px;
-    font-size: 21px;
-    font-weight: bold;
-    color: #166534;
-}
-
-
-/* ==========================================================
-   WEBSITE
-========================================================== */
-
-.website-box {
-    padding: 22px;
-    text-align: center;
-    background: #f8fafc;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-}
-
-.website-box a {
-    color: #2563eb;
-    text-decoration: none;
-    font-weight: bold;
-    word-break: break-all;
-}
-
-
-/* ==========================================================
-   DISCLAIMER
-========================================================== */
-
-.disclaimer {
-    padding: 22px;
-    background: #fff7ed;
-    border-left: 4px solid #f97316;
-    border-radius: 8px;
-}
-
-
-/* ==========================================================
-   CLOSING
-========================================================== */
-
-.closing {
-    margin-top: 50px;
-    padding-top: 30px;
-    text-align: center;
-    border-top: 1px solid #e5e7eb;
-}
-
-.closing-main {
-    font-size: 19px;
-    font-weight: bold;
-    color: #1d4ed8;
-}
-
-
-/* ==========================================================
-   MOBILE
-========================================================== */
-
-@media (max-width: 768px) {
-
-    .box {
-        width: 95%;
-        margin: 15px auto;
-        padding: 25px 18px;
-    }
-
-    .top-controls {
-        position: relative;
-        top: auto;
-        right: auto;
-        justify-content: flex-end;
-        margin-bottom: 15px;
-        flex-wrap: wrap;
-    }
-
-    .header {
-        padding-top: 10px;
-    }
-
-    h1 {
-        font-size: 30px;
-    }
-
-    h2 {
-        font-size: 23px;
-    }
-
-    .header-slogan {
-        font-size: 20px;
-    }
-
-    .ecosystem-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .cycle-container {
-        flex-direction: column;
-    }
-
-    .cycle-arrow {
-        transform: rotate(90deg);
-    }
-
-    table {
-        min-width: 650px;
-    }
-
-}
-
-</style>
+<style> * { box-sizing: border-box; } body { font-family: Arial, Helvetica, sans-serif; background: #f4f7fb; margin: 0; padding: 0; color: #1f2937; line-height: 1.7; } .box { width: 92%; max-width: 1050px; margin: 40px auto; background: white; padding: 45px; border-radius: 20px; box-shadow: 0 10px 35px rgba(0,0,0,0.08); position: relative; } /* ========================================================== TOP CONTROLS ========================================================== */ .top-controls { position: absolute; top: 20px; right: 25px; display: flex; gap: 8px; align-items: center; z-index: 100; } .language { display: flex; align-items: center; gap: 8px; } .language label { font-size: 13px; font-weight: bold; color: #555; } select { padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 7px; background: white; cursor: pointer; font-size: 13px; } .close-button { padding: 9px 17px; border: none; border-radius: 8px; background: #111827; color: white; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.2s ease; } .close-button:hover { background: #374151; transform: translateY(-1px); } /* ========================================================== LANGUAGE ========================================================== */ body.lang-en .ko { display: none !important; } body.lang-ko .en { display: none !important; } /* ========================================================== HEADER ========================================================== */ .header { text-align: center; padding-top: 55px; padding-bottom: 30px; margin-bottom: 35px; border-bottom: 1px solid #e5e7eb; } .logo { width: 180px; max-width: 70%; height: auto; margin-bottom: 20px; } h1 { text-align: center; color: #111827; font-size: 38px; margin: 0 0 15px 0; } h2 { color: #2563eb; margin-top: 40px; margin-bottom: 18px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; font-size: 27px; } p { font-size: 16px; line-height: 1.8; color: #374151; } .header-slogan { font-size: 23px; font-weight: bold; color: #2563eb; margin-top: 15px; } .header-quote { max-width: 800px; margin: 15px auto; font-size: 17px; font-style: italic; color: #6b7280; } .header-keywords { font-size: 15px; font-weight: bold; color: #2563eb; margin-top: 15px; } /* ========================================================== TOKEN INFORMATION ========================================================== */ .token-box { background: #f8fafc; padding: 25px; border: 1px solid #e5e7eb; border-radius: 14px; margin-top: 20px; } .token-name { font-size: 22px; font-weight: bold; color: #111827; margin-bottom: 15px; } .token-row { margin: 8px 0; } .contract { margin-top: 10px; padding: 14px; background: #eef2ff; border-radius: 8px; font-family: monospace; color: #3730a3; word-break: break-all; } /* ========================================================== TOKEN ALLOCATION ========================================================== */ .table-wrapper { width: 100%; overflow-x: auto; } table { width: 100%; border-collapse: collapse; margin-top: 20px; } th, td { border: 1px solid #d1d5db; padding: 13px; text-align: center; } th { background: #f3f4f6; color: #111827; font-weight: bold; } td { background: white; } tr:nth-child(even) td { background: #fafafa; } .total-row td { background: #eef2ff !important; font-weight: bold; } /* ========================================================== VIRTUOUS CYCLE ========================================================== */ .cycle-intro { text-align: center; margin: 25px 0; padding: 18px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; font-size: 18px; font-weight: bold; color: #1d4ed8; } .cycle-container { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin: 25px 0; } .cycle-item { padding: 12px 16px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; font-weight: bold; color: #1e40af; text-align: center; } .cycle-arrow { font-size: 21px; font-weight: bold; color: #6b7280; } .cycle-description { padding: 20px; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; } /* ========================================================== ECOSYSTEM ========================================================== */ .ecosystem-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 20px; } .ecosystem-item { padding: 18px; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 10px; font-weight: bold; } /* ========================================================== DONATION ========================================================== */ .donation-box { padding: 25px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; } .donation-highlight { margin: 20px 0; padding: 18px; text-align: center; background: #dcfce7; border-radius: 10px; font-size: 21px; font-weight: bold; color: #166534; } /* ========================================================== WEBSITE ========================================================== */ .website-box { padding: 22px; text-align: center; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; } .website-box a { color: #2563eb; text-decoration: none; font-weight: bold; word-break: break-all; } /* ========================================================== DISCLAIMER ========================================================== */ .disclaimer { padding: 22px; background: #fff7ed; border-left: 4px solid #f97316; border-radius: 8px; } /* ========================================================== CLOSING ========================================================== */ .closing { margin-top: 50px; padding-top: 30px; text-align: center; border-top: 1px solid #e5e7eb; } .closing-main { font-size: 19px; font-weight: bold; color: #1d4ed8; } /* ========================================================== MOBILE ========================================================== */ @media (max-width: 768px) { .box { width: 95%; margin: 15px auto; padding: 25px 18px; } .top-controls { position: relative; top: auto; right: auto; justify-content: flex-end; margin-bottom: 15px; flex-wrap: wrap; } .header { padding-top: 10px; } h1 { font-size: 30px; } h2 { font-size: 23px; } .header-slogan { font-size: 20px; } .ecosystem-grid { grid-template-columns: 1fr; } .cycle-container { flex-direction: column; } .cycle-arrow { transform: rotate(90deg); } table { min-width: 650px; } } </style>
 
 </head>
 
@@ -449,7 +18,6 @@ tr:nth-child(even) td {
 
 <div class="top-controls">
 
-```
 <div class="language">
 
     <label for="language">
@@ -479,13 +47,11 @@ tr:nth-child(even) td {
     <span class="ko">닫기</span>
 
 </button>
-```
 
 </div>
 
 <div class="header">
 
-```
 <img
     src="/static/logo.png"
     alt="W-donation Logo"
@@ -531,13 +97,11 @@ tr:nth-child(even) td {
     </div>
 
 </div>
-```
 
 </div>
 
 <div class="section">
 
-```
 <div class="en">
 
     <h2>What is W-donation?</h2>
@@ -574,13 +138,11 @@ tr:nth-child(even) td {
     </p>
 
 </div>
-```
 
 </div>
 
 <div class="section">
 
-```
 <div class="en">
 
     <h2>Our Vision</h2>
@@ -616,13 +178,11 @@ tr:nth-child(even) td {
     </p>
 
 </div>
-```
 
 </div>
 
 <div class="section">
 
-```
 <div class="en">
 
     <h2>WDM Token</h2>
@@ -736,13 +296,11 @@ tr:nth-child(even) td {
     </div>
 
 </div>
-```
 
 </div>
 
 <div class="section">
 
-```
 <div class="en">
 
     <h2>WDM Token Allocation</h2>
@@ -900,13 +458,11 @@ tr:nth-child(even) td {
     </p>
 
 </div>
-```
 
 </div>
 
 <div class="section">
 
-```
 <div class="en">
 
     <h2>The W-donation Virtuous Cycle</h2>
@@ -1025,13 +581,11 @@ tr:nth-child(even) td {
     </div>
 
 </div>
-```
 
 </div>
 
 <div class="section">
 
-```
 <div class="en">
 
     <h2>W-donation Ecosystem</h2>
@@ -1104,13 +658,11 @@ tr:nth-child(even) td {
     </div>
 
 </div>
-```
 
 </div>
 
 <div class="section">
 
-```
 <div class="en">
 
     <h2>Portal Project</h2>
@@ -1147,13 +699,11 @@ tr:nth-child(even) td {
     </p>
 
 </div>
-```
 
 </div>
 
 <div class="section">
 
-```
 <div class="en">
 
     <h2>Donation Policy</h2>
@@ -1215,13 +765,11 @@ tr:nth-child(even) td {
     </div>
 
 </div>
-```
 
 </div>
 
 <div class="section">
 
-```
 <div class="en">
 
     <h2>Why W-donation?</h2>
@@ -1308,13 +856,11 @@ tr:nth-child(even) td {
     </div>
 
 </div>
-```
 
 </div>
 
 <div class="section">
 
-```
 <div class="en">
 
     <h2>Roadmap</h2>
@@ -1416,13 +962,11 @@ tr:nth-child(even) td {
     </table>
 
 </div>
-```
 
 </div>
 
 <div class="section">
 
-```
 <div class="en">
 
     <h2>Official Website</h2>
@@ -1448,13 +992,11 @@ tr:nth-child(even) td {
     </a>
 
 </div>
-```
 
 </div>
 
 <div class="section">
 
-```
 <div class="en">
 
     <h2>Disclaimer</h2>
@@ -1503,13 +1045,11 @@ tr:nth-child(even) td {
     </div>
 
 </div>
-```
 
 </div>
 
 <div class="closing">
 
-```
 <div class="en">
 
     <h2>Building the Future Together</h2>
@@ -1543,13 +1083,11 @@ tr:nth-child(even) td {
     </p>
 
 </div>
-```
 
 </div>
 
 <div class="section">
 
-```
 <div class="en">
 
     <h2>Quarterly Donation Report</h2>
@@ -1620,97 +1158,12 @@ tr:nth-child(even) td {
     </table>
 
 </div>
-```
 
 </div>
 
 </div>
 
-<script>
-
-
-/* ==========================================================
-   LANGUAGE SWITCH
-========================================================== */
-
-function changeLanguage() {
-
-    const languageElement =
-        document.getElementById("language");
-
-    if (!languageElement) {
-        return;
-    }
-
-    const language =
-        languageElement.value;
-
-    document.body.classList.remove(
-        "lang-en",
-        "lang-ko"
-    );
-
-    document.body.classList.add(
-        "lang-" + language
-    );
-
-    document.documentElement.lang =
-        language;
-
-}
-
-
-/* ==========================================================
-   CLOSE WHITEPAPER
-========================================================== */
-
-function closePopup() {
-
-    if (window.history.length > 1) {
-
-        window.history.back();
-
-    } else {
-
-        window.close();
-
-    }
-
-}
-
-
-/* ==========================================================
-   DEFAULT LANGUAGE
-========================================================== */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    function() {
-
-        const languageElement =
-            document.getElementById("language");
-
-        if (languageElement) {
-
-            languageElement.value = "en";
-
-        }
-
-        document.body.classList.remove(
-            "lang-ko"
-        );
-
-        document.body.classList.add(
-            "lang-en"
-        );
-
-        document.documentElement.lang =
-            "en";
-
-    }
-);
-
-</script>
+<script> /* ========================================================== LANGUAGE SWITCH ========================================================== */ function changeLanguage() { const languageElement = document.getElementById("language"); if (!languageElement) { return; } const language = languageElement.value; document.body.classList.remove( "lang-en", "lang-ko" ); document.body.classList.add( "lang-" + language ); document.documentElement.lang = language; } /* ========================================================== CLOSE WHITEPAPER ========================================================== */ function closePopup() { if (window.history.length > 1) { window.history.back(); } else { window.close(); } } /* ========================================================== DEFAULT LANGUAGE ========================================================== */ document.addEventListener( "DOMContentLoaded", function() { const languageElement = document.getElementById("language"); if (languageElement) { languageElement.value = "en"; } document.body.classList.remove( "lang-ko" ); document.body.classList.add( "lang-en" ); document.documentElement.lang = "en"; } ); </script>
 
 </body>
 
