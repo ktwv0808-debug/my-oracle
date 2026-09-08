@@ -1,196 +1,252 @@
+```html
 <!DOCTYPE html>
 <html lang="ko">
 
 <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-<title>WDM Market Chart</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>WDM Price Chart</title>
 
-<style>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-body{
+    <style>
 
-    background:#111;
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #ffffff;
+        }
 
-    color:white;
+        .chart-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-    font-family:Arial;
+        h2 {
+            margin-bottom: 20px;
+        }
 
-    margin:0;
+        .chart-box {
+            position: relative;
+            width: 100%;
+            height: 500px;
+        }
 
-    padding:20px;
-
-}
-
-.container{
-
-    width:95%;
-
-    margin:auto;
-
-}
-
-canvas{
-
-    background:#222;
-
-    border-radius:10px;
-
-}
-
-</style>
+    </style>
 
 </head>
 
 <body>
 
-<div class="container">
+<div class="chart-container">
 
-<h2 align="center">
+    <h2>WDM Price Chart</h2>
 
-📈 WDM Market Chart
+    <div class="chart-box">
 
-</h2>
+        <canvas id="wdmChart"></canvas>
 
-<canvas id="chart" height="120"></canvas>
+    </div>
 
 </div>
 
 
 <script>
 
-let chart = null;
+let wdmChart = null;
 
 
-async function loadChart(){
+// ==========================================================
+// WDM Chart Data 불러오기
+// ==========================================================
 
-    try{
+async function loadWDMChart() {
 
-        const res = await fetch("/wdm-chart-data");
+    try {
 
-        const data = await res.json();
+        const response =
+            await fetch("/wdm-chart-data");
+
+        if (!response.ok) {
+
+            throw new Error(
+                "WDM chart data loading failed"
+            );
+
+        }
+
+        const data =
+            await response.json();
 
 
-        if(chart){
+        // --------------------------------------------------
+        // 데이터 확인
+        // --------------------------------------------------
 
-            chart.destroy();
+        console.log("WDM Chart Data:", data);
+
+
+        const labels =
+            data.labels || [];
+
+        const prices =
+            data.prices || [];
+
+
+        // --------------------------------------------------
+        // 기존 차트 제거
+        // --------------------------------------------------
+
+        if (wdmChart !== null) {
+
+            wdmChart.destroy();
 
         }
 
 
-        chart = new Chart(
+        // --------------------------------------------------
+        // Chart 생성
+        // --------------------------------------------------
 
-            document.getElementById("chart"),
-
-            {
-
-                type:"line",
-
-
-                data:{
-
-                    labels:data.labels,
+        const ctx =
+            document
+                .getElementById("wdmChart")
+                .getContext("2d");
 
 
-                    datasets:[
+        wdmChart = new Chart(ctx, {
 
-                    //--------------------------------------------------
-                    // WDM PRICE
-                    //--------------------------------------------------
+            type: "line",
+
+            data: {
+
+                labels: labels,
+
+                datasets: [
 
                     {
 
-                        label:"WDM",
+                        label: "WDM Price",
 
-                        data:data.prices,
+                        data: prices,
 
-                        borderColor:"white",
+                        borderWidth: 2,
 
-                        backgroundColor:"white",
+                        pointRadius: 3,
 
-                        borderWidth:2,
+                        pointHoverRadius: 5,
 
-                        pointRadius:0,
+                        tension: 0.2,
 
-                        tension:0.2,
-
-                        spanGaps:false
+                        fill: false
 
                     }
 
-                    ]
+                ]
+
+            },
+
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                interaction: {
+
+                    mode: "index",
+
+                    intersect: false
 
                 },
 
 
-                options:{
+                plugins: {
 
-                    responsive:true,
+                    legend: {
 
-                    animation:false,
-
-
-                    interaction:{
-
-                        intersect:false,
-
-                        mode:"index"
+                        display: true
 
                     },
 
+                    tooltip: {
 
-                    plugins:{
+                        callbacks: {
 
-                        legend:{
+                            label: function(context) {
 
-                            labels:{
-
-                                color:"white"
+                                return "WDM: $"
+                                    + Number(
+                                        context.raw
+                                      ).toLocaleString(
+                                        undefined,
+                                        {
+                                            maximumFractionDigits: 8
+                                        }
+                                      );
 
                             }
+
+                        }
+
+                    }
+
+                },
+
+
+                scales: {
+
+                    x: {
+
+                        title: {
+
+                            display: true,
+
+                            text: "Time"
+
+                        },
+
+                        ticks: {
+
+                            maxTicksLimit: 10
 
                         }
 
                     },
 
 
-                    scales:{
+                    y: {
 
-                        x:{
+                        title: {
 
-                            ticks:{
+                            display: true,
 
-                                color:"white",
-
-                                maxTicksLimit:10
-
-                            },
-
-                            grid:{
-
-                                color:"#444"
-
-                            }
+                            text: "WDM Price (USD)"
 
                         },
 
+                        beginAtZero: false,
 
-                        y:{
+                        ticks: {
 
-                            beginAtZero:false,
+                            callback: function(value) {
 
-                            ticks:{
-
-                                color:"white"
-
-                            },
-
-                            grid:{
-
-                                color:"#444"
+                                return "$"
+                                    + Number(value)
+                                        .toLocaleString(
+                                            undefined,
+                                            {
+                                                maximumFractionDigits: 8
+                                            }
+                                        );
 
                             }
 
@@ -202,18 +258,15 @@ async function loadChart(){
 
             }
 
-        );
+        });
 
     }
 
-    catch(error){
+    catch (error) {
 
         console.error(
-
-            "WDM Market Chart Error:",
-
+            "WDM CHART ERROR:",
             error
-
         );
 
     }
@@ -221,19 +274,17 @@ async function loadChart(){
 }
 
 
-loadChart();
+// ==========================================================
+// 페이지 로드
+// ==========================================================
 
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
 
-// ------------------------------------------------------------
-// Refresh WDM market data every 5 seconds
-// ------------------------------------------------------------
+        loadWDMChart();
 
-setInterval(
-
-    loadChart,
-
-    5000
-
+    }
 );
 
 </script>
@@ -241,4 +292,4 @@ setInterval(
 </body>
 
 </html>
-
+```
