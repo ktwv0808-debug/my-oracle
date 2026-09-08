@@ -3884,8 +3884,10 @@ def auto_save_eth():
             # ----------------------------------------------
             # WDM 차트 가격 이력 저장
             # ----------------------------------------------
-            save_wdm_chart_price(price)
+            wdm_chart_price = get_latest_wdm_price()
 
+            if wdm_chart_price is not None and wdm_chart_price > 0:
+                save_wdm_chart_price(wdm_chart_price)
             conn.commit()
             # --------------------------------------------------------
             # Chart Cache 초기화
@@ -5274,6 +5276,21 @@ def admin_required():
         return False
 
     return True
+
+@app.route("/clear-wdm-chart-history")
+def clear_wdm_chart_history():
+
+    try:
+
+        execute("""
+            DELETE FROM wdm_price_history
+        """)
+
+        return "WDM chart history cleared successfully."
+
+    except Exception as e:
+
+        return f"ERROR: {e}", 500
 # ==========================================================
 # PART 7  Routes
 # ==========================================================
