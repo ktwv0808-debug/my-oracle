@@ -5277,20 +5277,7 @@ def admin_required():
 
     return True
 
-@app.route("/clear-wdm-chart-history")
-def clear_wdm_chart_history():
 
-    try:
-
-        execute("""
-            DELETE FROM wdm_price_history
-        """)
-
-        return "WDM chart history cleared successfully."
-
-    except Exception as e:
-
-        return f"ERROR: {e}", 500
 # ==========================================================
 # PART 7  Routes
 # ==========================================================
