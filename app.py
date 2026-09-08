@@ -2638,6 +2638,123 @@ def get_latest_wdm_price():
             return float(cached_price)
 
         return 0.0
+
+```python
+# ============================================================
+# ETH ↔ WDM Conversion Calculator
+# 환산 계산 전용
+# ============================================================
+
+def calculate_wdm_conversion(
+    direction,
+    amount,
+    eth_price,
+    wdm_price
+):
+
+    try:
+
+        amount = float(amount)
+
+        eth_price = float(eth_price)
+
+        wdm_price = float(wdm_price)
+
+    except (TypeError, ValueError):
+
+        return {
+            "success": False,
+            "message": "Invalid conversion data"
+        }
+
+
+    # --------------------------------------------------------
+    # 금액 확인
+    # --------------------------------------------------------
+
+    if amount <= 0:
+
+        return {
+            "success": False,
+            "message": "Amount must be greater than zero"
+        }
+
+
+    # --------------------------------------------------------
+    # 가격 확인
+    # --------------------------------------------------------
+
+    if eth_price <= 0:
+
+        return {
+            "success": False,
+            "message": "ETH price unavailable"
+        }
+
+
+    if wdm_price <= 0:
+
+        return {
+            "success": False,
+            "message": "WDM price unavailable"
+        }
+
+
+    # --------------------------------------------------------
+    # ETH → WDM
+    # --------------------------------------------------------
+
+    if direction == "ETH_TO_WDM":
+
+        receive_amount = (
+            amount * eth_price
+        ) / wdm_price
+
+
+    # --------------------------------------------------------
+    # WDM → ETH
+    # --------------------------------------------------------
+
+    elif direction == "WDM_TO_ETH":
+
+        receive_amount = (
+            amount * wdm_price
+        ) / eth_price
+
+
+    # --------------------------------------------------------
+    # 잘못된 방향
+    # --------------------------------------------------------
+
+    else:
+
+        return {
+            "success": False,
+            "message": "Invalid direction"
+        }
+
+
+    # --------------------------------------------------------
+    # 결과
+    # --------------------------------------------------------
+
+    return {
+
+        "success": True,
+
+        "direction": direction,
+
+        "amount": amount,
+
+        "eth_price": eth_price,
+
+        "wdm_price": wdm_price,
+
+        "receive_amount": receive_amount
+
+    }
+```
+
 # ============================================================
 # Save ETH Price
 # ============================================================
@@ -7352,41 +7469,179 @@ def community():
 def chart():
 
     return render_template("chart.html")
+```python
+```python
 # ------------------------------------------------------------
 # Swap API
+# 환산기에 현재 ETH / WDM 가격 전달
 # ------------------------------------------------------------
+
 @app.route("/swap-api")
 def swap_api():
 
     try:
 
+        # ----------------------------------------------------
+        # ETH 현재 가격
+        # ----------------------------------------------------
+
         eth_price = get_latest_price()
 
-    except Exception as e:
+        if eth_price is None:
+            eth_price = 0.0
 
-        print("ETH price error:", e)
-
-        eth_price = 0.0
+        eth_price = float(eth_price)
 
 
-    try:
+        # ----------------------------------------------------
+        # WDM 현재 가격
+        # 기존 정상 가격 함수 사용
+        # ----------------------------------------------------
 
         wdm_price = get_latest_wdm_price()
 
+        if wdm_price is None:
+            wdm_price = 0.0
+
+        wdm_price = float(wdm_price)
+
+
+        # ----------------------------------------------------
+        # 결과 반환
+        # ----------------------------------------------------
+
+        return jsonify({
+
+            "success": True,
+
+            "eth_price": eth_price,
+
+            "wdm_price": wdm_price
+
+        })
+
+
     except Exception as e:
 
-        print("WDM price error:", e)
+        print("SWAP API ERROR:", e)
 
-        wdm_price = 0.0
+        return jsonify({
+
+            "success": False,
+
+            "eth_price": 0.0,
+
+            "wdm_price": 0.0,
+
+            "message": "Price data unavailable"
+
+        })
+```
+
+```python
+# ============================================================
+# WDM Converter Calculation API
+# 환산 계산 전용
+# ============================================================
+
+@app.route("/calculate-conversion", methods=["POST"])
+def calculate_conversion():
+
+    try:
+
+        data = request.get_json()
+
+        if not data:
+
+            return jsonify({
+
+                "success": False,
+
+                "message": "No data received"
+
+            })
 
 
-    return jsonify({
+        # ----------------------------------------------------
+        # 환산 방향
+        # ----------------------------------------------------
 
-        "eth_price": eth_price,
+        direction = data.get(
+            "direction",
+            "ETH_TO_WDM"
+        )
 
-        "wdm_price": wdm_price
 
-    })
+        # ----------------------------------------------------
+        # 입력 금액
+        # ----------------------------------------------------
+
+        amount = data.get(
+            "amount",
+            0
+        )
+
+
+        # ----------------------------------------------------
+        # 현재 가격
+        # /swap-api와 동일한 가격 공급 함수 사용
+        # ----------------------------------------------------
+
+        eth_price = get_latest_price()
+
+        if eth_price is None:
+
+            eth_price = 0.0
+
+        eth_price = float(eth_price)
+
+
+        wdm_price = get_latest_wdm_price()
+
+        if wdm_price is None:
+
+            wdm_price = 0.0
+
+        wdm_price = float(wdm_price)
+
+
+        # ----------------------------------------------------
+        # 환산 계산
+        # 계산 함수에는 가격을 전달
+        # ----------------------------------------------------
+
+        result = calculate_wdm_conversion(
+
+            direction,
+
+            amount,
+
+            eth_price,
+
+            wdm_price
+
+        )
+
+
+        return jsonify(result)
+
+
+    except Exception as e:
+
+        print(
+            "CONVERSION ERROR:",
+            e
+        )
+
+        return jsonify({
+
+            "success": False,
+
+            "message": "Conversion calculation failed"
+
+        })
+```
+
 # ------------------------------------------------------------
 # Execute Swap
 # ------------------------------------------------------------
