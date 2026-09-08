@@ -2639,7 +2639,7 @@ def get_latest_wdm_price():
 
         return 0.0
 
-```python
+
 # ============================================================
 # ETH ↔ WDM Conversion Calculator
 # 환산 계산 전용
