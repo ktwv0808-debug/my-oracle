@@ -2753,7 +2753,7 @@ def calculate_wdm_conversion(
         "receive_amount": receive_amount
 
     }
-```
+``` 
 
 # ============================================================
 # Save ETH Price
@@ -7469,8 +7469,7 @@ def community():
 def chart():
 
     return render_template("chart.html")
-```python
-```python
+
 # ------------------------------------------------------------
 # Swap API
 # 환산기에 현재 ETH / WDM 가격 전달
@@ -7536,9 +7535,8 @@ def swap_api():
             "message": "Price data unavailable"
 
         })
-```
 
-```python
+
 # ============================================================
 # WDM Converter Calculation API
 # 환산 계산 전용
