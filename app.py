@@ -791,26 +791,30 @@ def load_wdm_history():
         """
 
     )
-# ============================================================
-# Save WDM Chart Price
-# WDM 차트 전용 가격 저장
-# ============================================================
-
-def save_wdm_chart_price(price):
+# ----------------------------------------------
+# WDM 차트 가격 이력 저장
+# ----------------------------------------------
+def save_wdm_chart_price(conn, price):
 
     try:
 
-        execute(
-            """
+        cur = conn.cursor()
+
+        cur.execute("""
+
             INSERT INTO wdm_price_history(price)
+
             VALUES(%s)
-            """,
-            (price,)
-        )
+
+        """, (price,))
+
+        cur.close()
 
         return True
 
     except Exception as e:
+
+        print("WDM CHART SAVE ERROR :", e)
 
         traceback.print_exc()
 
@@ -3903,7 +3907,12 @@ def auto_save_eth():
             wdm_chart_price = get_latest_wdm_price()
 
             if wdm_chart_price is not None and wdm_chart_price > 0:
-                save_wdm_chart_price(wdm_chart_price)
+
+                save_wdm_chart_price(
+                    conn,
+                    wdm_chart_price
+                )
+
             conn.commit()
             # --------------------------------------------------------
             # Chart Cache 초기화
