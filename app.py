@@ -762,15 +762,31 @@ def load_wdm_history():
 
             price
 
-        FROM
+        FROM (
 
-            wdm_price_history
+            SELECT
+
+                id,
+
+                created_at,
+
+                price
+
+            FROM
+
+                wdm_price_history
+
+            ORDER BY
+
+                id DESC
+
+            LIMIT 100
+
+        ) AS latest
 
         ORDER BY
 
             id ASC
-
-        LIMIT 100
 
         """
 
