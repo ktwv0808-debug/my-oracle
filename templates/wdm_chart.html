@@ -130,11 +130,45 @@ async function loadWDMChart() {
         console.log("WDM Chart Data:", data);
 
 
-        const labels =
-            data.labels || [];
+// --------------------------------------------------
+// WDM 정상 가격 데이터만 사용
+// 과거 ETH 가격이 WDM 차트에 저장된 데이터 제외
+// --------------------------------------------------
 
-        const prices =
-            data.prices || [];
+const rawLabels =
+    data.labels || [];
+
+const rawPrices =
+    data.prices || [];
+
+const labels = [];
+
+const prices = [];
+
+for (let i = 0; i < rawPrices.length; i++) {
+
+    const price =
+        Number(rawPrices[i]);
+
+    // WDM 가격만 차트에 표시
+    // 과거 잘못 저장된 ETH 가격(약 $2,500) 제외
+    if (
+        Number.isFinite(price) &&
+        price > 0 &&
+        price < 1
+    ) {
+
+        labels.push(
+            rawLabels[i]
+        );
+
+        prices.push(
+            price
+        );
+
+    }
+
+}
 
 
         // --------------------------------------------------
