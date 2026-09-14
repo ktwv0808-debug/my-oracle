@@ -3869,6 +3869,9 @@ def auto_save_eth():
 
     while True:
 
+        conn = None
+        cur = None
+
         try:
 
             # ------------------------------------------------
@@ -3997,11 +4000,6 @@ def auto_save_eth():
             conn.commit()
 
 
-            cur.close()
-
-            close_db(conn)
-
-
             # ------------------------------------------------
             # 로그
             # ------------------------------------------------
@@ -4014,9 +4012,64 @@ def auto_save_eth():
             )
 
 
+        except Exception as e:
+
             # ------------------------------------------------
-            # 오래된 데이터 삭제
+            # DB Rollback
             # ------------------------------------------------
+            if conn is not None:
+
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+
+
+            # ------------------------------------------------
+            # 오류 로그
+            # ------------------------------------------------
+            print(
+                "AUTO ETH SAVE ERROR :",
+                e
+            )
+
+            traceback.print_exc()
+
+
+        finally:
+
+            # ------------------------------------------------
+            # Cursor 종료
+            # ------------------------------------------------
+            if cur is not None:
+
+                try:
+                    cur.close()
+                except Exception:
+                    pass
+
+                cur = None
+
+
+            # ------------------------------------------------
+            # DB Connection 반환
+            # 어떤 오류가 발생해도 반드시 Pool로 반환
+            # ------------------------------------------------
+            if conn is not None:
+
+                try:
+                    close_db(conn)
+                except Exception:
+                    pass
+
+                conn = None
+
+
+        # ------------------------------------------------
+        # 오래된 데이터 삭제
+        # ------------------------------------------------
+        try:
+
             keep_latest_rows(
                 "eth_price",
                 10000
@@ -4027,11 +4080,10 @@ def auto_save_eth():
                 10000
             )
 
-
         except Exception as e:
 
             print(
-                "AUTO ETH SAVE ERROR :",
+                "AUTO ETH CLEANUP ERROR :",
                 e
             )
 
