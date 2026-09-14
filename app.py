@@ -5158,361 +5158,76 @@ def auto_trade(signal_data=None):
 
     print("--------------------------------")
 
+   
     # --------------------------------------------------------
-    # BUY
-    # --------------------------------------------------------
-
-    if signal in ("BUY", "STRONG BUY"):
-
-        # ----------------------------------------------------
-        # Portfolio 매수
-        # ----------------------------------------------------
-
-        result = buy_eth()
-
-        # ----------------------------------------------------
-        # 매수 실패
-        # ----------------------------------------------------
-
-        if result is None:
-
-            print("BUY FAILED")
-
-            return False
-
-        # ----------------------------------------------------
-        # DB 연결
-        # ----------------------------------------------------
-
-        conn = get_db()
-
-        cur = conn.cursor()
-
-        # ----------------------------------------------------
-        # 거래기록 저장
-        # ----------------------------------------------------
-
-        cur.execute("""
-
-            INSERT INTO trading_records
-            (
-
-                signal,
-
-                price,
-
-                quantity,
-
-                trade_amount,
-
-                profit,
-
-                roi,
-
-                trade_type,
-
-                rsi,
-
-                ma20,
-
-                ma60
-
-            )
-
-            VALUES
-
-            (
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s
-
-            )
-
-        """,
-
-        (
-
-            result["signal"],
-
-            result["price"],
-
-            result["quantity"],
-
-            result["trade_amount"],
-
-            result["profit"],
-
-            result["roi"],
-
-            result["trade_type"],
-
-            rsi,
-
-            ma20,
-
-            ma60
-
-        ))
-
-        conn.commit()
-
-        cur.close()
-
-        close_db(conn)
-        
-        print("AUTO BUY SUCCESS")
-
-        return True
-    elif signal in ("SELL", "STRONG SELL"):
-
-        # ----------------------------------------------------
-        # Portfolio 매도
-        # ----------------------------------------------------
-
-        result = sell_eth()
-
-        # ----------------------------------------------------
-        # 매도 실패
-        # ----------------------------------------------------
-
-        if result is None:
-
-            print("SELL FAILED")
-
-            return False
-
-        # ----------------------------------------------------
-        # DB 연결
-        # ----------------------------------------------------
-
-        conn = get_db()
-
-        cur = conn.cursor()
-
-        # ----------------------------------------------------
-        # 거래기록 저장
-        # ----------------------------------------------------
-
-        cur.execute("""
-
-            INSERT INTO trading_records
-            (
-
-                signal,
-
-                price,
-
-                quantity,
-
-                trade_amount,
-
-                profit,
-
-                roi,
-
-                trade_type,
-
-                rsi,
-
-                ma20,
-
-                ma60
-
-            )
-
-            VALUES
-
-            (
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s
-
-            )
-
-        """,
-
-        (
-
-            result["signal"],
-
-            result["price"],
-
-            result["quantity"],
-
-            result["trade_amount"],
-
-            result["profit"],
-
-            result["roi"],
-
-            result["trade_type"],
-
-            rsi,
-
-            ma20,
-
-            ma60
-
-        ))
-
-        conn.commit()
-
-        cur.close()
-
-        close_db(conn)
-        
-        print("AUTO SELL SUCCESS")
-
-        return True
-
-   # --------------------------------------------------------
-    # HOLD
+    # ETH Trading Analysis Record
+    # 자동매매는 실행하지 않고 분석 결과만 기록
     # --------------------------------------------------------
 
-    elif signal == "HOLD":
+    conn = get_db()
+    cur = conn.cursor()
 
-        print("AUTO TRADE : HOLD")
+    # --------------------------------------------------------
+    # 거래기록 저장
+    # --------------------------------------------------------
 
-        # ----------------------------------------------------
-        # DB 연결
-        # ----------------------------------------------------
-
-        conn = get_db()
-
-        cur = conn.cursor()
-
-        # ----------------------------------------------------
-        # HOLD 기록 저장
-        # ----------------------------------------------------
-
-        cur.execute("""
-
-            INSERT INTO trading_records
-            (
-
-                signal,
-
-                price,
-
-                quantity,
-
-                trade_amount,
-
-                profit,
-
-                roi,
-
-                trade_type,
-
-                rsi,
-
-                ma20,
-
-                ma60
-
-            )
-
-            VALUES
-            (
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s,
-
-                %s
-
-            )
-
-        """,
+    cur.execute("""
+        INSERT INTO trading_records
         (
-
-            "HOLD",
-
+            signal,
             price,
-
-            0,
-
-            0,
-
-            0,
-
-            0,
-
-            "AUTO",
-
+            quantity,
+            trade_amount,
+            profit,
+            roi,
+            trade_type,
             rsi,
-
             ma20,
-
             ma60
+        )
+        VALUES
+        (
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s
+        )
+    """,
+    (
+        signal,
+        price,
+        0,
+        0,
+        0,
+        0,
+        "ANALYSIS",
+        rsi,
+        ma20,
+        ma60
+    ))
 
-        ))
+    conn.commit()
 
-        conn.commit()
+    cur.close()
+    close_db(conn)
 
-        cur.close()
+    print(
+        "ETH ANALYSIS SAVED :",
+        signal,
+        price,
+        rsi,
+        ma20,
+        ma60
+    )
 
-        close_db(conn)
-        
-        return False
+    return True
 
-    # --------------------------------------------------------
-    # 기타 신호
-    # --------------------------------------------------------
-
-    else:
-
-        print("UNKNOWN SIGNAL :", signal)
-
-        return False
 
 # ------------------------------------------------------------
 # Admin Check
