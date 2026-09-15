@@ -24,7 +24,7 @@ import psycopg2
 # ==========================================================
 # PostgreSQL Connection Pool
 # ==========================================================
-from psycopg2.pool import SimpleConnectionPool
+from psycopg2.pool import ThreadedConnectionPool
 from psycopg2.extras import RealDictCursor
 from flask import send_file
 from flask_compress import Compress
@@ -295,11 +295,11 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
     raise Exception("DATABASE_URL is not set.")
 
-db_pool = SimpleConnectionPool(
+db_pool = ThreadedConnectionPool(
 
     minconn=1,
 
-    maxconn=5,
+    maxconn=15,
 
     dsn=DATABASE_URL,
 
@@ -316,18 +316,45 @@ db_pool = SimpleConnectionPool(
 # ==========================================================
 
 def get_db():
+    """
+    Thread-safe PostgreSQL connection pool에서 연결을 가져옵니다.
+    일시적인 pool 고갈 시 잠시 기다린 후 재시도합니다.
+    """
+    last_error = None
 
-    return db_pool.getconn()
+    for _ in range(10):
+        try:
+            return db_pool.getconn()
+        except psycopg2.pool.PoolError as e:
+            last_error = e
+            time.sleep(0.2)
+
+    raise last_error
+
 # ==========================================================
 # Return Database Connection
 # Connection Pool 반환
 # ==========================================================
 
-def close_db(conn):
+def close_db(conn, discard=False):
+    """
+    사용한 DB 연결을 pool로 반환합니다.
+    discard=True이면 오류로 끊어진 연결을 pool에서 폐기합니다.
+    """
+    if conn is None:
+        return
 
-    if conn is not None:
+    try:
+        if discard:
+            db_pool.putconn(conn, close=True)
+        else:
+            db_pool.putconn(conn)
+    except Exception:
+        try:
+            db_pool.putconn(conn, close=True)
+        except Exception:
+            pass
 
-        db_pool.putconn(conn)
 # ==========================================================
 # Execute SQL
 # INSERT / UPDATE / DELETE
@@ -335,58 +362,42 @@ def close_db(conn):
 # ==========================================================
 
 def execute(sql, params=None):
-
     for attempt in range(2):
-
         conn = None
+        cur = None
 
         try:
-
             conn = get_db()
-
             cur = conn.cursor()
-
             cur.execute(sql, params)
-
             conn.commit()
-
-            cur.close()
-
             return
 
-
         except OperationalError:
-
-            if conn:
-
+            if conn is not None:
                 try:
-
                     conn.rollback()
-                except:
-                    pass
-
-                try:
-
-                    close_db(conn)
-                except:
+                except Exception:
                     pass
 
             if attempt == 0:
-
+                # 끊어진 연결은 반드시 폐기하고 새 연결로 재시도
+                if conn is not None:
+                    close_db(conn, discard=True)
+                    conn = None
                 continue
 
             raise
 
-
         finally:
-
-            if conn:
-
+            if cur is not None:
                 try:
-
-                    close_db(conn)
-                except:
+                    cur.close()
+                except Exception:
                     pass
+
+            if conn is not None:
+                close_db(conn)
 
 # ==========================================================
 # Fetch One Row
@@ -394,41 +405,40 @@ def execute(sql, params=None):
 # ==========================================================
 
 def fetch_one(sql, params=None):
-
-    conn = get_db()
-
-    try:
-
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+    for attempt in range(2):
+        conn = None
+        cur = None
 
         try:
-
+            conn = get_db()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
             cur.execute(sql, params)
+            return cur.fetchone()
 
         except psycopg2.OperationalError:
+            if conn is not None:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
 
-            # ----------------------------------------------
-            # Dead Connection
-            # 연결이 끊어졌으면 다시 연결
-            # ----------------------------------------------
+            if attempt == 0:
+                if conn is not None:
+                    close_db(conn, discard=True)
+                    conn = None
+                continue
 
-            close_db(conn)
+            raise
 
-            conn = get_db()
+        finally:
+            if cur is not None:
+                try:
+                    cur.close()
+                except Exception:
+                    pass
 
-            cur = conn.cursor(cursor_factory=RealDictCursor)
-
-            cur.execute(sql, params)
-
-        row = cur.fetchone()
-
-        cur.close()
-
-        return row
-
-    finally:
-
-        close_db(conn)
+            if conn is not None:
+                close_db(conn)
 
 # ==========================================================
 # Fetch All Rows
@@ -436,36 +446,40 @@ def fetch_one(sql, params=None):
 # ==========================================================
 
 def fetch_all(sql, params=None):
+    for attempt in range(2):
+        conn = None
+        cur = None
 
-    conn = get_db()
+        try:
+            conn = get_db()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute(sql, params)
+            return cur.fetchall()
 
-    try:
+        except psycopg2.OperationalError:
+            if conn is not None:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
 
-        cur = conn.cursor(
-            cursor_factory=RealDictCursor
-        )
+            if attempt == 0:
+                if conn is not None:
+                    close_db(conn, discard=True)
+                    conn = None
+                continue
 
+            raise
 
-        cur.execute(
-            sql,
-            params
-        )
+        finally:
+            if cur is not None:
+                try:
+                    cur.close()
+                except Exception:
+                    pass
 
-
-        rows = cur.fetchall()
-
-
-        cur.close()
-
-
-        return rows
-
-
-    finally:
-
-        close_db(conn)
-
-
+            if conn is not None:
+                close_db(conn)
 
 # ==========================================================
 # Portfolio 조회 캐시
@@ -987,26 +1001,33 @@ def delete_announcement(id):
 # ------------------------------------------------------------
 
 def keep_latest_rows(table_name, limit_count=10000):
+    conn = None
+    cur = None
 
-    conn = get_db()
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(f"""
+            DELETE FROM {table_name}
+            WHERE id NOT IN
+            (
+                SELECT id
+                FROM {table_name}
+                ORDER BY id DESC
+                LIMIT %s
+            )
+        """, (limit_count,))
+        conn.commit()
 
-    cur = conn.cursor()
+    finally:
+        if cur is not None:
+            try:
+                cur.close()
+            except Exception:
+                pass
+        if conn is not None:
+            close_db(conn)
 
-    cur.execute(f"""
-        DELETE FROM {table_name}
-        WHERE id NOT IN
-        (
-            SELECT id
-            FROM {table_name}
-            ORDER BY id DESC
-            LIMIT %s
-        )
-    """, (limit_count,))
-
-    conn.commit()
-
-    cur.close()
-    close_db(conn)
 # ============================================================
 # PART 3 : Database
 # ============================================================
@@ -3869,140 +3890,134 @@ def auto_save_eth():
 
     while True:
 
-        conn = None
-        cur = None
-
         try:
-
             # ------------------------------------------------
             # 현재 ETH 가격
             # ------------------------------------------------
             price = get_eth_price()
 
             if price is None:
-
                 time.sleep(30)
-
                 continue
 
+            # ------------------------------------------------
+            # 중요: DB 연결을 오래 점유하지 않도록
+            # 가격 INSERT 후 즉시 connection 반환
+            # ------------------------------------------------
+            conn = None
+            cur = None
+            new_id = None
+
+            try:
+                conn = get_db()
+                cur = conn.cursor(cursor_factory=RealDictCursor)
+
+                cur.execute(
+                    """
+                    INSERT INTO eth_price(price)
+                    VALUES(%s)
+                    RETURNING id
+                    """,
+                    (price,)
+                )
+
+                new_id = cur.fetchone()["id"]
+                conn.commit()
+
+            except Exception:
+                if conn is not None:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                raise
+
+            finally:
+                if cur is not None:
+                    try:
+                        cur.close()
+                    except Exception:
+                        pass
+                if conn is not None:
+                    close_db(conn)
 
             # ------------------------------------------------
-            # DB 저장
-            # ETH 가격만 저장
-            # ------------------------------------------------
-            conn = get_db()
-
-            cur = conn.cursor(
-                cursor_factory=RealDictCursor
-            )
-
-            cur.execute(
-                """
-                INSERT INTO eth_price(price)
-                VALUES(%s)
-                RETURNING id
-                """,
-                (price,)
-            )
-
-            new_id = cur.fetchone()["id"]
-
-
-            # ------------------------------------------------
-            # Chart Cache 초기화
-            # 새로운 ETH 데이터 반영
+            # Cache 초기화
             # ------------------------------------------------
             CACHE["chart_data"] = None
             CACHE["chart_time"] = 0
 
-
-            # ------------------------------------------------
-            # Indicator Cache 초기화
-            # RSI / MA / Cross Signal
-            # ------------------------------------------------
             CACHE["rsi"] = None
             CACHE["rsi_time"] = 0
-
             CACHE["ma20"] = None
             CACHE["ma20_time"] = 0
-
             CACHE["ma60"] = None
             CACHE["ma60_time"] = 0
-
             CACHE["prev_ma20"] = None
             CACHE["prev_ma20_time"] = 0
-
             CACHE["prev_ma60"] = None
             CACHE["prev_ma60_time"] = 0
-
             CACHE["cross_signal"] = None
             CACHE["cross_signal_time"] = 0
-
             CACHE["signal"] = None
             CACHE["signal_time"] = 0
 
-
-            # ------------------------------------------------
-            # WDM 가격 캐시는 ETH 자동저장과 분리
-            # ------------------------------------------------
             CACHE["wdm_price"] = None
             CACHE["wdm_price_time"] = 0
 
-
             # ------------------------------------------------
-            # 이동평균 계산
+            # DB connection을 반환한 뒤 지표 계산
+            # -> nested connection으로 인한 pool 고갈 방지
             # ------------------------------------------------
             ma20 = calculate_ma(20)
-
             ma60 = calculate_ma(60)
-
-
-            # ------------------------------------------------
-            # 신호 계산
-            # ------------------------------------------------
             signal_data = generate_signal()
-
             signal = signal_data["signal"]
-
 
             # ------------------------------------------------
             # 자동매매 실행 비활성화
             # ------------------------------------------------
             # auto_trade(signal_data)
 
-
             # ------------------------------------------------
-            # 같은 행 UPDATE
+            # 계산 결과를 별도의 짧은 DB 연결로 UPDATE
             # ------------------------------------------------
-            cur.execute(
-                """
-                UPDATE eth_price
+            conn = None
+            cur = None
 
-                SET
-                    ma20=%s,
-                    ma60=%s,
-                    signal=%s
-
-                WHERE id=%s
-                """,
-                (
-                    ma20,
-                    ma60,
-                    signal,
-                    new_id
+            try:
+                conn = get_db()
+                cur = conn.cursor()
+                cur.execute(
+                    """
+                    UPDATE eth_price
+                    SET
+                        ma20=%s,
+                        ma60=%s,
+                        signal=%s
+                    WHERE id=%s
+                    """,
+                    (ma20, ma60, signal, new_id)
                 )
-            )
+                conn.commit()
 
+            except Exception:
+                if conn is not None:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                raise
 
-            # ------------------------------------------------
-            # 저장 완료
-            # ------------------------------------------------
-            conn.commit()
+            finally:
+                if cur is not None:
+                    try:
+                        cur.close()
+                    except Exception:
+                        pass
+                if conn is not None:
+                    close_db(conn)
 
-
-            # ------------------------------------------------
-            # 로그
-            # ------------------------------------------------
             print(
                 f"[AUTO ETH] "
                 f"Price={price:.2f} "
@@ -4011,286 +4026,18 @@ def auto_save_eth():
                 f"Signal={signal}"
             )
 
-
         except Exception as e:
-
-            # ------------------------------------------------
-            # DB Rollback
-            # ------------------------------------------------
-            if conn is not None:
-
-                try:
-                    conn.rollback()
-                except Exception:
-                    pass
-
-
-            # ------------------------------------------------
-            # 오류 로그
-            # ------------------------------------------------
-            print(
-                "AUTO ETH SAVE ERROR :",
-                e
-            )
-
+            print("AUTO ETH SAVE ERROR :", e)
             traceback.print_exc()
 
-
-        finally:
-
-            # ------------------------------------------------
-            # Cursor 종료
-            # ------------------------------------------------
-            if cur is not None:
-
-                try:
-                    cur.close()
-                except Exception:
-                    pass
-
-                cur = None
-
-
-            # ------------------------------------------------
-            # DB Connection 반환
-            # 어떤 오류가 발생해도 반드시 Pool로 반환
-            # ------------------------------------------------
-            if conn is not None:
-
-                try:
-                    close_db(conn)
-                except Exception:
-                    pass
-
-                conn = None
-
-
-        # ------------------------------------------------
-        # 오래된 데이터 삭제
-        # ------------------------------------------------
         try:
-
-            keep_latest_rows(
-                "eth_price",
-                10000
-            )
-
-            keep_latest_rows(
-                "trading_records",
-                10000
-            )
-
+            keep_latest_rows("eth_price", 10000)
+            keep_latest_rows("trading_records", 10000)
         except Exception as e:
-
-            print(
-                "AUTO ETH CLEANUP ERROR :",
-                e
-            )
-
+            print("AUTO ETH CLEANUP ERROR :", e)
             traceback.print_exc()
 
-
-        # ------------------------------------------------
-        # 10분마다 ETH 저장
-        # ------------------------------------------------
         time.sleep(600)
-
-
-# ==========================================================
-# WDM Auto Save
-# WDM 가격 이력 전용 자동 저장
-# ==========================================================
-
-def auto_save_wdm():
-
-    while True:
-
-        conn = None
-
-        try:
-
-            # ------------------------------------------------
-            # 현재 WDM 가격 조회
-            # Uniswap V4 / Base Mainnet
-            # ------------------------------------------------
-
-            print(
-                "[AUTO WDM] "
-                "WDM price check..."
-            )
-
-            wdm_price = get_latest_wdm_price()
-
-
-            # ------------------------------------------------
-            # 정상 가격 확인
-            # ------------------------------------------------
-
-            if (
-                wdm_price is None
-                or float(wdm_price) <= 0
-            ):
-
-                print(
-                    "[AUTO WDM] "
-                    "WDM price unavailable - "
-                    "retry after 60 seconds"
-                )
-
-                time.sleep(60)
-
-                continue
-
-
-            # ------------------------------------------------
-            # 가격 확인 로그
-            # ------------------------------------------------
-
-            wdm_price = float(wdm_price)
-
-            print(
-                "[AUTO WDM] "
-                f"Price=${wdm_price:.12f}"
-            )
-
-
-            # ------------------------------------------------
-            # DB 연결
-            # ------------------------------------------------
-
-            conn = get_db()
-
-
-            # ------------------------------------------------
-            # WDM 가격 이력 저장
-            # ------------------------------------------------
-
-            saved = save_wdm_chart_price(
-                conn,
-                wdm_price
-            )
-
-
-            # ------------------------------------------------
-            # 저장 결과 확인
-            # ------------------------------------------------
-
-            if not saved:
-
-                conn.rollback()
-
-                print(
-                    "[AUTO WDM] "
-                    "Price history save failed - "
-                    "retry after 60 seconds"
-                )
-
-                close_db(conn)
-
-                conn = None
-
-                time.sleep(60)
-
-                continue
-
-
-            # ------------------------------------------------
-            # DB Commit
-            # ------------------------------------------------
-
-            conn.commit()
-
-
-            # ------------------------------------------------
-            # DB 연결 종료
-            # ------------------------------------------------
-
-            close_db(conn)
-
-            conn = None
-
-
-            # ------------------------------------------------
-            # WDM Chart Cache 초기화
-            # 새로운 가격이 저장되었으므로
-            # 다음 차트 조회에서 최신 DB 데이터를 읽도록 함
-            # ------------------------------------------------
-
-            CACHE["chart_data"] = None
-            CACHE["chart_time"] = 0
-
-
-            # ------------------------------------------------
-            # 저장 완료 로그
-            # ------------------------------------------------
-
-            print(
-                "[AUTO WDM] "
-                "Price history saved successfully"
-            )
-
-
-            # ------------------------------------------------
-            # 정상 저장 시 10분 후 다음 저장
-            # ------------------------------------------------
-
-            time.sleep(600)
-
-
-        except Exception as e:
-
-            # ------------------------------------------------
-            # DB Rollback
-            # ------------------------------------------------
-
-            if conn is not None:
-
-                try:
-
-                    conn.rollback()
-
-                except Exception:
-
-                    pass
-
-
-                # ------------------------------------------------
-                # DB 연결 종료
-                # ------------------------------------------------
-
-                try:
-
-                    close_db(conn)
-
-                except Exception:
-
-                    pass
-
-                conn = None
-
-
-            # ------------------------------------------------
-            # 오류 로그
-            # ------------------------------------------------
-
-            print(
-                "[AUTO WDM SAVE ERROR]:",
-                e
-            )
-
-            traceback.print_exc()
-
-
-            # ------------------------------------------------
-            # 오류 발생 시 60초 후 재시도
-            # ------------------------------------------------
-
-            print(
-                "[AUTO WDM] "
-                "Retry after 60 seconds"
-            )
-
-            time.sleep(60)
 
 # ==========================================================
 # PART 6 : Portfolio
