@@ -1,4 +1,14 @@
 # ============================================================
+# DB CONNECTION POOL SAFETY PATCH
+# 2026-09-18
+# - get_db()에서 대여한 connection 추적
+# - 예외로 close_db()가 실행되지 않은 경우 teardown에서 반환
+# - 예외 발생 시 rollback 후 pool 반환
+# - close_db()의 반환 오류가 요청 전체를 다시 실패시키지 않도록 보호
+# - pool maxconn은 무작정 키우지 않고 10으로 유지
+# ============================================================
+
+# ============================================================
 # PART 1 : Import
 # ============================================================
 
@@ -299,7 +309,7 @@ db_pool = ThreadedConnectionPool(
 
     minconn=1,
 
-    maxconn=15,
+    maxconn=10,
 
     dsn=DATABASE_URL,
 
@@ -316,25 +326,58 @@ db_pool = ThreadedConnectionPool(
 # ==========================================================
 
 def get_db():
-    """
-    Thread-safe PostgreSQL connection pool에서 연결을 가져옵니다.
-    일시적인 pool 고갈 시 잠시 기다린 후 재시도합니다.
-    """
-    last_error = None
+    conn = db_pool.getconn()
+    try:
+        from flask import g
+        if not hasattr(g, "_db_connection_objects"):
+            g._db_connection_objects = {}
+        g._db_connection_objects[id(conn)] = conn
+    except Exception:
+        pass
+    return conn
 
-    for _ in range(10):
+def close_db(conn, discard=False):
+    if conn is not None:
         try:
-            return db_pool.getconn()
-        except psycopg2.pool.PoolError as e:
-            last_error = e
-            time.sleep(0.2)
+            db_pool.putconn(conn, close=discard)
+        except Exception:
+            pass
+        finally:
+            try:
+                from flask import g
+                if hasattr(g, "_db_connection_objects"):
+                    g._db_connection_objects.pop(id(conn), None)
+            except Exception:
+                pass
 
-    raise last_error
+@app.teardown_appcontext
+def cleanup_db_connections(exception=None):
+    """
+    안전망:
+    함수 내부에서 예외가 발생하여 close_db()까지 도달하지 못한
+    DB connection을 요청 종료 시 pool로 반환합니다.
+    """
+    try:
+        from flask import g
+        connections = list(
+            getattr(g, "_db_connection_objects", {}).values()
+        )
 
-# ==========================================================
-# Return Database Connection
-# Connection Pool 반환
-# ==========================================================
+        for conn in connections:
+            try:
+                if exception is not None:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                db_pool.putconn(conn)
+            except Exception:
+                pass
+
+        if hasattr(g, "_db_connection_objects"):
+            g._db_connection_objects.clear()
+    except Exception:
+        pass
 
 def close_db(conn, discard=False):
     """
