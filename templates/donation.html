@@ -2,35 +2,38 @@
 <html lang="en">
 
 <head>
+
 <script src="/static/language.js"></script>
-  
+
 <script>
 
 const langData={
 
-
 en:{
-
 
 close:"Close",
 
-
 history:"Price History",
 
-
-signal:"Auto Trading Signal", 
-
+signal:"Auto Trading Signal",
 
 trades:"Trading Records",
 
-
 whitepaper:"Whitepaper",
 
+mission:"Our Mission",
 
-poem:"Toward Victory",
+buy:"WDM Purchase Guide",
 
+notice:"📢 Notice",
 
-mission:"Our Mission"
+content:"📂 Content",
+
+faq:"❓ FAQ",
+
+uniswap:"🦄 Uniswap",
+
+community:"🌐 Community"
 
 },
 
@@ -38,29 +41,31 @@ mission:"Our Mission"
 
 ko:{
 
-
 close:"닫기",
-
 
 history:"가격 기록",
 
-
 signal:"자동 거래 신호",
-
 
 trades:"거래 기록",
 
-
 whitepaper:"백서",
 
+mission:"우리의 사명",
 
-poem:"승리를 향하여",
+buy:"WDM 매수 안내",
 
+notice:"📢 공지사항",
 
-mission:"우리의 사명"
+content:"📂 콘텐츠",
+
+faq:"❓ 자주 묻는 질문",
+
+uniswap:"🦄 Uniswap",
+
+community:"🌐 커뮤니티"
 
 }
-
 
 };
 
@@ -68,19 +73,13 @@ mission:"우리의 사명"
 
 function changeLang(){
 
-
 let l=document.getElementById("language").value;
-
-
 
 document.querySelectorAll("[data-en]").forEach(e=>{
 
-
 e.innerHTML=e.getAttribute("data-"+l);
 
-
 });
-
 
 }
 
@@ -88,17 +87,16 @@ e.innerHTML=e.getAttribute("data-"+l);
 
 function closePopup(){
 
-
 window.open('','_self');
 
 window.close();
-
 
 }
 
 
 
 </script>
+
 <meta charset="UTF-8">
 
 <title>W-donation</title>
@@ -211,30 +209,21 @@ margin:40px 0;
 
 .btn{
 
-
 display:inline-block;
-
 
 padding:16px 35px;
 
-
 margin:10px;
-
 
 background:#0066cc;
 
-
 color:white;
-
 
 border-radius:15px;
 
-
 font-size:18px;
 
-
 cursor:pointer;
-
 
 }
 
@@ -271,6 +260,7 @@ padding:12px;
 }
 
 
+
 td{
 
 border:1px solid #ddd;
@@ -290,7 +280,6 @@ padding:12px;
 
 
 function changeLanguage(){
-
 
 let lang=document.getElementById("lang").value;
 
@@ -326,10 +315,19 @@ system.innerHTML="WDM 마켓 정보";
 paper.innerHTML="백서";
 
 
-poem.innerHTML="승리를 향하여";
+buy.innerHTML="WDM 매수 안내";
 
 
 report.innerHTML="분기별 기부 보고서";
+
+
+notice.innerHTML="📢 공지사항";
+
+
+content.innerHTML="📂 콘텐츠";
+
+
+faq.innerHTML="❓ 자주 묻는 질문";
 
 
 }
@@ -365,10 +363,19 @@ system.innerHTML="WDM Market Information";
 paper.innerHTML="Whitepaper";
 
 
-poem.innerHTML="Toward Victory";
+buy.innerHTML="WDM Purchase Guide";
 
 
 report.innerHTML="Quarterly Donation Report";
+
+
+notice.innerHTML="📢 Notice";
+
+
+content.innerHTML="📂 Content";
+
+
+faq.innerHTML="❓ FAQ";
 
 }
 
@@ -467,16 +474,9 @@ W-donation
 </h1>
 
 
-
-
-
 <img src="/static/worldvision.png"
 
 class="logo">
-
-
-
-
 
 
 <h2 id="subtitle"
@@ -488,10 +488,6 @@ Blockchain With Social Responsibility
 </h2>
 
 
-
-
-
-
 <p id="line1"
 
 class="text">
@@ -499,9 +495,6 @@ class="text">
 Creating technology that creates social impact.
 
 </p>
-
-
-
 
 
 <p id="line2"
@@ -513,9 +506,6 @@ class="text">
 </p>
 
 
-
-
-
 <p id="line3"
 
 class="text">
@@ -525,19 +515,11 @@ Donation records and transaction details will be publicly disclosed.
 </p>
 
 
-
-
-
-
-
 <h2 id="mission">
 
 Our Mission
 
 </h2>
-
-
-
 
 
 <p id="missionText"
@@ -550,12 +532,7 @@ W-donation believes that blockchain technology can create positive change beyond
 
 
 
-
-
-
-
 <div class="buttons">
-
 
 
 <div class="btn"
@@ -582,52 +559,79 @@ Whitepaper
 
 
 
-<button data-en="WDM Purchase Guide" data-ko="WDM 매수 안내" onclick="closePopup()"> WDM Purchase Guide </button>
 <div class="btn"
+
+id="buy"
+
+onclick="popup('/buy-wdm')">
+
+WDM Purchase Guide
+
+</div>
+
+
+
+<div class="btn"
+
+id="notice"
+
 onclick="popup('/announcement')">
 
 📢 Notice
 
 </div>
+
+
+
 <div class="btn"
+
+id="content"
+
 onclick="popup('/content')">
 
 📂 Content
 
 </div>
-  
+
+
+
 <div class="btn"
+
+id="faq"
+
 onclick="popup('/faq')">
 
 ❓ FAQ
 
 </div>
+
+
+
 <div class="btn">
+
 <a
-    href="https://app.uniswap.org"
-    target="_blank"
-    rel="noopener noreferrer"
-    style="text-decoration:none; color:white;">
-    
+href="https://app.uniswap.org"
+target="_blank"
+rel="noopener noreferrer"
+style="text-decoration:none; color:white;">
+
 🦄 Uniswap
 
 </a>
+
 </div>
-  
+
+
+
 <a
-    href="/community"
-    target="_blank"
-    class="btn btn-primary"
-    style="text-decoration:none; color:white;">
+href="/community"
+target="_blank"
+class="btn btn-primary"
+style="text-decoration:none; color:white;">
 
 🌐 Community
 
 </a>
-
-
-
-
-
 
 
 
@@ -636,8 +640,6 @@ onclick="popup('/faq')">
 Quarterly Donation Report
 
 </h2>
-
-
 
 
 
@@ -685,13 +687,13 @@ Transaction Proof
 
 <tr>
 
-    <td>{{ d.quarter }}</td>
+<td>{{ d.quarter }}</td>
 
-    <td>{{ d.net_profit }} ETH</td>
+<td>{{ d.net_profit }} ETH</td>
 
-    <td>{{ d.donation }} ETH</td>
+<td>{{ d.donation }} ETH</td>
 
-    <td>{{ d.proof }}</td>
+<td>{{ d.proof }}</td>
 
 </tr>
 
@@ -711,3 +713,5 @@ Transaction Proof
 </body>
 
 </html>
+
+
