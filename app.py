@@ -1039,28 +1039,76 @@ def delete_announcement(id):
     CACHE["announcement"] = None
 
     CACHE["announcement_time"] = 0
+
 # ------------------------------------------------------------
 # Keep Latest Rows
+# 최신 데이터만 유지하고 초과할 때만 삭제
 # ------------------------------------------------------------
 
 def keep_latest_rows(table_name, limit_count=10000):
+
+    allowed_tables = {
+        "eth_price",
+        "wdm_price_history",
+        "trading_records"
+    }
+
+    if table_name not in allowed_tables:
+        raise ValueError(
+            f"Invalid cleanup table: {table_name}"
+        )
+
+    if limit_count < 1:
+        raise ValueError(
+            "limit_count must be greater than zero"
+        )
+
     conn = None
     cur = None
 
     try:
         conn = get_db()
         cur = conn.cursor()
-        cur.execute(f"""
-            DELETE FROM {table_name}
-            WHERE id NOT IN
-            (
-                SELECT id
-                FROM {table_name}
-                ORDER BY id DESC
-                LIMIT %s
+
+        # 현재 행 수 확인
+        cur.execute(
+            f"SELECT COUNT(*) FROM {table_name}"
+        )
+
+        row_count = cur.fetchone()[0]
+
+        # 한도를 넘은 경우에만 오래된 데이터 삭제
+        if row_count > limit_count:
+
+            cur.execute(
+                f"""
+                DELETE FROM {table_name}
+                WHERE id NOT IN (
+                    SELECT id
+                    FROM {table_name}
+                    ORDER BY id DESC
+                    LIMIT %s
+                )
+                """,
+                (limit_count,)
             )
-        """, (limit_count,))
-        conn.commit()
+
+            deleted_count = cur.rowcount
+            conn.commit()
+
+            print(
+                f"[DB CLEANUP] {table_name}: "
+                f"deleted={deleted_count}, "
+                f"limit={limit_count}"
+            )
+
+    except Exception:
+        if conn is not None:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+        raise
 
     finally:
         if cur is not None:
@@ -1068,8 +1116,10 @@ def keep_latest_rows(table_name, limit_count=10000):
                 cur.close()
             except Exception:
                 pass
+
         if conn is not None:
             close_db(conn)
+
 
 # ============================================================
 # PART 3 : Database
