@@ -5209,80 +5209,54 @@ def admin_required():
 
 @app.route("/")
 def home():
-
+    """Render the public homepage even when Neon is temporarily unavailable."""
     global HOME_CACHE
 
     current_time = time.time()
+    donations = []
 
-    # ==========================================================
-    # Home Cache
-    # 120�� ���� ĳ�� ���
-    # ==========================================================
+    # Prefer the short-lived cache so the homepage can still render during a DB outage.
+    try:
+        cached_data = HOME_CACHE.get("data")
+        cached_time = HOME_CACHE.get("time", 0)
+        if cached_data is not None and current_time - cached_time < 120:
+            donations = cached_data
+        else:
+            conn = None
+            cur = None
+            try:
+                conn = get_db()
+                cur = conn.cursor(cursor_factory=RealDictCursor)
+                cur.execute("""
+                    SELECT quarter, net_profit, donation, proof
+                    FROM donation_records
+                    ORDER BY id DESC
+                """)
+                donations = cur.fetchall()
+                HOME_CACHE["data"] = donations
+                HOME_CACHE["time"] = current_time
+            finally:
+                if cur is not None:
+                    try:
+                        cur.close()
+                    except Exception:
+                        pass
+                if conn is not None:
+                    # Discard a connection if the query failed or the connection is broken.
+                    try:
+                        close_db(conn, discard=bool(getattr(conn, "closed", 0)))
+                    except Exception:
+                        pass
+    except Exception as exc:
+        # Do not let database quota/connection errors take down the public landing page.
+        print(f"HOME DATABASE UNAVAILABLE; rendering homepage without donation records: {exc}")
+        cached_data = HOME_CACHE.get("data")
+        if cached_data is not None:
+            donations = cached_data
+        else:
+            donations = []
 
-    if (
-
-        HOME_CACHE["data"] is not None
-
-        and
-
-        current_time - HOME_CACHE["time"] < 120
-
-    ):
-
-        donations = HOME_CACHE["data"]
-
-    else:
-
-        # ==========================================================
-        # Donation Records
-        # ��� ���� ��ȸ
-        # ==========================================================
-
-        conn = get_db()
-
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-
-        cur.execute("""
-
-            SELECT
-                quarter,
-                net_profit,
-                donation,
-                proof
-
-            FROM donation_records
-
-            ORDER BY id DESC
-
-        """)
-
-        donations = cur.fetchall()
-
-        cur.close()
-
-        close_db(conn)
-
-        # ==========================================================
-        # Cache Save
-        # ĳ�ÿ� ����
-        # ==========================================================
-
-        HOME_CACHE["data"] = donations
-
-        HOME_CACHE["time"] = current_time
-
-    # ==========================================================
-    # Main Page
-    # ���� ������ ���
-    # ==========================================================
-
-    return render_template(
-
-        "donation.html",
-
-        donations=donations
-
-    )
+    return render_template("donation.html", donations=donations)
 # ------------------------------------------------------------
 # Donation
 # ------------------------------------------------------------
