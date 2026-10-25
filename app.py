@@ -1,11 +1,11 @@
 # ============================================================
 # DB CONNECTION POOL SAFETY PATCH
 # 2026-09-18
-# - get_db()에서 대여한 connection 추적
-# - 예외로 close_db()가 실행되지 않은 경우 teardown에서 반환
-# - 예외 발생 시 rollback 후 pool 반환
-# - close_db()의 반환 오류가 요청 전체를 다시 실패시키지 않도록 보호
-# - pool maxconn은 무작정 키우지 않고 10으로 유지
+# - get_db()���� �뿩�� connection ����
+# - ���ܷ� close_db()�� ������� ���� ��� teardown���� ��ȯ
+# - ���� �߻� �� rollback �� pool ��ȯ
+# - close_db()�� ��ȯ ������ ��û ��ü�� �ٽ� ���н�Ű�� �ʵ��� ��ȣ
+# - pool maxconn�� ������ Ű���� �ʰ� 10���� ����
 # ============================================================
 
 # ============================================================
@@ -42,7 +42,7 @@ from psycopg2 import OperationalError
 
 # ==========================================================
 # Admin Account (Environment Variables)
-# 관리자 계정 (환경변수)
+# ������ ���� (ȯ�溯��)
 # ==========================================================
 
 ADMIN_ID = os.environ.get("ADMIN_ID")
@@ -64,7 +64,7 @@ CACHE = {
     "statistics_time": 0,
     # --------------------------------
     # Trading Indicator Cache
-    # RSI / MA 계산 캐시
+    # RSI / MA ��� ĳ��
     # --------------------------------
 
     "rsi": None,
@@ -113,7 +113,7 @@ CACHE = {
 }
 
 
-# 캐시 유지 시간(초)
+# ĳ�� ���� �ð�(��)
 CACHE_TIME = {
 
     "eth_price": 30,
@@ -149,7 +149,7 @@ CACHE_TIME = {
 }
 # ==========================================================
 # Access Log Cache
-# 동일 방문자 중복 저장 방지
+# ���� �湮�� �ߺ� ���� ����
 # ==========================================================
 
 ACCESS_LOG_CACHE = {}
@@ -202,7 +202,7 @@ app.config["COMPRESS_LEVEL"] = 6
 app.config["COMPRESS_MIN_SIZE"] = 500
 # ==========================================================
 # Home Cache
-# 메인 페이지 캐시
+# ���� ������ ĳ��
 # ==========================================================
 
 import time
@@ -268,7 +268,7 @@ os.makedirs(
     exist_ok=True
 )
 # ------------------------------------------------------------
-# Session 암호키
+# Session ��ȣŰ
 # ------------------------------------------------------------
 app.secret_key = "WDM_ADMIN_SECRET_KEY_2026"
 
@@ -305,104 +305,77 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
     raise Exception("DATABASE_URL is not set.")
 
+# Small, lazy pool to reduce connections on a low-traffic Render/Neon setup.
 db_pool = ThreadedConnectionPool(
-
-    minconn=1,
-
-    maxconn=10,
-
+    minconn=0,
+    maxconn=3,
     dsn=DATABASE_URL,
-
     connect_timeout=5,
-
-    sslmode="require"
-
+    sslmode="require",
+    application_name="wdm-web"
 )
 
 
 # ==========================================================
 # Get Database Connection
-# Connection Pool 사용
+# Connection Pool ���
 # ==========================================================
 
 def get_db():
+    """Borrow a database connection and register it for request cleanup."""
     conn = db_pool.getconn()
     try:
-        from flask import g
-        if not hasattr(g, "_db_connection_objects"):
-            g._db_connection_objects = {}
-        g._db_connection_objects[id(conn)] = conn
+        from flask import g, has_request_context
+        if has_request_context():
+            if not hasattr(g, "_db_connection_objects"):
+                g._db_connection_objects = {}
+            g._db_connection_objects[id(conn)] = conn
     except Exception:
         pass
     return conn
 
+
 def close_db(conn, discard=False):
-    if conn is not None:
+    """Return a connection once; discard broken connections when requested."""
+    if conn is None:
+        return
+    try:
+        from flask import g, has_request_context
+        if has_request_context() and hasattr(g, "_db_connection_objects"):
+            g._db_connection_objects.pop(id(conn), None)
+    except Exception:
+        pass
+    try:
+        if not discard and not conn.closed:
+            if conn.status != psycopg2.extensions.STATUS_READY:
+                conn.rollback()
+        db_pool.putconn(conn, close=discard or bool(conn.closed))
+    except Exception:
         try:
-            db_pool.putconn(conn, close=discard)
+            db_pool.putconn(conn, close=True)
         except Exception:
             pass
-        finally:
-            try:
-                from flask import g
-                if hasattr(g, "_db_connection_objects"):
-                    g._db_connection_objects.pop(id(conn), None)
-            except Exception:
-                pass
+
 
 @app.teardown_appcontext
 def cleanup_db_connections(exception=None):
-    """
-    안전망:
-    함수 내부에서 예외가 발생하여 close_db()까지 도달하지 못한
-    DB connection을 요청 종료 시 pool로 반환합니다.
-    """
+    """Return any connections that a route forgot to close."""
     try:
         from flask import g
-        connections = list(
-            getattr(g, "_db_connection_objects", {}).values()
-        )
-
+        connections = list(getattr(g, "_db_connection_objects", {}).values())
         for conn in connections:
             try:
                 if exception is not None:
-                    try:
-                        conn.rollback()
-                    except Exception:
-                        pass
-                db_pool.putconn(conn)
+                    conn.rollback()
+                close_db(conn, discard=bool(getattr(conn, "closed", False)))
             except Exception:
-                pass
-
-        if hasattr(g, "_db_connection_objects"):
-            g._db_connection_objects.clear()
+                try:
+                    close_db(conn, discard=True)
+                except Exception:
+                    pass
     except Exception:
         pass
 
-def close_db(conn, discard=False):
-    """
-    사용한 DB 연결을 pool로 반환합니다.
-    discard=True이면 오류로 끊어진 연결을 pool에서 폐기합니다.
-    """
-    if conn is None:
-        return
-
-    try:
-        if discard:
-            db_pool.putconn(conn, close=True)
-        else:
-            db_pool.putconn(conn)
-    except Exception:
-        try:
-            db_pool.putconn(conn, close=True)
-        except Exception:
-            pass
-
-# ==========================================================
-# Execute SQL
-# INSERT / UPDATE / DELETE
-# SSL 연결 종료 시 1회 자동 재시도
-# ==========================================================
 
 def execute(sql, params=None):
     for attempt in range(2):
@@ -424,7 +397,7 @@ def execute(sql, params=None):
                     pass
 
             if attempt == 0:
-                # 끊어진 연결은 반드시 폐기하고 새 연결로 재시도
+                # ������ ������ �ݵ�� ����ϰ� �� ����� ��õ�
                 if conn is not None:
                     close_db(conn, discard=True)
                     conn = None
@@ -444,7 +417,7 @@ def execute(sql, params=None):
 
 # ==========================================================
 # Fetch One Row
-# SELECT 1건 조회
+# SELECT 1�� ��ȸ
 # ==========================================================
 
 def fetch_one(sql, params=None):
@@ -485,7 +458,7 @@ def fetch_one(sql, params=None):
 
 # ==========================================================
 # Fetch All Rows
-# SELECT 여러건 조회
+# SELECT ������ ��ȸ
 # ==========================================================
 
 def fetch_all(sql, params=None):
@@ -525,8 +498,8 @@ def fetch_all(sql, params=None):
                 close_db(conn)
 
 # ==========================================================
-# Portfolio 조회 캐시
-# DB 반복 조회 최소화
+# Portfolio ��ȸ ĳ��
+# DB �ݺ� ��ȸ �ּ�ȭ
 # ==========================================================
 
 PORTFOLIO_CACHE = {
@@ -539,7 +512,7 @@ PORTFOLIO_CACHE = {
 
 
 # ==========================================================
-# Portfolio Cache 유지 시간
+# Portfolio Cache ���� �ð�
 # seconds
 # ==========================================================
 
@@ -548,8 +521,8 @@ PORTFOLIO_CACHE_TIME = 30
 
 
 # ==========================================================
-# Portfolio 조회
-# Cache 적용
+# Portfolio ��ȸ
+# Cache ����
 # ==========================================================
 
 def get_cached_portfolio():
@@ -562,7 +535,7 @@ def get_cached_portfolio():
 
 
     # ======================================================
-    # Cache 사용
+    # Cache ���
     # ======================================================
 
     if PORTFOLIO_CACHE["data"] is not None:
@@ -584,8 +557,8 @@ def get_cached_portfolio():
 
 
     # ======================================================
-    # Cache 만료
-    # DB 조회 실행
+    # Cache ����
+    # DB ��ȸ ����
     # ======================================================
 
     row = fetch_one("""
@@ -598,7 +571,7 @@ def get_cached_portfolio():
 
 
     # ======================================================
-    # Cache 저장
+    # Cache ����
     # ======================================================
 
     PORTFOLIO_CACHE["data"] = row
@@ -615,7 +588,7 @@ def get_cached_portfolio():
 
 # ==========================================================
 # Portfolio Cache Clear
-# 매수/매도 후 실행
+# �ż�/�ŵ� �� ����
 # ==========================================================
 
 def clear_portfolio_cache():
@@ -759,7 +732,7 @@ def delete_file_from_github(file_url):
 
 
     # ------------------------------------------------------
-    # 파일 정보 조회
+    # ���� ���� ��ȸ
     # ------------------------------------------------------
 
     response = requests.get(
@@ -780,7 +753,7 @@ def delete_file_from_github(file_url):
 
 
     # ------------------------------------------------------
-    # 삭제
+    # ����
     # ------------------------------------------------------
 
     requests.delete(
@@ -849,7 +822,7 @@ def load_wdm_history():
 
     )
 # ----------------------------------------------
-# WDM 차트 가격 이력 저장
+# WDM ��Ʈ ���� �̷� ����
 # ----------------------------------------------
 def save_wdm_chart_price(conn, price):
 
@@ -891,7 +864,7 @@ import time
 
 
 # ----------------------------------------------------------
-# 공지 전체 조회 (Cache)
+# ���� ��ü ��ȸ (Cache)
 # ----------------------------------------------------------
 def fetch_announcements():
 
@@ -921,7 +894,7 @@ def fetch_announcements():
 
 
 # ----------------------------------------------------------
-# 공지 1개 조회
+# ���� 1�� ��ȸ
 # ----------------------------------------------------------
 def get_announcement(id):
 
@@ -940,7 +913,7 @@ def get_announcement(id):
 
 
 # ----------------------------------------------------------
-# 공지 등록
+# ���� ���
 # ----------------------------------------------------------
 def add_announcement(title, content):
 
@@ -980,7 +953,7 @@ def add_announcement(title, content):
 
 
 # ----------------------------------------------------------
-# 공지 수정
+# ���� ����
 # ----------------------------------------------------------
 def update_announcement(id, title, content):
 
@@ -1015,7 +988,7 @@ def update_announcement(id, title, content):
 
 
 # ----------------------------------------------------------
-# 공지 삭제
+# ���� ����
 # ----------------------------------------------------------
 def delete_announcement(id):
 
@@ -1039,76 +1012,28 @@ def delete_announcement(id):
     CACHE["announcement"] = None
 
     CACHE["announcement_time"] = 0
-
 # ------------------------------------------------------------
 # Keep Latest Rows
-# 최신 데이터만 유지하고 초과할 때만 삭제
 # ------------------------------------------------------------
 
 def keep_latest_rows(table_name, limit_count=10000):
-
-    allowed_tables = {
-        "eth_price",
-        "wdm_price_history",
-        "trading_records"
-    }
-
-    if table_name not in allowed_tables:
-        raise ValueError(
-            f"Invalid cleanup table: {table_name}"
-        )
-
-    if limit_count < 1:
-        raise ValueError(
-            "limit_count must be greater than zero"
-        )
-
     conn = None
     cur = None
 
     try:
         conn = get_db()
         cur = conn.cursor()
-
-        # 현재 행 수 확인
-        cur.execute(
-            f"SELECT COUNT(*) FROM {table_name}"
-        )
-
-        row_count = cur.fetchone()[0]
-
-        # 한도를 넘은 경우에만 오래된 데이터 삭제
-        if row_count > limit_count:
-
-            cur.execute(
-                f"""
-                DELETE FROM {table_name}
-                WHERE id NOT IN (
-                    SELECT id
-                    FROM {table_name}
-                    ORDER BY id DESC
-                    LIMIT %s
-                )
-                """,
-                (limit_count,)
+        cur.execute(f"""
+            DELETE FROM {table_name}
+            WHERE id NOT IN
+            (
+                SELECT id
+                FROM {table_name}
+                ORDER BY id DESC
+                LIMIT %s
             )
-
-            deleted_count = cur.rowcount
-            conn.commit()
-
-            print(
-                f"[DB CLEANUP] {table_name}: "
-                f"deleted={deleted_count}, "
-                f"limit={limit_count}"
-            )
-
-    except Exception:
-        if conn is not None:
-            try:
-                conn.rollback()
-            except Exception:
-                pass
-        raise
+        """, (limit_count,))
+        conn.commit()
 
     finally:
         if cur is not None:
@@ -1116,10 +1041,8 @@ def keep_latest_rows(table_name, limit_count=10000):
                 cur.close()
             except Exception:
                 pass
-
         if conn is not None:
             close_db(conn)
-
 
 # ============================================================
 # PART 3 : Database
@@ -1231,8 +1154,8 @@ def init_db():
     
     # ==========================================================
     # Announcement Table
-    # 공지사항 테이블 생성
-    # init_db() 함수 내부
+    # �������� ���̺� ����
+    # init_db() �Լ� ����
     # ==========================================================
 
     cur.execute("""
@@ -1321,7 +1244,7 @@ def init_db():
     """)
 
 # ==========================================================
-# FAQ answer NULL 허용
+# FAQ answer NULL ���
 # ==========================================================
 
     cur.execute("""
@@ -1332,7 +1255,7 @@ def init_db():
     """)
 
 # ==========================================================
-# FAQ updated_at 기본값
+# FAQ updated_at �⺻��
 # ==========================================================
 
     cur.execute("""
@@ -1344,8 +1267,8 @@ def init_db():
     """)
 
     # ==========================================================
-    # site_statistics 컬럼 추가
-    # 오늘 방문자 관리
+    # site_statistics �÷� �߰�
+    # ���� �湮�� ����
     # ==========================================================
 
     execute("""
@@ -1360,7 +1283,7 @@ def init_db():
     """)
     # ==========================================================
     # Site Statistics Table
-    # 누적 방문자 통계
+    # ���� �湮�� ���
     # ==========================================================
 
     execute(
@@ -1384,7 +1307,7 @@ def init_db():
 
     # ==========================================================
     # Insert Default Site Statistics
-    # 기본 방문자 통계 데이터 생성
+    # �⺻ �湮�� ��� ������ ����
     # ==========================================================
 
     execute("""
@@ -1411,7 +1334,7 @@ def init_db():
     """)
     # ==========================================================
     # Site Statistics Table
-    # 누적 방문자 통계
+    # ���� �湮�� ���
     # ==========================================================
 
     cur.execute("""
@@ -1449,7 +1372,7 @@ def init_db():
   
 # ==========================================================
 # Access Statistics Table
-# 방문자 접속 기록 저장 테이블
+# �湮�� ���� ��� ���� ���̺�
 # ==========================================================
 
     execute("""
@@ -1469,7 +1392,7 @@ def init_db():
     """)
 # ==========================================================
 # Add Country Column
-# 방문자 국가 정보 저장 컬럼 추가
+# �湮�� ���� ���� ���� �÷� �߰�
 # ==========================================================
 
     execute("""
@@ -1514,7 +1437,7 @@ def init_db():
     
     # ==========================================================
     # WDM PRICE TABLE
-    # MA20 컬럼 추가
+    # MA20 �÷� �߰�
     # ==========================================================
 
     cur.execute("""
@@ -1526,7 +1449,7 @@ def init_db():
 
     # ==========================================================
     # WDM PRICE TABLE
-    # MA60 컬럼 추가
+    # MA60 �÷� �߰�
     # ==========================================================
 
     cur.execute("""
@@ -1538,7 +1461,7 @@ def init_db():
 
     # ==========================================================
     # WDM PRICE TABLE
-    # SIGNAL 컬럼 추가
+    # SIGNAL �÷� �߰�
     # ==========================================================
 
     cur.execute("""
@@ -1686,12 +1609,12 @@ def update_database():
 
 # ==========================================================
 # Save Access Log
-# 방문 기록 저장
+# �湮 ��� ����
 # ==========================================================
 
 # ==========================================================
 # Save Access Log
-# 방문 기록 저장
+# �湮 ��� ����
 # ==========================================================
 def save_access_log():
 
@@ -1701,7 +1624,7 @@ def save_access_log():
 
         # ==========================================================
         # Get Real Visitor IP
-        # 실제 방문자 IP 추출
+        # ���� �湮�� IP ����
         # ==========================================================
 
         forwarded = request.headers.get(
@@ -1719,7 +1642,7 @@ def save_access_log():
 
         # ==========================================================
         # Ignore Localhost
-        # 로컬 및 내부 IP 제외
+        # ���� �� ���� IP ����
         # ==========================================================
 
         if ip in (
@@ -1732,7 +1655,7 @@ def save_access_log():
 
         # ==========================================================
         # Get Access Information
-        # 접속 페이지 및 브라우저 정보
+        # ���� ������ �� ������ ����
         # ==========================================================
 
         path = request.path
@@ -1745,7 +1668,7 @@ def save_access_log():
 
         # ==========================================================
         # Ignore Bot / Crawler
-        # 봇 및 크롤러 제외
+        # �� �� ũ�ѷ� ����
         # ==========================================================
 
         bot_keywords = [
@@ -1773,7 +1696,7 @@ def save_access_log():
 
         # ==========================================================
         # Ignore favicon
-        # 파비콘 요청 제외
+        # �ĺ��� ��û ����
         # ==========================================================
 
         if path == "/favicon.ico":
@@ -1783,7 +1706,7 @@ def save_access_log():
 
         # ==========================================================
         # Access Log Cache
-        # 동일 IP + 동일 URL 30초 중복 저장 방지
+        # ���� IP + ���� URL 30�� �ߺ� ���� ����
         # ==========================================================
 
         now = time.time()
@@ -1802,7 +1725,7 @@ def save_access_log():
 
 
         # ==========================================================
-        # 오래된 Cache 삭제
+        # ������ Cache ����
         # ==========================================================
 
         expired_keys = []
@@ -1820,10 +1743,10 @@ def save_access_log():
 
          # ==========================================================
         # Get Visitor Country
-        # 방문자 국가 정보 조회
+        # �湮�� ���� ���� ��ȸ
         #
-        # 속도 개선을 위해 임시 비활성화
-        # 필요 시 아래 주석(#) 제거 후 사용
+        # �ӵ� ������ ���� �ӽ� ��Ȱ��ȭ
+        # �ʿ� �� �Ʒ� �ּ�(#) ���� �� ���
         # ==========================================================
 
         country = "Unknown"
@@ -1854,8 +1777,8 @@ def save_access_log():
         #     country = "Unknown"
 
         # ==========================================================
-        # Today Visitor Count 증가
-        # 오늘 방문자 증가
+        # Today Visitor Count ����
+        # ���� �湮�� ����
         # ==========================================================
 
         execute("""
@@ -1867,8 +1790,8 @@ def save_access_log():
         """)
 
         # ==========================================================
-        # 날짜 변경 확인
-        # 오늘 날짜 변경 시 초기화
+        # ��¥ ���� Ȯ��
+        # ���� ��¥ ���� �� �ʱ�ȭ
         # ==========================================================
 
         execute("""
@@ -1886,7 +1809,7 @@ def save_access_log():
         """)
         # ==========================================================
         # Insert Access Log
-        # 방문 기록 저장
+        # �湮 ��� ����
         # ==========================================================
 
         execute(
@@ -1915,7 +1838,7 @@ def save_access_log():
         
         # ==========================================================
         # Total Visitor Count
-        # 누적 방문자 수 증가
+        # ���� �湮�� �� ����
         # ==========================================================
 
         execute(
@@ -1936,7 +1859,7 @@ def save_access_log():
              
         # ==========================================================
         # Keep Latest 1000 Logs
-        # 최근 방문 기록 1000개 유지
+        # �ֱ� �湮 ��� 1000�� ����
         # ==========================================================
 
         execute(
@@ -1978,7 +1901,7 @@ def save_access_log():
         )
 # ==========================================================
 # Unique Visitor Count
-# 중복 제거 방문자 수 계산
+# �ߺ� ���� �湮�� �� ���
 # ==========================================================
 
 def get_unique_visitors():
@@ -2265,7 +2188,7 @@ def insert_test_data():
 
         """)
     # --------------------------------------------------------
-    # WDM 최초 가격
+    # WDM ���� ����
     # --------------------------------------------------------
 
     cur.execute("SELECT COUNT(*) FROM wdm_price")
@@ -2289,11 +2212,11 @@ def insert_test_data():
 # ============================================================
 # ==========================================================
 # Get ETH Price From CoinGecko
-# 이더리움 현재 가격 조회
+# �̴����� ���� ���� ��ȸ
 # ==========================================================
 # ==========================================================
 # ETH Price Cache
-# CoinGecko 호출 최소화
+# CoinGecko ȣ�� �ּ�ȭ
 # ==========================================================
 
 ETH_PRICE_CACHE = {
@@ -2307,8 +2230,8 @@ ETH_PRICE_CACHE = {
 ETH_CACHE_SECONDS = 30
 
 # ==========================================================
-# ETH 가격 조회
-# CoinGecko API + 메모리 캐시
+# ETH ���� ��ȸ
+# CoinGecko API + �޸� ĳ��
 # ==========================================================
 
 def get_eth_price():
@@ -2320,7 +2243,7 @@ def get_eth_price():
 
 
     # -------------------------------
-    # 캐시 데이터 사용
+    # ĳ�� ������ ���
     # -------------------------------
 
     if CACHE["eth_price"]:
@@ -2332,7 +2255,7 @@ def get_eth_price():
 
 
     # -------------------------------
-    # 실제 API 호출
+    # ���� API ȣ��
     # -------------------------------
 
     try:
@@ -2353,7 +2276,7 @@ def get_eth_price():
 
 
 
-        # 캐시 저장
+        # ĳ�� ����
 
         CACHE["eth_price"] = price
         CACHE["eth_time"] = now
@@ -2370,7 +2293,7 @@ def get_eth_price():
         return CACHE["eth_price"]
 # ------------------------------------------------------------
 # Latest Price (DB)
-# 팝업창 즉시 표시용
+# �˾�â ��� ǥ�ÿ�
 # ------------------------------------------------------------
 def get_latest_price():
 
@@ -2483,7 +2406,7 @@ def get_latest_wdm_price():
 
         # ----------------------------------------------------
         # requests Session
-        # Render netrc timeout 방지
+        # Render netrc timeout ����
         # ----------------------------------------------------
 
         session = requests.Session()
@@ -2674,17 +2597,18 @@ def get_latest_wdm_price():
         # ----------------------------------------------------
 
         try:
-
             eth_price = get_latest_price()
-
         except Exception as e:
+            print("WDM ETH DB price unavailable; using market API:", e)
+            eth_price = None
 
-            print(
-                "WDM ETH Price Error:",
-                e
-            )
-
-            eth_price = 0.0
+        # Fall back to cached/live ETH market price if DB history is unavailable.
+        if not eth_price or float(eth_price) <= 0:
+            try:
+                eth_price = get_eth_price()
+            except Exception as e:
+                print("WDM ETH market price error:", e)
+                eth_price = 0.0
 
         if not eth_price or float(eth_price) <= 0:
 
@@ -2775,8 +2699,8 @@ def get_latest_wdm_price():
 
 
 # ============================================================
-# ETH ↔ WDM Conversion Calculator
-# 환산 계산 전용
+# ETH �� WDM Conversion Calculator
+# ȯ�� ��� ����
 # ============================================================
 
 def calculate_wdm_conversion(
@@ -2803,7 +2727,7 @@ def calculate_wdm_conversion(
 
 
     # --------------------------------------------------------
-    # 금액 확인
+    # �ݾ� Ȯ��
     # --------------------------------------------------------
 
     if amount <= 0:
@@ -2815,7 +2739,7 @@ def calculate_wdm_conversion(
 
 
     # --------------------------------------------------------
-    # 가격 확인
+    # ���� Ȯ��
     # --------------------------------------------------------
 
     if eth_price <= 0:
@@ -2835,7 +2759,7 @@ def calculate_wdm_conversion(
 
 
     # --------------------------------------------------------
-    # ETH → WDM
+    # ETH �� WDM
     # --------------------------------------------------------
 
     if direction == "ETH_TO_WDM":
@@ -2846,7 +2770,7 @@ def calculate_wdm_conversion(
 
 
     # --------------------------------------------------------
-    # WDM → ETH
+    # WDM �� ETH
     # --------------------------------------------------------
 
     elif direction == "WDM_TO_ETH":
@@ -2857,7 +2781,7 @@ def calculate_wdm_conversion(
 
 
     # --------------------------------------------------------
-    # 잘못된 방향
+    # �߸��� ����
     # --------------------------------------------------------
 
     else:
@@ -2869,7 +2793,7 @@ def calculate_wdm_conversion(
 
 
     # --------------------------------------------------------
-    # 결과
+    # ���
     # --------------------------------------------------------
 
     return {
@@ -2939,14 +2863,14 @@ def save_wdm_price():
     message = ""
 
     # ------------------------------------------------------
-    # 저장 버튼 클릭
+    # ���� ��ư Ŭ��
     # ------------------------------------------------------
     if request.method == "POST":
 
         price = float(request.form["price"])
 
         # ----------------------------------------------
-        # 가격 저장
+        # ���� ����
         # ----------------------------------------------
         cur.execute("""
             INSERT INTO wdm_price(price)
@@ -2959,7 +2883,7 @@ def save_wdm_price():
         conn.commit()
 
         # ----------------------------------------------
-        # MA20 계산
+        # MA20 ���
         # ----------------------------------------------
         cur.execute("""
             SELECT price
@@ -2977,7 +2901,7 @@ def save_wdm_price():
             ma20 = sum(float(r["price"]) for r in rows) / 20
 
         # ----------------------------------------------
-        # MA60 계산
+        # MA60 ���
         # ----------------------------------------------
         cur.execute("""
             SELECT price
@@ -2995,7 +2919,7 @@ def save_wdm_price():
             ma60 = sum(float(r["price"]) for r in rows) / 60
 
         # ----------------------------------------------
-        # 이전 MA 조회
+        # ���� MA ��ȸ
         # ----------------------------------------------
         cur.execute("""
             SELECT
@@ -3033,7 +2957,7 @@ def save_wdm_price():
                     signal = "SELL"
 
         # ----------------------------------------------
-        # MA / Signal 업데이트
+        # MA / Signal ������Ʈ
         # ----------------------------------------------
         cur.execute("""
             UPDATE wdm_price
@@ -3050,14 +2974,14 @@ def save_wdm_price():
         ))
 
         # ----------------------------------------------
-        # 저장 완료
+        # ���� �Ϸ�
         # ----------------------------------------------
         conn.commit()
 
         message = f"WDM Saved ({signal})"
     # ==========================================================
-    # 저장 완료
-    # (signal은 위에서 이미 계산되어 있음)
+    # ���� �Ϸ�
+    # (signal�� ������ �̹� ���Ǿ� ����)
     # ==========================================================
 
     conn.commit()
@@ -3065,7 +2989,7 @@ def save_wdm_price():
     message = f"WDM Saved ({signal})"
 
     # ------------------------------------------------------
-    # 최근 데이터 표시
+    # �ֱ� ������ ǥ��
     # ------------------------------------------------------
     cur.execute("""
         SELECT *
@@ -3091,8 +3015,8 @@ def save_wdm_price():
     )
 # ==========================================================
 # WDM Moving Average
-# MA 계산
-# 기존 calculate_wdm_ma() 함수 전체 교체
+# MA ���
+# ���� calculate_wdm_ma() �Լ� ��ü ��ü
 # ==========================================================
 
 def calculate_wdm_ma(period):
@@ -3113,7 +3037,7 @@ def calculate_wdm_ma(period):
     cur.close()
     close_db(conn)
     # ------------------------------------------
-    # 데이터 부족
+    # ������ ����
     # ------------------------------------------
     if len(rows) < period:
 
@@ -3126,8 +3050,8 @@ def calculate_wdm_ma(period):
 
 # ==========================================================
 # WDM Previous Moving Average
-# 이전 MA 계산
-# 기존 calculate_previous_wdm_ma() 함수 전체 교체
+# ���� MA ���
+# ���� calculate_previous_wdm_ma() �Լ� ��ü ��ü
 # ==========================================================
 
 def calculate_previous_wdm_ma(period):
@@ -3149,20 +3073,20 @@ def calculate_previous_wdm_ma(period):
     close_db(conn)
 
     # ------------------------------------------
-    # 데이터 부족
+    # ������ ����
     # ------------------------------------------
     if len(rows) < period + 1:
 
         return None
 
-    # 최근 가격 제외
+    # �ֱ� ���� ����
     prices = [float(r["price"]) for r in rows[1:]]
 
     return round(sum(prices) / period, 8)    
 # ==========================================================
 # WDM RSI
-# RSI 계산
-# calculate_previous_wdm_ma() 바로 아래 붙여넣기
+# RSI ���
+# calculate_previous_wdm_ma() �ٷ� �Ʒ� �ٿ��ֱ�
 # ==========================================================
 
 def calculate_wdm_rsi(period=14):
@@ -3172,7 +3096,7 @@ def calculate_wdm_rsi(period=14):
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     # ------------------------------------------------------
-    # 최근 period+1개의 가격 조회
+    # �ֱ� period+1���� ���� ��ȸ
     # ------------------------------------------------------
     cur.execute("""
         SELECT price
@@ -3186,20 +3110,20 @@ def calculate_wdm_rsi(period=14):
     cur.close()
     close_db(conn)
     # ------------------------------------------------------
-    # 데이터 부족
+    # ������ ����
     # ------------------------------------------------------
     if len(rows) < period + 1:
 
         return None
 
-    # 오래된 가격 → 최신 가격 순으로 정렬
+    # ������ ���� �� �ֽ� ���� ������ ����
     prices = [float(r["price"]) for r in reversed(rows)]
 
     gains = []
     losses = []
 
     # ------------------------------------------------------
-    # 상승 / 하락 계산
+    # ��� / �϶� ���
     # ------------------------------------------------------
     for i in range(1, len(prices)):
 
@@ -3219,7 +3143,7 @@ def calculate_wdm_rsi(period=14):
     avg_loss = sum(losses) / period
 
     # ------------------------------------------------------
-    # RSI 계산
+    # RSI ���
     # ------------------------------------------------------
     if avg_loss == 0:
 
@@ -3232,7 +3156,7 @@ def calculate_wdm_rsi(period=14):
     return round(rsi, 2)
 # ==========================================================
 # WDM Price History
-# WDM 차트용 가격 이력 조회
+# WDM ��Ʈ�� ���� �̷� ��ȸ
 # ==========================================================
 
 def get_wdm_price_history(limit=100):
@@ -3258,14 +3182,14 @@ def get_wdm_price_history(limit=100):
     return rows
 # ==========================================================
 # WDM Trading Signal
-# ETH generate_signal()과 동일한 구조
-# calculate_wdm_rsi() 아래 붙여넣기
+# ETH generate_signal()�� ������ ����
+# calculate_wdm_rsi() �Ʒ� �ٿ��ֱ�
 # ==========================================================
 
 def generate_wdm_signal():
 
     # ------------------------------------------------------
-    # 지표 계산
+    # ��ǥ ���
     # ------------------------------------------------------
     rsi = calculate_wdm_rsi()
 
@@ -3280,7 +3204,7 @@ def generate_wdm_signal():
     signal = "HOLD"
 
     # ------------------------------------------------------
-    # 데이터 부족
+    # ������ ����
     # ------------------------------------------------------
     if None in (rsi, ma20, ma60, prev20, prev60):
 
@@ -3322,7 +3246,7 @@ def generate_wdm_signal():
             signal = "HOLD"
 
     # ------------------------------------------------------
-    # 결과 반환
+    # ��� ��ȯ
     # ------------------------------------------------------
     return {
 
@@ -3336,11 +3260,11 @@ def generate_wdm_signal():
 
     }
 # ------------------------------------------------------------
-# RSI 계산
+# RSI ���
 # ------------------------------------------------------------
 # ------------------------------------------------------------
-# RSI 계산
-# DB 조회 최소화 캐시 적용
+# RSI ���
+# DB ��ȸ �ּ�ȭ ĳ�� ����
 # ------------------------------------------------------------
 
 def calculate_rsi(period=14):
@@ -3368,7 +3292,7 @@ def calculate_rsi(period=14):
 
 
     # --------------------------------------------------------
-    # 가격 데이터 조회
+    # ���� ������ ��ȸ
     # --------------------------------------------------------
 
     rows = fetch_all("""
@@ -3452,7 +3376,7 @@ def calculate_rsi(period=14):
 
 
     # --------------------------------------------------------
-    # 캐시 저장
+    # ĳ�� ����
     # --------------------------------------------------------
 
     CACHE["rsi"] = rsi
@@ -3464,7 +3388,7 @@ def calculate_rsi(period=14):
     return rsi
 # ------------------------------------------------------------
 # Moving Average
-# MA20 / MA60 계산 캐시 적용
+# MA20 / MA60 ��� ĳ�� ����
 # ------------------------------------------------------------
 
 def calculate_ma(period):
@@ -3481,7 +3405,7 @@ def calculate_ma(period):
 
 
     # --------------------------------------------------------
-    # 캐시 확인
+    # ĳ�� Ȯ��
     # --------------------------------------------------------
 
     if CACHE.get(cache_key) is not None:
@@ -3501,7 +3425,7 @@ def calculate_ma(period):
 
 
     # --------------------------------------------------------
-    # DB 조회
+    # DB ��ȸ
     # --------------------------------------------------------
 
     conn = get_db()
@@ -3564,7 +3488,7 @@ def calculate_ma(period):
 
 
     # --------------------------------------------------------
-    # 캐시 저장
+    # ĳ�� ����
     # --------------------------------------------------------
 
     CACHE[cache_key] = ma
@@ -3581,7 +3505,7 @@ def calculate_ma(period):
 
 # ------------------------------------------------------------
 # Previous Moving Average
-# 이전 MA 계산 캐시 적용
+# ���� MA ��� ĳ�� ����
 # ------------------------------------------------------------
 
 def calculate_previous_ma(period):
@@ -3598,7 +3522,7 @@ def calculate_previous_ma(period):
 
 
     # --------------------------------------------------------
-    # 캐시 확인
+    # ĳ�� Ȯ��
     # --------------------------------------------------------
 
     if CACHE.get(cache_key) is not None:
@@ -3618,7 +3542,7 @@ def calculate_previous_ma(period):
 
 
     # --------------------------------------------------------
-    # DB 조회
+    # DB ��ȸ
     # --------------------------------------------------------
 
     conn = get_db()
@@ -3688,7 +3612,7 @@ def calculate_previous_ma(period):
 
 
     # --------------------------------------------------------
-    # 캐시 저장
+    # ĳ�� ����
     # --------------------------------------------------------
 
     CACHE[cache_key] = previous_ma
@@ -3700,12 +3624,12 @@ def calculate_previous_ma(period):
     return previous_ma
 # ------------------------------------------------------------
 # Cross Signal
-# MA20 / MA60 실제 교차 계산
+# MA20 / MA60 ���� ���� ���
 # ------------------------------------------------------------
 # ------------------------------------------------------------
 # Cross Signal
-# MA20 / MA60 실제 교차 계산
-# DB 조회 최소화 캐시 적용
+# MA20 / MA60 ���� ���� ���
+# DB ��ȸ �ּ�ȭ ĳ�� ����
 # ------------------------------------------------------------
 
 def get_cross_signals():
@@ -3719,7 +3643,7 @@ def get_cross_signals():
 
 
     # --------------------------------------------------------
-    # Cross Signal Cache 확인
+    # Cross Signal Cache Ȯ��
     # --------------------------------------------------------
 
     if CACHE["cross_signal"] is not None:
@@ -3742,7 +3666,7 @@ def get_cross_signals():
 
 
         # ----------------------------------------------------
-        # 최근 두 개 데이터만 조회
+        # �ֱ� �� �� �����͸� ��ȸ
         # ----------------------------------------------------
 
         cur.execute("""
@@ -3781,7 +3705,7 @@ def get_cross_signals():
 
 
 
-    # 최신순으로 가져오기 때문에 역순 변경
+    # �ֽż����� �������� ������ ���� ����
 
     rows.reverse()
 
@@ -3853,7 +3777,7 @@ def get_cross_signals():
 
 
     # --------------------------------------------------------
-    # Cache 저장
+    # Cache ����
     # --------------------------------------------------------
 
     CACHE["cross_signal"] = signal
@@ -3869,7 +3793,7 @@ def get_cross_signals():
 # ------------------------------------------------------------
 # ------------------------------------------------------------
 # Trading Signal
-# RSI / MA / Cross Signal 캐시 적용
+# RSI / MA / Cross Signal ĳ�� ����
 # ------------------------------------------------------------
 def generate_signal():
 
@@ -3888,13 +3812,13 @@ def generate_signal():
             return CACHE["signal"]
 
     # --------------------------------------------------------
-    # RSI 계산
+    # RSI ���
     # --------------------------------------------------------
 
     rsi = calculate_rsi()
 
     # --------------------------------------------------------
-    # 이동평균 계산
+    # �̵���� ���
     # --------------------------------------------------------
 
     ma20 = calculate_ma(20)
@@ -3902,7 +3826,7 @@ def generate_signal():
     ma60 = calculate_ma(60)
 
     # --------------------------------------------------------
-    # 데이터 부족
+    # ������ ����
     # --------------------------------------------------------
 
     if ma20 is None or ma60 is None:
@@ -3933,7 +3857,7 @@ def generate_signal():
     signal = get_cross_signals()
 
     # --------------------------------------------------------
-    # RSI 보강
+    # RSI ����
     # --------------------------------------------------------
 
     if signal == "BUY":
@@ -3949,7 +3873,7 @@ def generate_signal():
             signal = "STRONG SELL"
 
     # --------------------------------------------------------
-    # 결과
+    # ���
     # --------------------------------------------------------
 
     result = {
@@ -3967,7 +3891,7 @@ def generate_signal():
     }
 
     # --------------------------------------------------------
-    # Cache 저장
+    # Cache ����
     # --------------------------------------------------------
 
     CACHE["signal"] = result
@@ -3985,7 +3909,7 @@ def auto_save_eth():
 
         try:
             # ------------------------------------------------
-            # 현재 ETH 가격
+            # ���� ETH ����
             # ------------------------------------------------
             price = get_eth_price()
 
@@ -3994,8 +3918,8 @@ def auto_save_eth():
                 continue
 
             # ------------------------------------------------
-            # 중요: DB 연결을 오래 점유하지 않도록
-            # 가격 INSERT 후 즉시 connection 반환
+            # �߿�: DB ������ ���� �������� �ʵ���
+            # ���� INSERT �� ��� connection ��ȯ
             # ------------------------------------------------
             conn = None
             cur = None
@@ -4035,7 +3959,7 @@ def auto_save_eth():
                     close_db(conn)
 
             # ------------------------------------------------
-            # Cache 초기화
+            # Cache �ʱ�ȭ
             # ------------------------------------------------
             CACHE["chart_data"] = None
             CACHE["chart_time"] = 0
@@ -4059,8 +3983,8 @@ def auto_save_eth():
             CACHE["wdm_price_time"] = 0
 
             # ------------------------------------------------
-            # DB connection을 반환한 뒤 지표 계산
-            # -> nested connection으로 인한 pool 고갈 방지
+            # DB connection�� ��ȯ�� �� ��ǥ ���
+            # -> nested connection���� ���� pool ���� ����
             # ------------------------------------------------
             ma20 = calculate_ma(20)
             ma60 = calculate_ma(60)
@@ -4068,12 +3992,12 @@ def auto_save_eth():
             signal = signal_data["signal"]
 
             # ------------------------------------------------
-            # 자동매매 실행 비활성화
+            # �ڵ��Ÿ� ���� ��Ȱ��ȭ
             # ------------------------------------------------
             # auto_trade(signal_data)
 
             # ------------------------------------------------
-            # 계산 결과를 별도의 짧은 DB 연결로 UPDATE
+            # ��� ����� ������ ª�� DB ����� UPDATE
             # ------------------------------------------------
             conn = None
             cur = None
@@ -4141,7 +4065,7 @@ def auto_save_wdm():
         try:
 
             # ------------------------------------------------
-            # 현재 WDM 가격 조회
+            # ���� WDM ���� ��ȸ
             # Uniswap V4 / Base Mainnet
             # ------------------------------------------------
 
@@ -4154,7 +4078,7 @@ def auto_save_wdm():
 
 
             # ------------------------------------------------
-            # 정상 가격 확인
+            # ���� ���� Ȯ��
             # ------------------------------------------------
 
             if (
@@ -4174,7 +4098,7 @@ def auto_save_wdm():
 
 
             # ------------------------------------------------
-            # 가격 확인 로그
+            # ���� Ȯ�� �α�
             # ------------------------------------------------
 
             wdm_price = float(wdm_price)
@@ -4186,14 +4110,14 @@ def auto_save_wdm():
 
 
             # ------------------------------------------------
-            # DB 연결
+            # DB ����
             # ------------------------------------------------
 
             conn = get_db()
 
 
             # ------------------------------------------------
-            # WDM 가격 이력 저장
+            # WDM ���� �̷� ����
             # ------------------------------------------------
 
             saved = save_wdm_chart_price(
@@ -4203,7 +4127,7 @@ def auto_save_wdm():
 
 
             # ------------------------------------------------
-            # 저장 결과 확인
+            # ���� ��� Ȯ��
             # ------------------------------------------------
 
             if not saved:
@@ -4233,7 +4157,7 @@ def auto_save_wdm():
 
 
             # ------------------------------------------------
-            # DB 연결 종료
+            # DB ���� ����
             # ------------------------------------------------
 
             close_db(conn)
@@ -4242,9 +4166,9 @@ def auto_save_wdm():
 
 
             # ------------------------------------------------
-            # WDM Chart Cache 초기화
-            # 새로운 가격이 저장되었으므로
-            # 다음 차트 조회에서 최신 DB 데이터를 읽도록 함
+            # WDM Chart Cache �ʱ�ȭ
+            # ���ο� ������ ����Ǿ����Ƿ�
+            # ���� ��Ʈ ��ȸ���� �ֽ� DB �����͸� �е��� ��
             # ------------------------------------------------
 
             CACHE["chart_data"] = None
@@ -4252,7 +4176,7 @@ def auto_save_wdm():
 
 
             # ------------------------------------------------
-            # 저장 완료 로그
+            # ���� �Ϸ� �α�
             # ------------------------------------------------
 
             print(
@@ -4262,7 +4186,7 @@ def auto_save_wdm():
 
 
             # ------------------------------------------------
-            # 정상 저장 시 10분 후 다음 저장
+            # ���� ���� �� 10�� �� ���� ����
             # ------------------------------------------------
 
             time.sleep(600)
@@ -4286,7 +4210,7 @@ def auto_save_wdm():
 
 
                 # ------------------------------------------------
-                # DB 연결 종료
+                # DB ���� ����
                 # ------------------------------------------------
 
                 try:
@@ -4301,7 +4225,7 @@ def auto_save_wdm():
 
 
             # ------------------------------------------------
-            # 오류 로그
+            # ���� �α�
             # ------------------------------------------------
 
             print(
@@ -4313,7 +4237,7 @@ def auto_save_wdm():
 
 
             # ------------------------------------------------
-            # 오류 발생 시 60초 후 재시도
+            # ���� �߻� �� 60�� �� ��õ�
             # ------------------------------------------------
 
             print(
@@ -4330,8 +4254,8 @@ def auto_save_wdm():
 
 
 # --------------------------------------
-# Portfolio 조회
-# DB 조회 최소화 캐시 적용
+# Portfolio ��ȸ
+# DB ��ȸ �ּ�ȭ ĳ�� ����
 # --------------------------------------
 
 def calculate_portfolio():
@@ -4343,8 +4267,8 @@ def calculate_portfolio():
 
 
     # --------------------------------------------------------
-    # Portfolio 계산 결과 캐시 사용
-    # 30초 동안 DB 조회 생략
+    # Portfolio ��� ��� ĳ�� ���
+    # 30�� ���� DB ��ȸ ����
     # --------------------------------------------------------
 
     if CACHE["portfolio"]:
@@ -4365,7 +4289,7 @@ def calculate_portfolio():
 
 
         # --------------------------------------------------------
-        # Portfolio 데이터 조회
+        # Portfolio ������ ��ȸ
         # --------------------------------------------------------
 
         cur.execute("""
@@ -4380,7 +4304,7 @@ def calculate_portfolio():
 
 
         # --------------------------------------------------------
-        # Portfolio가 없으면 기본 생성
+        # Portfolio�� ������ �⺻ ����
         # --------------------------------------------------------
 
         if portfolio is None:
@@ -4420,7 +4344,7 @@ def calculate_portfolio():
 
 
         # --------------------------------------------------------
-        # 최신 ETH 가격 조회
+        # �ֽ� ETH ���� ��ȸ
         # --------------------------------------------------------
 
         cur.execute("""
@@ -4444,7 +4368,7 @@ def calculate_portfolio():
 
 
         # --------------------------------------------------------
-        # Portfolio 기본 값
+        # Portfolio �⺻ ��
         # --------------------------------------------------------
 
         cash = float(portfolio["cash"])
@@ -4458,7 +4382,7 @@ def calculate_portfolio():
 
 
         # --------------------------------------------------------
-        # ETH 평가금액
+        # ETH �򰡱ݾ�
         # --------------------------------------------------------
 
         asset_value = eth * current_price
@@ -4466,7 +4390,7 @@ def calculate_portfolio():
 
 
         # --------------------------------------------------------
-        # WDM 가격 조회
+        # WDM ���� ��ȸ
         # --------------------------------------------------------
 
         wdm_price = get_latest_wdm_price()
@@ -4474,7 +4398,7 @@ def calculate_portfolio():
 
 
         # --------------------------------------------------------
-        # WDM 평가금액
+        # WDM �򰡱ݾ�
         # --------------------------------------------------------
 
         wdm_value = wdm * wdm_price
@@ -4482,7 +4406,7 @@ def calculate_portfolio():
 
 
         # --------------------------------------------------------
-        # 총 자산
+        # �� �ڻ�
         # --------------------------------------------------------
 
         total_assets = (
@@ -4494,7 +4418,7 @@ def calculate_portfolio():
 
 
         # --------------------------------------------------------
-        # 수익 계산
+        # ���� ���
         # --------------------------------------------------------
 
         if eth > 0:
@@ -4511,7 +4435,7 @@ def calculate_portfolio():
 
 
         # --------------------------------------------------------
-        # ROI 계산
+        # ROI ���
         # --------------------------------------------------------
 
         if eth > 0 and avg_price > 0:
@@ -4529,7 +4453,7 @@ def calculate_portfolio():
 
 
         # --------------------------------------------------------
-        # 결과 저장
+        # ��� ����
         # --------------------------------------------------------
 
         result = {
@@ -4572,7 +4496,7 @@ def calculate_portfolio():
 
 
         # --------------------------------------------------------
-        # Portfolio 캐시 저장
+        # Portfolio ĳ�� ����
         # --------------------------------------------------------
 
         CACHE["portfolio"] = result
@@ -4593,8 +4517,8 @@ def calculate_portfolio():
         close_db(conn)
 # ------------------------------------------------------------
 # BUY ETH
-# Portfolio 현금을 이용하여 ETH 매수
-# DB 조회 최소화 + Portfolio 캐시 초기화
+# Portfolio ������ �̿��Ͽ� ETH �ż�
+# DB ��ȸ �ּ�ȭ + Portfolio ĳ�� �ʱ�ȭ
 # ------------------------------------------------------------
 
 def buy_eth(buy_percent=20):
@@ -4609,7 +4533,7 @@ def buy_eth(buy_percent=20):
 
 
         # ----------------------------------------------------
-        # Portfolio 조회
+        # Portfolio ��ȸ
         # ----------------------------------------------------
 
         cur.execute("""
@@ -4642,7 +4566,7 @@ def buy_eth(buy_percent=20):
 
 
         # ----------------------------------------------------
-        # ETH 보유중이면 매수 금지
+        # ETH �������̸� �ż� ����
         # ----------------------------------------------------
 
         if eth > 0:
@@ -4654,7 +4578,7 @@ def buy_eth(buy_percent=20):
 
 
         # ----------------------------------------------------
-        # 현재 ETH 가격 조회
+        # ���� ETH ���� ��ȸ
         # ----------------------------------------------------
 
         cur.execute("""
@@ -4682,7 +4606,7 @@ def buy_eth(buy_percent=20):
 
 
         # ----------------------------------------------------
-        # 매수 금액 계산
+        # �ż� �ݾ� ���
         # ----------------------------------------------------
 
         trade_amount = round(
@@ -4698,7 +4622,7 @@ def buy_eth(buy_percent=20):
 
 
         # ----------------------------------------------------
-        # ETH 수량 계산
+        # ETH ���� ���
         # ----------------------------------------------------
 
         quantity = trade_amount / current_price
@@ -4706,7 +4630,7 @@ def buy_eth(buy_percent=20):
 
 
         # ----------------------------------------------------
-        # Portfolio 계산
+        # Portfolio ���
         # ----------------------------------------------------
 
         new_cash = cash - trade_amount
@@ -4716,7 +4640,7 @@ def buy_eth(buy_percent=20):
 
 
         # ----------------------------------------------------
-        # 평균 매수가
+        # ��� �ż���
         # ----------------------------------------------------
 
         if eth == 0:
@@ -4738,7 +4662,7 @@ def buy_eth(buy_percent=20):
 
 
         # ----------------------------------------------------
-        # Portfolio 업데이트
+        # Portfolio ������Ʈ
         # ----------------------------------------------------
 
         cur.execute("""
@@ -4769,7 +4693,7 @@ def buy_eth(buy_percent=20):
 
 
         # ----------------------------------------------------
-        # Portfolio 캐시 초기화
+        # Portfolio ĳ�� �ʱ�ȭ
         # ----------------------------------------------------
 
         CACHE["portfolio"] = None
@@ -4838,9 +4762,9 @@ def buy_eth(buy_percent=20):
 
 # ------------------------------------------------------------
 # SELL ETH
-# Portfolio 보유 ETH 전량 매도
-# 실현손익 계산
-# DB 조회 최소화 + Portfolio 캐시 초기화
+# Portfolio ���� ETH ���� �ŵ�
+# �������� ���
+# DB ��ȸ �ּ�ȭ + Portfolio ĳ�� �ʱ�ȭ
 # ------------------------------------------------------------
 
 def sell_eth():
@@ -4856,7 +4780,7 @@ def sell_eth():
 
 
         # ----------------------------------------------------
-        # Portfolio 조회
+        # Portfolio ��ȸ
         # ----------------------------------------------------
 
         cur.execute("""
@@ -4893,7 +4817,7 @@ def sell_eth():
 
 
         # ----------------------------------------------------
-        # ETH 없으면 매도 불가
+        # ETH ������ �ŵ� �Ұ�
         # ----------------------------------------------------
 
         if eth <= 0:
@@ -4905,7 +4829,7 @@ def sell_eth():
 
 
         # ----------------------------------------------------
-        # 현재 ETH 가격
+        # ���� ETH ����
         # ----------------------------------------------------
 
         cur.execute("""
@@ -4934,7 +4858,7 @@ def sell_eth():
 
 
         # ----------------------------------------------------
-        # 매도 금액
+        # �ŵ� �ݾ�
         # ----------------------------------------------------
 
         trade_amount = eth * current_price
@@ -4942,7 +4866,7 @@ def sell_eth():
 
 
         # ----------------------------------------------------
-        # 손익 계산
+        # ���� ���
         # ----------------------------------------------------
 
         profit = (
@@ -4954,7 +4878,7 @@ def sell_eth():
 
 
         # ----------------------------------------------------
-        # ROI 계산
+        # ROI ���
         # ----------------------------------------------------
 
         if avg_price > 0:
@@ -4976,7 +4900,7 @@ def sell_eth():
 
 
         # ----------------------------------------------------
-        # Portfolio 변경
+        # Portfolio ����
         # ----------------------------------------------------
 
         new_cash = cash + trade_amount
@@ -4988,7 +4912,7 @@ def sell_eth():
 
 
         # ----------------------------------------------------
-        # Portfolio 업데이트
+        # Portfolio ������Ʈ
         # ----------------------------------------------------
 
         cur.execute("""
@@ -5022,7 +4946,7 @@ def sell_eth():
 
 
         # ----------------------------------------------------
-        # Portfolio 캐시 초기화
+        # Portfolio ĳ�� �ʱ�ȭ
         # ----------------------------------------------------
 
         CACHE["portfolio"] = None
@@ -5087,11 +5011,11 @@ def sell_eth():
 
         close_db(conn)
 # ============================================================
-# PART 6-1 : ETH ↔ WDM Swap Engine
+# PART 6-1 : ETH �� WDM Swap Engine
 # ============================================================
 # ====================================================
 # PART 6-1
-# ETH ↔ WDM Virtual DEX
+# ETH �� WDM Virtual DEX
 # ====================================================
 
     calculate_swap()
@@ -5102,66 +5026,66 @@ def sell_eth():
 
     liquidity_pool()
 # ------------------------------------------------------------
-# ETH → WDM Swap
+# ETH �� WDM Swap
 # ------------------------------------------------------------
 
-# 구현 예정
-# ETH를 현재 WDM 가격으로 교환
-# Portfolio 업데이트
-# Trading Record 저장
-# 실제 DEX 연동 예정
+# ���� ����
+# ETH�� ���� WDM �������� ��ȯ
+# Portfolio ������Ʈ
+# Trading Record ����
+# ���� DEX ���� ����
 
 # ------------------------------------------------------------
-# WDM → ETH Swap
+# WDM �� ETH Swap
 # ------------------------------------------------------------
 
-# 구현 예정
-# WDM를 현재 ETH 가격으로 교환
-# Portfolio 업데이트
-# Trading Record 저장
-# 실제 DEX 연동 예정
+# ���� ����
+# WDM�� ���� ETH �������� ��ȯ
+# Portfolio ������Ʈ
+# Trading Record ����
+# ���� DEX ���� ����
 
 # ------------------------------------------------------------
-# ETH ↔ WDM Swap Price
+# ETH �� WDM Swap Price
 # ------------------------------------------------------------
 
-# 구현 예정
-# 현재 ETH 가격
-# 현재 WDM 가격
-# Swap 비율 계산
-# 예상 수령수량 계산
+# ���� ����
+# ���� ETH ����
+# ���� WDM ����
+# Swap ���� ���
+# ���� ���ɼ��� ���
 
 # ------------------------------------------------------------
 # Swap Fee
 # ------------------------------------------------------------
 
-# 구현 예정
+# ���� ����
 # 0.3% Swap Fee
-# 추후 변경 가능
+# ���� ���� ����
 
 # ------------------------------------------------------------
 # Liquidity Pool
 # ------------------------------------------------------------
 
-# 구현 예정
+# ���� ����
 # ETH Reserve
 # WDM Reserve
 # Constant Product (x*y=k)
-# 실제 Uniswap 방식 적용 예정       
+# ���� Uniswap ��� ���� ����       
 # ------------------------------------------------------------
 # AUTO TRADE
-# 자동매매 엔진
+# �ڵ��Ÿ� ����
 #
 # BUY  -> buy_eth()
 # SELL -> sell_eth()
-# HOLD -> 아무것도 안함
+# HOLD -> �ƹ��͵� ����
 #
-# 거래기록 저장은 이 함수에서만 수행한다.
+# �ŷ���� ������ �� �Լ������� �����Ѵ�.
 # ------------------------------------------------------------
 def auto_trade(signal_data=None):
 
     # --------------------------------------------------------
-    # signal_data가 없으면 새로 생성
+    # signal_data�� ������ ���� ����
     # --------------------------------------------------------
 
     if signal_data is None:
@@ -5169,7 +5093,7 @@ def auto_trade(signal_data=None):
         signal_data = generate_signal()
 
     # --------------------------------------------------------
-    # 신호 데이터
+    # ��ȣ ������
     # --------------------------------------------------------
 
     signal = signal_data["signal"]
@@ -5193,14 +5117,14 @@ def auto_trade(signal_data=None):
    
     # --------------------------------------------------------
     # ETH Trading Analysis Record
-    # 자동매매는 실행하지 않고 분석 결과만 기록
+    # �ڵ��ŸŴ� �������� �ʰ� �м� ����� ���
     # --------------------------------------------------------
 
     conn = get_db()
     cur = conn.cursor()
 
     # --------------------------------------------------------
-    # 거래기록 저장
+    # �ŷ���� ����
     # --------------------------------------------------------
 
     cur.execute("""
@@ -5292,7 +5216,7 @@ def home():
 
     # ==========================================================
     # Home Cache
-    # 120초 동안 캐시 사용
+    # 120�� ���� ĳ�� ���
     # ==========================================================
 
     if (
@@ -5311,7 +5235,7 @@ def home():
 
         # ==========================================================
         # Donation Records
-        # 기부 내역 조회
+        # ��� ���� ��ȸ
         # ==========================================================
 
         conn = get_db()
@@ -5340,7 +5264,7 @@ def home():
 
         # ==========================================================
         # Cache Save
-        # 캐시에 저장
+        # ĳ�ÿ� ����
         # ==========================================================
 
         HOME_CACHE["data"] = donations
@@ -5349,7 +5273,7 @@ def home():
 
     # ==========================================================
     # Main Page
-    # 메인 페이지 출력
+    # ���� ������ ���
     # ==========================================================
 
     return render_template(
@@ -5447,18 +5371,18 @@ def poem():
 
 # ------------------------------------------------------------
 # ETH Price Popup Page
-# price.html 출력용
+# price.html ��¿�
 # ------------------------------------------------------------
 @app.route("/price")
 def price():
 
     # --------------------------------------------------------
-    # DB 최신 가격
+    # DB �ֽ� ����
     # --------------------------------------------------------
 
     live_price = get_latest_price()
 
-    # 최근 가격 기록 가져오기
+    # �ֱ� ���� ��� ��������
     conn = get_db()
 
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -5494,13 +5418,13 @@ def price():
 
 # ------------------------------------------------------------
 # ETH Price API
-# JavaScript / 자동 갱신용
+# JavaScript / �ڵ� ���ſ�
 # ------------------------------------------------------------
 @app.route("/price-api")
 def price_api():
 
     # --------------------------------------------------------
-    # DB 최신 가격
+    # DB �ֽ� ����
     # --------------------------------------------------------
 
     live_price = get_latest_price()
@@ -5718,7 +5642,7 @@ def admin_login():
 
 # ==========================================================
 # Admin Dashboard
-# 관리자 통합 대시보드
+# ������ ���� ��ú���
 # ==========================================================
 
 @app.route("/admin/dashboard")
@@ -5726,7 +5650,7 @@ def admin_dashboard():
 
     # ------------------------------------------------------
     # Admin Login Check
-    # 관리자 로그인 여부 확인
+    # ������ �α��� ���� Ȯ��
     # ------------------------------------------------------
 
     if not session.get("admin"):
@@ -5735,7 +5659,7 @@ def admin_dashboard():
 
     # ------------------------------------------------------
     # Admin Dashboard
-    # 관리자 대시보드 출력
+    # ������ ��ú��� ���
     # ------------------------------------------------------
 
     return render_template(
@@ -5760,9 +5684,9 @@ def admin_logout():
 
 # ==========================================================
 # Announcement
-# 일반 사용자 공지 목록
-# 붙여넣기 위치 :
-# 기존 @app.route("/announcement") 삭제 후
+# �Ϲ� ����� ���� ���
+# �ٿ��ֱ� ��ġ :
+# ���� @app.route("/announcement") ���� ��
 # ==========================================================
 
 @app.route("/announcement")
@@ -5787,9 +5711,9 @@ def announcement():
     )
 # ==========================================================
 # Admin Announcement CMS
-# 관리자 전용 공지 관리
-# 붙여넣기 위치 :
-# @app.route("/announcement/<int:id>") 아래
+# ������ ���� ���� ����
+# �ٿ��ֱ� ��ġ :
+# @app.route("/announcement/<int:id>") �Ʒ�
 # ==========================================================
 
 @app.route("/admin2/announcement", methods=["GET", "POST"])
@@ -5809,12 +5733,12 @@ def admin2_announcement():
 
         content = request.form["content"]
 
-        # 등록
+        # ���
         if action == "add":
 
             add_announcement(title, content)
 
-        # 수정
+        # ����
         elif action == "edit":
 
             announcement_id = request.form["id"]
@@ -5838,7 +5762,7 @@ def admin2_announcement():
         edit_row = get_announcement(edit_id)
 
     # ----------------------------------------------------------
-    # 공지 목록
+    # ���� ���
     # ----------------------------------------------------------
     rows = fetch_all("""
 
@@ -5861,9 +5785,9 @@ def admin2_announcement():
     )
 # ==========================================================
 # Announcement Detail
-# 일반 사용자 공지 상세보기
-# 붙여넣기 위치 :
-# @app.route("/announcement") 바로 아래
+# �Ϲ� ����� ���� �󼼺���
+# �ٿ��ֱ� ��ġ :
+# @app.route("/announcement") �ٷ� �Ʒ�
 # ==========================================================
 
 @app.route("/announcement/<int:id>")
@@ -5885,16 +5809,16 @@ def announcement_detail(id):
 
 # ==========================================================
 # Announcement Add
-# 관리자 공지 등록
-# 붙여넣기 위치 :
-# @app.route("/announcement") 바로 아래
+# ������ ���� ���
+# �ٿ��ֱ� ��ġ :
+# @app.route("/announcement") �ٷ� �Ʒ�
 # ==========================================================
 
 @app.route("/announcement/add", methods=["GET", "POST"])
 def announcement_add():
 
     # ----------------------------------------------------------
-    # 관리자 로그인 확인
+    # ������ �α��� Ȯ��
     # ----------------------------------------------------------
     if not session.get("admin"):
 
@@ -5912,14 +5836,14 @@ def announcement_add():
     return render_template("announcement_add.html")
 # ==========================================================
 # Announcement Edit
-# 공지 수정
+# ���� ����
 # ==========================================================
 
 @app.route("/announcement/edit/<int:id>", methods=["GET", "POST"])
 def edit_announcement_route(id):
 
     # ----------------------------------------------------------
-    # 관리자 로그인 확인
+    # ������ �α��� Ȯ��
     # ----------------------------------------------------------
     if not session.get("admin"):
         return redirect("/admin/login")
@@ -5946,13 +5870,13 @@ def edit_announcement_route(id):
 @app.route("/admin2/announcement/delete/<int:id>")
 def admin2_delete_announcement(id):
 
-    # 관리자 로그인 확인
+    # ������ �α��� Ȯ��
     if not session.get("admin"):
         return redirect("/admin/login")
 
     delete_announcement(id)
 
-    # 관리자 목록으로 이동
+    # ������ ������� �̵�
     return redirect("/admin2/announcement")
 # ==========================================================
 # Admin Announcement Detail
@@ -5971,7 +5895,7 @@ def admin2_announcement_detail(id):
     )
 # ============================================================
 # Admin2 Content Management
-# Content 등록 / 수정 / 삭제
+# Content ��� / ���� / ����
 # ============================================================
 
 @app.route("/admin3/content", methods=["GET", "POST"])
@@ -5987,7 +5911,7 @@ def admin_content():
 
     # --------------------------------------------------------
     # Content Delete
-    # DB + Uploaded File 삭제
+    # DB + Uploaded File ����
     # --------------------------------------------------------
 
     delete_id = request.args.get("delete")
@@ -5997,7 +5921,7 @@ def admin_content():
 
 
         # ----------------------------------------------------
-        # 1. 삭제할 파일 정보 조회
+        # 1. ������ ���� ���� ��ȸ
         # ----------------------------------------------------
 
         file_info = fetch_one("""
@@ -6013,7 +5937,7 @@ def admin_content():
 
 
         # ----------------------------------------------------
-        # 2. 실제 업로드 파일 삭제
+        # 2. ���� ���ε� ���� ����
         # ----------------------------------------------------
 
         if file_info and file_info["file_path"]:
@@ -6027,7 +5951,7 @@ def admin_content():
 
 
         # ----------------------------------------------------
-        # 3. PostgreSQL 데이터 삭제
+        # 3. PostgreSQL ������ ����
         # ----------------------------------------------------
 
         execute("""
@@ -6080,7 +6004,7 @@ def admin_content():
 
             # ------------------------------------------------
             # File Upload
-            # 랜덤 파일명 생성
+            # ���� ���ϸ� ����
             # ------------------------------------------------
 
             if upload_file and upload_file.filename:
@@ -6331,8 +6255,8 @@ def admin3_content_detail(content_id):
 
 # ============================================================
 # Public Content List
-# 사용자 콘텐츠 목록
-# Cache 적용
+# ����� ������ ���
+# Cache ����
 # ============================================================
 
 @app.route("/content")
@@ -6400,8 +6324,8 @@ def content():
 
 # ============================================================
 # Content Detail
-# 콘텐츠 상세보기
-# 조회수 증가 + Cache 초기화
+# ������ �󼼺���
+# ��ȸ�� ���� + Cache �ʱ�ȭ
 # ============================================================
 
 @app.route("/content/<int:id>")
@@ -6409,7 +6333,7 @@ def content_detail(id):
 
 
     # --------------------------------------------------------
-    # Content 조회
+    # Content ��ȸ
     # --------------------------------------------------------
 
     row = fetch_one("""
@@ -6428,7 +6352,7 @@ def content_detail(id):
 
 
     # --------------------------------------------------------
-    # Content 존재 확인
+    # Content ���� Ȯ��
     # --------------------------------------------------------
 
     if row is None:
@@ -6438,7 +6362,7 @@ def content_detail(id):
 
 
     # --------------------------------------------------------
-    # 조회수 증가
+    # ��ȸ�� ����
     # --------------------------------------------------------
 
     execute("""
@@ -6467,7 +6391,7 @@ def content_detail(id):
 
 
     # --------------------------------------------------------
-    # 상세 페이지 출력
+    # �� ������ ���
     # --------------------------------------------------------
 
     return render_template(
@@ -6608,7 +6532,7 @@ def faq():
     )
 # ==========================================================
 # FAQ CMS
-# 관리자 FAQ 관리
+# ������ FAQ ����
 # ==========================================================
 
 @app.route("/admin/faq", methods=["GET", "POST"])
@@ -6627,7 +6551,7 @@ def admin_faq():
         answer = request.form.get("answer")
 
         # -------------------------------
-        # FAQ 등록
+        # FAQ ���
         # -------------------------------
         if action == "add":
 
@@ -6689,7 +6613,7 @@ def admin_faq():
         return redirect("/admin/faq")
 
     # ------------------------------------------------------
-    # 수정모드
+    # �������
     # ------------------------------------------------------
     edit_row = None
 
@@ -6821,7 +6745,7 @@ def admin_faq_detail(id):
 @app.before_request
 def track_access():
 
-    # 관리자 페이지 제외
+    # ������ ������ ����
     if not request.path.startswith("/admin"):
 
         save_access_log()
@@ -6840,7 +6764,7 @@ def admin_statistics():
 
     # ==========================================================
     # Total Visitors
-    # 누적 방문자 수
+    # ���� �湮�� ��
     # ==========================================================
 
     total = fetch_one(
@@ -6868,7 +6792,7 @@ def admin_statistics():
 
     # ==========================================================
     # Today Visitors
-    # 오늘 방문자 수
+    # ���� �湮�� ��
     # ==========================================================
 
     today = fetch_one(
@@ -6896,7 +6820,7 @@ def admin_statistics():
 
     # ==========================================================
     # Top Pages
-    # 많이 방문한 페이지
+    # ���� �湮�� ������
     # ==========================================================
 
     pages = fetch_all(
@@ -6930,7 +6854,7 @@ def admin_statistics():
 
     # ==========================================================
     # Daily Visitor Statistics
-    # 일별 방문 통계
+    # �Ϻ� �湮 ���
     # ==========================================================
 
     daily_stats = fetch_all(
@@ -6964,7 +6888,7 @@ def admin_statistics():
 
     # ==========================================================
     # Monthly Visitor Statistics
-    # 월별 방문 통계
+    # ���� �湮 ���
     # ==========================================================
 
     monthly_stats = fetch_all(
@@ -6998,7 +6922,7 @@ def admin_statistics():
 
     # ==========================================================
     # Country Visitor Statistics
-    # 국가별 방문 통계
+    # ������ �湮 ���
     # ==========================================================
 
     country_stats = fetch_all(
@@ -7053,7 +6977,7 @@ def admin_statistics():
 
     # ==========================================================
     # Render Access Statistics Page
-    # 접속통계 페이지 출력
+    # ������� ������ ���
     # ==========================================================
 
     return render_template(
@@ -7077,7 +7001,7 @@ def admin_statistics():
     )
 # ------------------------------------------------------------
 # Donation Management
-# 기부 보고서 관리자 페이지
+# ��� ������ ������ ������
 # ------------------------------------------------------------
 
 @app.route("/admin/donation")
@@ -7106,8 +7030,8 @@ def admin_donation():
     )
 
 # ------------------------------------------------------------
-# Donation 추가
-# 관리자 로그인 필요
+# Donation �߰�
+# ������ �α��� �ʿ�
 # ------------------------------------------------------------
 
 @app.route("/admin/donation/add", methods=["POST"])
@@ -7147,15 +7071,15 @@ def add_donation():
     return redirect("/admin/dashboard")
 
 # ------------------------------------------------------------
-# Donation 수정
-# 관리자 로그인 필요
+# Donation ����
+# ������ �α��� �ʿ�
 # ------------------------------------------------------------
 
 @app.route("/admin/donation/edit/<int:id>", methods=["POST"])
 def edit_donation(id):
 
 
-    # 관리자 확인
+    # ������ Ȯ��
     if not admin_required():
 
         return redirect(
@@ -7226,15 +7150,15 @@ def edit_donation(id):
 
 
 # ------------------------------------------------------------
-# Donation 삭제
-# 관리자 로그인 필요
+# Donation ����
+# ������ �α��� �ʿ�
 # ------------------------------------------------------------
 
 @app.route("/admin/donation/delete/<int:id>")
 def delete_donation(id):
 
 
-    # 관리자 확인
+    # ������ Ȯ��
     if not admin_required():
 
         return redirect(
@@ -7263,14 +7187,14 @@ def delete_donation(id):
 
 # ------------------------------------------------------------
 # Community Management
-# 관리자 페이지
+# ������ ������
 # ------------------------------------------------------------
 
 @app.route("/admin/community")
 def admin_community():
 
     # --------------------------------------------------------
-    # 관리자 로그인 확인
+    # ������ �α��� Ȯ��
     # --------------------------------------------------------
 
     if not admin_required():
@@ -7301,8 +7225,8 @@ def admin_community():
 
 
 # ------------------------------------------------------------
-# Community 저장
-# 관리자 로그인 필요
+# Community ����
+# ������ �α��� �ʿ�
 # ------------------------------------------------------------
 
 @app.route(
@@ -7312,7 +7236,7 @@ def admin_community():
 def save_community():
 
     # --------------------------------------------------------
-    # 관리자 로그인 확인
+    # ������ �α��� Ȯ��
     # --------------------------------------------------------
 
     if not admin_required():
@@ -7345,7 +7269,7 @@ def save_community():
 
 
     # --------------------------------------------------------
-    # 데이터가 없으면 INSERT
+    # �����Ͱ� ������ INSERT
     # --------------------------------------------------------
 
     if row is None:
@@ -7390,7 +7314,7 @@ def save_community():
 
 
     # --------------------------------------------------------
-    # 데이터가 있으면 UPDATE
+    # �����Ͱ� ������ UPDATE
     # --------------------------------------------------------
 
     else:
@@ -7472,7 +7396,7 @@ def chart():
 
 # ------------------------------------------------------------
 # Swap API
-# 환산기에 현재 ETH / WDM 가격 전달
+# ȯ��⿡ ���� ETH / WDM ���� ����
 # ------------------------------------------------------------
 
 @app.route("/swap-api")
@@ -7481,7 +7405,7 @@ def swap_api():
     try:
 
         # ----------------------------------------------------
-        # ETH 현재 가격
+        # ETH ���� ����
         # ----------------------------------------------------
 
         eth_price = get_latest_price()
@@ -7493,8 +7417,8 @@ def swap_api():
 
 
         # ----------------------------------------------------
-        # WDM 현재 가격
-        # 기존 정상 가격 함수 사용
+        # WDM ���� ����
+        # ���� ���� ���� �Լ� ���
         # ----------------------------------------------------
 
         wdm_price = get_latest_wdm_price()
@@ -7506,7 +7430,7 @@ def swap_api():
 
 
         # ----------------------------------------------------
-        # 결과 반환
+        # ��� ��ȯ
         # ----------------------------------------------------
 
         return jsonify({
@@ -7539,7 +7463,7 @@ def swap_api():
 
 # ============================================================
 # WDM Converter Calculation API
-# 환산 계산 전용
+# ȯ�� ��� ����
 # ============================================================
 
 @app.route("/calculate-conversion", methods=["POST"])
@@ -7561,7 +7485,7 @@ def calculate_conversion():
 
 
         # ----------------------------------------------------
-        # 환산 방향
+        # ȯ�� ����
         # ----------------------------------------------------
 
         direction = data.get(
@@ -7571,7 +7495,7 @@ def calculate_conversion():
 
 
         # ----------------------------------------------------
-        # 입력 금액
+        # �Է� �ݾ�
         # ----------------------------------------------------
 
         amount = data.get(
@@ -7581,8 +7505,8 @@ def calculate_conversion():
 
 
         # ----------------------------------------------------
-        # 현재 가격
-        # /swap-api와 동일한 가격 공급 함수 사용
+        # ���� ����
+        # /swap-api�� ������ ���� ���� �Լ� ���
         # ----------------------------------------------------
 
         eth_price = get_latest_price()
@@ -7604,8 +7528,8 @@ def calculate_conversion():
 
 
         # ----------------------------------------------------
-        # 환산 계산
-        # 계산 함수에는 가격을 전달
+        # ȯ�� ���
+        # ��� �Լ����� ������ ����
         # ----------------------------------------------------
 
         result = calculate_wdm_conversion(
@@ -7661,8 +7585,8 @@ def execute_swap():
 
 # ------------------------------------------------------------
 # ETH Chart Data
-# DB 조회 최소화 캐시 적용
-# Golden Cross / Dead Cross 유지
+# DB ��ȸ �ּ�ȭ ĳ�� ����
+# Golden Cross / Dead Cross ����
 # ------------------------------------------------------------
 
 @app.route("/chart-data")
@@ -7676,8 +7600,8 @@ def chart_data():
 
 
     # --------------------------------------------------------
-    # Chart Cache 확인
-    # 30초 이내 DB 조회 생략
+    # Chart Cache Ȯ��
+    # 30�� �̳� DB ��ȸ ����
     # --------------------------------------------------------
 
     if CACHE["chart_data"]:
@@ -7693,7 +7617,7 @@ def chart_data():
 
 
     # --------------------------------------------------------
-    # DB 연결
+    # DB ����
     # --------------------------------------------------------
 
     conn = get_db()
@@ -7744,7 +7668,7 @@ def chart_data():
 
 
     # --------------------------------------------------------
-    # 최신순 → 과거순 변경
+    # �ֽż� �� ���ż� ����
     # --------------------------------------------------------
 
     rows = list(reversed(rows))
@@ -7774,13 +7698,13 @@ def chart_data():
 
 
     # --------------------------------------------------------
-    # 데이터 생성
+    # ������ ����
     # --------------------------------------------------------
 
     for i, row in enumerate(rows):
 
 
-        # 시간
+        # �ð�
 
         labels.append(
 
@@ -7790,7 +7714,7 @@ def chart_data():
 
 
 
-        # 가격
+        # ����
 
         price = float(row["price"])
 
@@ -7798,7 +7722,7 @@ def chart_data():
 
 
 
-        # 이동평균
+        # �̵����
 
         m20 = None
 
@@ -7824,7 +7748,7 @@ def chart_data():
 
 
 
-        # 기본값
+        # �⺻��
 
         buy.append(None)
 
@@ -7836,7 +7760,7 @@ def chart_data():
 
 
 
-        # 첫 데이터 비교 불가
+        # ù ������ �� �Ұ�
 
         if i == 0:
 
@@ -7850,7 +7774,7 @@ def chart_data():
 
 
 
-        # 이동평균 데이터 부족
+        # �̵���� ������ ����
 
         if (
 
@@ -7896,7 +7820,7 @@ def chart_data():
 
 
     # --------------------------------------------------------
-    # JSON 데이터 생성
+    # JSON ������ ����
     # --------------------------------------------------------
 
     result = {
@@ -7930,7 +7854,7 @@ def chart_data():
 
 
     # --------------------------------------------------------
-    # Chart Cache 저장
+    # Chart Cache ����
     # --------------------------------------------------------
 
     CACHE["chart_data"] = result
@@ -7956,17 +7880,17 @@ def wdm_chart():
 
 # ==========================================================
 # WDM Chart Data
-# 기존 wdm_chart_data() 함수 전체 삭제 후 붙여넣기
+# ���� wdm_chart_data() �Լ� ��ü ���� �� �ٿ��ֱ�
 # ==========================================================
 
 # ============================================================
 # WDM CHART DATA
-# 차트 전용 데이터
+# ��Ʈ ���� ������
 # ============================================================
 
 # ==========================================================
 # WDM Chart Data
-# WDM 가격 이력 → 차트 데이터
+# WDM ���� �̷� �� ��Ʈ ������
 # ==========================================================
 
 @app.route("/wdm-chart-data")
@@ -7975,7 +7899,7 @@ def wdm_chart_data():
     try:
 
         # --------------------------------------------------
-        # WDM Price History 조회
+        # WDM Price History ��ȸ
         # --------------------------------------------------
 
         rows = get_wdm_price_history(100)
@@ -7988,7 +7912,7 @@ def wdm_chart_data():
         prices = []
 
         # --------------------------------------------------
-        # 오래된 데이터 → 최신 데이터 순서로 변경
+        # ������ ������ �� �ֽ� ������ ������ ����
         # --------------------------------------------------
 
         rows = list(reversed(rows))
@@ -8006,7 +7930,7 @@ def wdm_chart_data():
             )
 
         # --------------------------------------------------
-        # JSON 반환
+        # JSON ��ȯ
         # --------------------------------------------------
 
         return jsonify({
@@ -8055,16 +7979,21 @@ def add_headers(response):
 # Database Initialize
 # ============================================================
 
-init_db()
+# A temporary Neon quota/outage must not prevent Gunicorn from importing Flask.
+# Existing tables/data are not deleted by this startup block.
+DB_STARTUP_OK = False
+try:
+    init_db()
+    insert_default_community()
+    insert_default_portfolio()
+    insert_default_meme()
+    insert_test_data()
+    DB_STARTUP_OK = True
+    print("[DB STARTUP] Database initialization completed.")
+except Exception as e:
+    print("[DB STARTUP] Database unavailable; app starts in degraded mode:", e)
+    traceback.print_exc()
 
-insert_default_community()
-
-insert_default_portfolio()
-
-insert_default_meme()
-    
-insert_test_data()
-# ============================================================
 # PART 9 : Thread
 # ============================================================
 
@@ -8072,25 +8001,14 @@ insert_test_data()
 # Start Auto Save Threads
 # ============================================================
 
-if __name__ != "__main__":
-
-    # --------------------------------------------------------
-    # ETH 자동 저장
-    # --------------------------------------------------------
-    threading.Thread(
-        target=auto_save_eth,
-        daemon=True
-    ).start()
-
-
-    # --------------------------------------------------------
-    # WDM 가격 이력 자동 저장
-    # --------------------------------------------------------
-    threading.Thread(
-        target=auto_save_wdm,
-        daemon=True
-    ).start()
-# ==========================================================
+# Enable explicitly with ENABLE_BACKGROUND_JOBS=true after checking Neon quota.
+if (
+    __name__ != "__main__"
+    and os.environ.get("ENABLE_BACKGROUND_JOBS", "false").strip().lower()
+    in ("1", "true", "yes", "on")
+):
+    threading.Thread(target=auto_save_eth, daemon=True, name="wdm-auto-eth").start()
+    threading.Thread(target=auto_save_wdm, daemon=True, name="wdm-auto-wdm").start()
 # PART 10 : app.run()
 # ==========================================================
 
@@ -8102,6 +8020,6 @@ if __name__ == "__main__":
 
         port=5000,
 
-        debug=True
+        debug=False
 
     )
